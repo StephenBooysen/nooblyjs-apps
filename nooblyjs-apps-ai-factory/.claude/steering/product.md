@@ -807,7 +807,7 @@ through events and APIs. Don't copy code from another slice.
 | --- | --- | --- |
 | **the host** (the solution root) | The NooblyJS shell and the new UI modules: suite rail, module sidebar, design system, routing, SSO, role checks, onboarding and profiles, team chat, the Teams bot endpoint | Onboarding, Home (For you, Overview, Lifecycle, Approvals, Activity, Metrics, Teams & roles), Product Factory screens, Platform screens, chat panel; hosts the restyled Factory, Teammates and Knowledge UIs |
 | **`nooblyjs-core`** | Shared backend services: auth, logging, caching, queueing, data, notifying, scheduling, measuring, searching, workflow | Event bus for lifecycle events, **AuditEvent** store, notifications to Teams/Outlook, metrics aggregation, service dashboards |
-| **`nooblyjs-ai-common`** | Shared AI building blocks: provider adapters, model catalogue, tokens, **cost**, retry, SSE | The **model gateway** behind Model routing: work type → model → fallback → provider (Bedrock / Vertex / Azure); cost per call tagged with item, teammate and system |
+| **`nooblyjs-core/ai`** | Shared AI building blocks: provider adapters, model catalogue, tokens, **cost**, retry, SSE | The **model gateway** behind Model routing: work type → model → fallback → provider (Bedrock / Vertex / Azure); cost per call tagged with item, teammate and system |
 | **`nooblyjs-ai-harness`** | The agent runtime: agent loop, tools, permissions, sandboxing, hooks, MCP, skills, memory | What every agent runs in: factory stations, teammate tasks, Product Factory drafting agents. Enforces guardrails, no outbound internet, staging-only secrets |
 | **`src/apps/product`** (`/product`; a section of the Software Factory from 2026-10-19 to CHG-009) | The **Product Factory** (with its own screens): signals, ideas, specs, architecture artefacts (diagram as code, ADRs, standards check, quality attributes), UX and UI artefacts, the roadmap, and the per-stage **drafting agents** | Owns the Product board, Spec, Architecture, UX Design and UI Design screens (a UI module in the frame), the handoff preview, and "ask the agent to draft" |
 | **`src/apps/design`** (`/design`; Phase 16c, a section of the Software Factory until CHG-009) | **Design**: business requirements, solution architecture, functional analysis and stories (§5.3a), and Design's readiness checks | Owns the five Design screens; keeps each story a lifecycle item through `host.service('workflows')` (`syncStories`, `handoffStory`); answers `host.service('design')` |
@@ -826,7 +826,7 @@ Resolve these before building the affected slice:
 
 - **Model providers:** the harness, teammates and common code call the Anthropic API
   directly (`ANTHROPIC_API_KEY`). Governance requires Bedrock / Vertex / Azure, so
-  `nooblyjs-ai-common` must add those adapters and make them the default.
+  `nooblyjs-core/ai` must add those adapters and make them the default.
 - **Agent merge:** the Factory line ends in a `merge` station (autonomy L3), and the
   Repositories mockup shows a "Merge after all gates pass" agent toggle. Governance says
   agents never merge to `main`. The toggle must stay off and locked unless the

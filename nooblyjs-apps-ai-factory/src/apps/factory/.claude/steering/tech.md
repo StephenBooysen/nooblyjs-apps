@@ -62,7 +62,7 @@ The NooblyJS roadmap does this work in **Phase 7**.
 | Dashboard in `src/server/dashboard/` (hash routes `#/`, `#/runs`, `#/run/:id`, `#/inbox`, `#/campaigns`, `#/metrics`), plus `index.html` at the repo root | `public/js/module.js` with History-API routes (`structure.md` §2) and pages in `public/js/pages/`, restyled with the NooblyJS kit. The old header nav, the `🏭` brand and other emoji, and the dashboard's own CSS tokens go away |
 | The `merge` station on `lines/*.json` | **Refuses when hosted** (`FACTORY_HOSTED=noobly`), whatever the line or the autonomy level says, and appends `merge.refused`, which NooblyJS audits. A configured autonomy L3 is refused at intake too. Merging is a person's action |
 | Daily spend cap in `src/scheduler/budgets.js` | Still enforced, and every agent step also emits `agent.action` with its cost. From NooblyJS Phase 9, the cap comes from `data/platform/budgets.yaml` through the host |
-| Models through the harness, with any provider | The harness calls `nooblyjs-ai-common` providers (Bedrock / Vertex / Azure in production). Roles and tiers map to **work types** (`implementation`, `triage`, `review`) |
+| Models through the harness, with any provider | The harness calls `nooblyjs-core/ai` providers (Bedrock / Vertex / Azure in production). Roles and tiers map to **work types** (`implementation`, `triage`, `review`) |
 | CLI (`bin/factory.js`) writes to `$FACTORY_HOME` | The CLI keeps working standalone. When NooblyJS hosts the factory, only the NooblyJS process writes `data/factory/`, so CLI commands that change state call the API. Which commands do this is decided in the Phase 7 spec `[CONFIRM]` |
 
 Kept as they are: `// @ts-check` plus JSDoc, one concept per file opening with a comment that

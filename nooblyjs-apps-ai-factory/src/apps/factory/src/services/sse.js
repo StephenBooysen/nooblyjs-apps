@@ -14,7 +14,7 @@
 // Other processes (factory serve, submit, inbox answers) append to the same SQLite file,
 // so we POLL it (every pollMs, cheap: an indexed "seq > ?"), rather than rely on an
 // in-process notification that would only see this process's events.
-import { openSSE } from 'nooblyjs-ai-common/sse';
+import { openSSE } from 'nooblyjs-core/ai/sse';
 
 /**
  * @param {import('../models/store/events.js').Store} store
@@ -26,7 +26,7 @@ export function streamEvents(store, req, res, { after, pollMs = 500, heartbeatMs
   const lastId = Number(req.headers['last-event-id']);
   let seq = Number.isFinite(lastId) && lastId > 0 ? lastId : (after ?? store.read().at(-1)?.seq ?? 0);
   // Headers, the "reconnect after 2s" hint and the keep-alive comments that stop proxies
-  // closing a silent connection all come from openSSE (nooblyjs-ai-common).
+  // closing a silent connection all come from openSSE (nooblyjs-core/ai).
   const sse = openSSE(res, { retryMs: 2000, heartbeatMs, headers: { 'cache-control': 'no-store' } });
 
   const flush = () => {

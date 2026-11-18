@@ -19,7 +19,7 @@ pages, signs people in, stores data, emits events or calls models, read
 `.claude/steering/structure.md` §0 (this repo's layout as a hosted app). The source of truth is
 `../../../.claude/steering/structure.md` §2a. Where anything below conflicts with those, they win.
 
-This app is part of NooblyJS, **one solution** (`nooblyjs-apps-ai-factory/`; the solution root is `../../..`), with no `package.json` of its own: `nooblyjs-core` is linked from the root `package.json` (`file:../../nooblyjs-core`), and the AI module `nooblyjs-ai-common` lives inside it (`file:../../nooblyjs-core/src/aiservice/common`).
+This app is part of NooblyJS, **one solution** (`nooblyjs-apps-ai-factory/`; the solution root is `../../..`), with no `package.json` of its own: `nooblyjs-core` is linked from the root `package.json` (`file:../../nooblyjs-core`), and the AI module inside it is imported as `nooblyjs-core/ai`.
 
 @.claude/steering/nooblyjs-ai.md
 

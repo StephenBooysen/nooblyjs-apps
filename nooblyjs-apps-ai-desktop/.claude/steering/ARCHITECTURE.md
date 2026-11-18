@@ -38,7 +38,7 @@ tags: [nooblyjs-ai-desktop, steering]
 | Markdown | `marked` + `dompurify` | Render assistant output safely |
 | Styling | Hand-written CSS with custom properties | Light/dark via tokens; no framework |
 | Config | `dotenv` | Keys from `.env` |
-| Provider calls | `nooblyjs-ai-common` (plain `fetch`) | Shared with the other nooblyjs AI projects; no vendor SDKs. Gemini and DeepSeek use the OpenAI-compatible adapter |
+| Provider calls | `nooblyjs-core/ai` (plain `fetch`) | Shared with the other nooblyjs AI projects; no vendor SDKs. Gemini and DeepSeek use the OpenAI-compatible adapter |
 | Tests | `node:test` + `supertest` | Built-in runner; no Jest |
 
 Deliberately absent: React, Vite/webpack, TypeScript, Tailwind, any database driver.
@@ -304,7 +304,7 @@ one shape, so `messages.api.js` has a single code path regardless of vendor.
 
 ### 7.2 Per-provider notes
 
-All four go through nooblyjs-ai-common's provider layer; `src/providers/adapter.js` turns its
+All four go through nooblyjs-core/ai's provider layer; `src/providers/adapter.js` turns its
 events into the contract above. (Until Phase 3b of the common roadmap each had its own SDK.)
 
 | Provider | Common adapter | System prompt | Notes |

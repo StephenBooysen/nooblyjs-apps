@@ -15,11 +15,11 @@
 // Otherwise the provider's default model below is used.
 import { createEchoProvider } from './echo.js';
 import { createClaudeCodeProvider } from './claude-code.js';
-import { PROVIDERS as KNOWN, createProvider as connect, providerForModel as catalogueProvider } from 'nooblyjs-ai-common';
+import { PROVIDERS as KNOWN, createProvider as connect, providerForModel as catalogueProvider } from 'nooblyjs-core/ai';
 
 // What each provider IS (label, key variables, default and small models, which
 // model names are its own, whether it takes images, its address and API style)
-// comes from the shared model catalogue in nooblyjs-ai-common (src/models.js), and
+// comes from the shared model catalogue in nooblyjs-core/ai (src/models.js), and
 // so does the code that talks to it (src/providers/). What stays here is which
 // providers noobly offers, and the echo provider, which is noobly's own.
 //

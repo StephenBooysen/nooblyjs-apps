@@ -57,7 +57,7 @@ Stop there aborts it. With no Platform (the tests' stand-in host), nothing chang
 ## 4. This repo today, and what changed when it joined NooblyJS
 
 Teammates is closest to the platform already: ESM, Express 5, `js-yaml`, `nooblyjs-core` and
-`nooblyjs-ai-common` linked with `file:`, the Markdown FsStore, and pages that render into a view
+`nooblyjs-core/ai` linked with `file:`, the Markdown FsStore, and pages that render into a view
 they're given. Work in progress has hosted it with a **different contract**:
 `serveStatic` / `initialize(context)` / `serveSpaFallback` / `shutdown`, with its own
 `index.html`. That contract was written for the legacy Knowledge container. NooblyJS uses
@@ -76,7 +76,7 @@ NooblyJS roadmap does this in **Phase 6**.
 | `src/core/` builds its own nooblyjs-core registry on a separate Express 4 app (`coreRouter()`, `coreSession()`), plus `src/middleware/auth.js` and `src/routes/session.js` | Hosted: the host's `serverManager`, `host.auth` and the host's CSRF. None of `src/core/index.js`'s registry, session or Passport setup runs. Done: `src/services/core/` only creates this app's named service instances. The registry, session and Passport setup live in the host (NooblyJS, or `test/fixtures/host.js` in the tests) |
 | API under `<base>/api/…` (`/api/meta`, `/api/session`, `/api/admin`, …) | `/teammates/api/v1/…`. `/api/session` and `/login` go, because the host owns sign-in |
 | `server.js`, `.env.example`, `npm start` / `npm run dev` | **Removed 2026-11-18**: no standalone mode; the tests run `register()` on `src/services/standalone-host.js` |
-| Model profiles and prices in `data/config/models.md` | Model calls go through `nooblyjs-ai-common` and the platform's routing (`data/platform/model-routes.yaml`, Bedrock / Vertex / Azure in production). `models.md` keeps only teammate billing settings (rate, `tokensPerHour`) `[CONFIRM in Phase 9]` |
+| Model profiles and prices in `data/config/models.md` | Model calls go through `nooblyjs-core/ai` and the platform's routing (`data/platform/model-routes.yaml`, Bedrock / Vertex / Azure in production). `models.md` keeps only teammate billing settings (rate, `tokensPerHour`) `[CONFIRM in Phase 9]` |
 | API keys (`dtk_…`) for outside callers | Kept, for `POST /teammates/api/v1/teammates/:slug/tasks` only. The key's caller is the audited actor. An agent acting for a key is still capped at Contributor |
 | `data/system/users.md`, `data/core/` (auth, sessions) | Not used when hosted. People and sign-in belong to NooblyJS |
 | Its own `src/models/fs-store.js` (was `src/store/`) | **FsStore now lives in nooblyjs-core** (NooblyJS Phase 0): `require('nooblyjs-core/src/store/fs-store.js')` (CommonJS; import it with `createRequire` or a default import). Same API and guarantees, plus `readYaml`, `writeYaml`, `appendYaml` and `readYamlStream`. When hosted, use `host.store`. **Done in NooblyJS Phase 24:** `src/models/fs-store.js` re-exports the shared copy, and `register()` uses `host.store` (`storeFor()`) |

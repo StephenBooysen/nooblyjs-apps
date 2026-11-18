@@ -1,7 +1,7 @@
 // The task pipeline: a teammate is "called" with a task, does the work on its configured model,
 // writes memory about it, and logs the time to its timesheet.
-import { priceUsage } from 'nooblyjs-ai-common/cost';
-import { PRICES } from 'nooblyjs-ai-common/models';
+import { priceUsage } from 'nooblyjs-core/ai/cost';
+import { PRICES } from 'nooblyjs-core/ai/models';
 import { HttpError, badRequest } from '../utils/errors.js';
 import { isoDate } from '../utils/dates.js';
 import { newId, round1, round2 } from '../utils/ids.js';

@@ -10,7 +10,7 @@ tags: [nooblyjs-ai-harness]
 `noobly`: an AI coding CLI harness (like Claude Code), built one concept at a time so you can learn how it works.
 
 ```bash
-git clone https://github.com/nooblyjs/nooblyjs-core.git ../../nooblyjs-core   # nooblyjs-core, beside the nooblyjs-apps repo: its src/aiservice/common is the AI module (nooblyjs-ai-common), linked as a file: dependency
+git clone https://github.com/nooblyjs/nooblyjs-core.git ../../nooblyjs-core   # nooblyjs-core, beside the nooblyjs-apps repo: linked as a file: dependency; its AI module is imported as nooblyjs-core/ai
 npm install
 node bin/noobly.js --echo                 # try the UI offline, no API key
 export XAI_API_KEY=xai-...                # or ANTHROPIC_API_KEY / OPENAI_API_KEY

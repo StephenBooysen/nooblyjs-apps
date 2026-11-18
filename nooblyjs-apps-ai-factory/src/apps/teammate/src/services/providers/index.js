@@ -1,5 +1,5 @@
-import { PROVIDERS } from 'nooblyjs-ai-common/models';
-import { findApiKey } from 'nooblyjs-ai-common/providers';
+import { PROVIDERS } from 'nooblyjs-core/ai/models';
+import { findApiKey } from 'nooblyjs-core/ai/providers/index';
 import { AnthropicProvider } from './anthropic.js';
 import { MockProvider } from './mock.js';
 

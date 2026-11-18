@@ -29,7 +29,7 @@ there is one `package.json` and one `node_modules`. One process serves one frame
 
 Needs **Node 24** and [`nooblyjs-core`](https://github.com/nooblyjs/nooblyjs-core) checked out beside the `nooblyjs-apps`
 repo (`../../nooblyjs-core` from this folder). Core also holds the AI module every app calls models through:
-`nooblyjs-ai-common` (one way to call every model provider, including Bedrock, Vertex AI and Azure; the model catalogue;
+`nooblyjs-core/ai` (one way to call every model provider, including Bedrock, Vertex AI and Azure; the model catalogue;
 cost), at `nooblyjs-core/src/aiservice/common`. The agent harness, `nooblyjs-apps-ai-harness`, sits beside this folder in
 `nooblyjs-apps`.
 

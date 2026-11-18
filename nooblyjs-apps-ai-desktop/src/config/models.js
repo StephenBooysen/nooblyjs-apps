@@ -5,10 +5,10 @@
 //
 // What we know about each model (its label, context window, and quirks like
 // tokenParam or supportsTemperature) comes from the shared model catalogue in
-// nooblyjs-ai-common, so every nooblyjs AI project agrees on it. A model that
+// nooblyjs-core/ai, so every nooblyjs AI project agrees on it. A model that
 // isn't in the catalogue yet goes there first.
 
-const { getModel } = require('nooblyjs-ai-common/models');
+const { getModel } = require('nooblyjs-core/ai/models');
 
 const OFFERED = {
   anthropic: ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5-20251001'],
@@ -21,7 +21,7 @@ const OFFERED = {
 // supportsTemperature: false for reasoning models that reject a custom temperature
 function describe(id) {
   const model = getModel(id);
-  if (!model) throw new Error(`Model "${id}" is not in the nooblyjs-ai-common model catalogue`);
+  if (!model) throw new Error(`Model "${id}" is not in the nooblyjs-core/ai model catalogue`);
   return {
     id, // the name we send, which may be an alias such as a dated snapshot
     label: model.label,

@@ -10,8 +10,8 @@ import path from 'node:path';
 export const IMAGE_TYPES = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp' };
 // Anthropic accepts up to 5 MB of base64 per image, which is ~3.75 MB of file.
 export const MAX_IMAGE_BYTES = 3_750_000;
-// What an image costs in the context window, roughly (~1,600 tokens). Defined in nooblyjs-ai-common's tokens.js.
-export { IMAGE_TOKENS } from 'nooblyjs-ai-common/tokens';
+// What an image costs in the context window, roughly (~1,600 tokens). Defined in nooblyjs-core/ai's tokens.js.
+export { IMAGE_TOKENS } from 'nooblyjs-core/ai/tokens';
 
 export const isImagePath = (file) => Boolean(IMAGE_TYPES[path.extname(file).toLowerCase()]);
 
@@ -41,5 +41,5 @@ export function imagePathsIn(text, cwd) {
 }
 
 // The images inside a message's content (also inside tool results), and the data: URL
-// form OpenAI's APIs take. The provider adapters use them, so they live in nooblyjs-ai-common.
-export { dataUrl, imagesIn } from 'nooblyjs-ai-common/providers/images';
+// form OpenAI's APIs take. The provider adapters use them, so they live in nooblyjs-core/ai.
+export { dataUrl, imagesIn } from 'nooblyjs-core/ai/providers/images';

@@ -8,12 +8,12 @@
 // English and code is ~4 characters per token. (Anthropic also offers a
 // count_tokens endpoint for exact numbers, at the cost of an extra request.)
 //
-// estimateTokens and contextWindowFor now live in nooblyjs-ai-common (src/tokens.js),
+// estimateTokens and contextWindowFor now live in nooblyjs-core/ai (src/tokens.js),
 // shared with the other nooblyjs AI projects. What stays here is the harness's own
 // part: measuring a Session's next request against its model's window.
-import { estimateTokens, contextWindowFor } from 'nooblyjs-ai-common/tokens';
+import { estimateTokens, contextWindowFor } from 'nooblyjs-core/ai/tokens';
 
-export { CHARS_PER_TOKEN, contextWindowFor, estimateTokens } from 'nooblyjs-ai-common/tokens';
+export { CHARS_PER_TOKEN, contextWindowFor, estimateTokens } from 'nooblyjs-core/ai/tokens';
 
 /**
  * Estimated size of the next request: system prompt + tools + history

@@ -2,7 +2,7 @@
 // work type ('spec-drafting'), never a model id; the route names the model, its fallback and the cloud provider.
 // Governance: models only through Bedrock, Vertex AI or Azure. The direct Anthropic API is for development only.
 import { HttpError } from '../../util/errors.js';
-import { MODELS, getModel } from 'nooblyjs-ai-common/models';
+import { MODELS, getModel } from 'nooblyjs-core/ai/models';
 
 const FILE = ['platform', 'model-routes.yaml'];
 export const CLOUD_PROVIDERS = ['bedrock', 'vertex', 'azure'];

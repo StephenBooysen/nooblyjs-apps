@@ -133,7 +133,7 @@ disabled in NooblyJS (§4).
   model route, at what cost. Every write is audited.
 - **Agents never see production secrets.** Sandboxes and preview environments get staging
   values only. **No outbound internet** from sandboxes, except allow-listed package registries.
-- **Models** come only through Bedrock / Vertex / Azure (via `nooblyjs-ai-common`), routed by
+- **Models** come only through Bedrock / Vertex / Azure (via `nooblyjs-core/ai`), routed by
   work type. Implementation and tests → Sonnet with a Haiku fallback. Review → Opus with a
   Sonnet fallback.
 - **Budgets**: the Software Factory has a **daily cap** ($20 a day in the seed). At the

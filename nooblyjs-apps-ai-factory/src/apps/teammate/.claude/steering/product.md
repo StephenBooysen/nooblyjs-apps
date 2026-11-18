@@ -133,7 +133,7 @@ used · incl. $748 pending".
 - **Every action is attributed and costed** (`{ actor, teammateId, itemId, system,
   modelRoute, costUsd, at }`) and audited. Every chat message and decision goes to the
   item's Activity and the audit log.
-- **Models** come only through `nooblyjs-ai-common`, on Bedrock / Vertex / Azure. A teammate's
+- **Models** come only through `nooblyjs-core/ai`, on Bedrock / Vertex / Azure. A teammate's
   model tier (Opus $$$, Sonnet $$, Haiku $) maps to the Platform's model routes. Direct
   consumer APIs are development-only.
 - Agents never see production secrets. Personal data is redacted in agent logs.

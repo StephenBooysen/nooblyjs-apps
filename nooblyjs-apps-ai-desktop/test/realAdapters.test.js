@@ -1,7 +1,7 @@
 'use strict';
 
 // A whole turn through the app's real adapters: the route → the registry → the
-// adapter → nooblyjs-ai-common → HTTP, against a local fake of each provider's
+// adapter → nooblyjs-core/ai → HTTP, against a local fake of each provider's
 // API. (streaming.test.js covers the route with mock adapters instead.)
 
 const test = require('node:test');

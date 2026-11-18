@@ -187,7 +187,7 @@ initialises nooblyjs-core's `ServiceRegistry` (the **`serverManager`**) once, th
   `/workflows/api/v1`, keeps its files in `data/workflows/`, and is `host.service('workflows')` to the children.
   Its own tests are in `test/lifecycle/`. The `../nooblyjs-ai-workflows` repo is retired.
 - The Product Factory is the Product app (its own screens, its API at `/product/api/v1`: artefacts and drafting agents).
-- `nooblyjs-core` (with its AI module `src/aiservice/common`, imported as `nooblyjs-ai-common`: model providers, cost) and
+- `nooblyjs-core` (with its AI module `src/aiservice/common`, imported as `nooblyjs-core/ai`: model providers, cost) and
   `nooblyjs-ai-harness` (agent runtime) are libraries.
 - The host itself owns Home, the Product Factory screens, Platform, onboarding, team chat and the Teams bot endpoint.
 - **The solution root owns everything shared** (`structure.md` §1a): the product, the lifecycle, governance, the hosted-app
@@ -210,7 +210,7 @@ Known pitfall: nooblyjs-core registers Express 4 route patterns that Express 5 r
 - Agents propose, people decide. Agents are capped at the Contributor access role and **never merge
   to main or approve anything**, including from chat or the Teams bot.
 - Every write is audited, and every agent action records actor, item, system, model route and cost.
-- Models only via AWS Bedrock / Google Vertex AI / Azure, through the AI module (`nooblyjs-ai-common`). Direct consumer
+- Models only via AWS Bedrock / Google Vertex AI / Azure, through the AI module (`nooblyjs-core/ai`). Direct consumer
   APIs are allowed in development only. No GitHub Copilot integrations.
 - A person's **work role** (PM, Architect, Developer…) only shapes their home page. Permissions come
   only from the access role.

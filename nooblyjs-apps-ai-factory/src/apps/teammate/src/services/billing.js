@@ -1,6 +1,6 @@
 // Month-end and billing administration: closing a month into an invoice, invoice downloads (CSV, PDF),
 // the settings and model price screens, and the token view of billing (usage and API cost against billed amounts).
-import { availableModels } from 'nooblyjs-ai-common/discovery';
+import { availableModels } from 'nooblyjs-core/ai/discovery';
 import { HttpError, badRequest, notFound } from '../utils/errors.js';
 import { addMonths, isoDate, longDate, monthName, periodRange } from '../utils/dates.js';
 import { round1, round2 } from '../utils/ids.js';
@@ -25,7 +25,7 @@ const monthLabel = (month) => `${monthName(`${month}-01`)} ${month.slice(0, 4)}`
 const invalid = (errors) => new HttpError(422, 'validation_failed', 'Please fix the highlighted fields', errors);
 
 export class BillingService {
-  /** `discover` lists the models the providers offer (nooblyjs-ai-common's discovery; tests pass a fake). */
+  /** `discover` lists the models the providers offer (nooblyjs-core/ai's discovery; tests pass a fake). */
   constructor(repos, team, { now = () => isoDate(), store, discover = ({ refresh } = {}) => availableModels({ refresh }) } = {}) {
     this.repos = repos;
     this.discover = discover;
@@ -359,7 +359,7 @@ export class BillingService {
   }
 
   /**
-   * Every model the configured providers offer right now (nooblyjs-ai-common's discovery: each provider's own list, priced
+   * Every model the configured providers offer right now (nooblyjs-core/ai's discovery: each provider's own list, priced
    * from the catalogue, the provider, or OpenRouter as a labelled reference), each marked when it is already offered
    * here. Cached for a day; `refresh` asks the providers again.
    */

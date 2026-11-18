@@ -38,7 +38,7 @@ internet, staging-only secrets, and tools that can't merge, approve or change po
    persona and skills (from Teammates), the context (from Knowledge, with citations), the
    tools allowed for this repo, and a budget. The worker gets streamed progress and a final
    result. No terminal UI is involved.
-2. **Models only through `nooblyjs-ai-common`.** Every call goes to AWS Bedrock, Google Vertex
+2. **Models only through `nooblyjs-core/ai`.** Every call goes to AWS Bedrock, Google Vertex
    AI or Azure. NooblyJS asks for a **work type**, never a model id. Platform → Settings →
    Model routing decides the model, fallback and provider. The seed routes:
 
@@ -108,7 +108,7 @@ These are company governance rules, checked in the runtime, not only in the UI:
 ## 5. Open points
 
 - The harness defaults to consumer provider keys (`XAI_API_KEY`, `ANTHROPIC_API_KEY`,
-  `OPENAI_API_KEY`). In NooblyJS, providers come only from `nooblyjs-ai-common` routes, and the
+  `OPENAI_API_KEY`). In NooblyJS, providers come only from `nooblyjs-core/ai` routes, and the
   direct providers are development-only.
 - The package is named `nooblyjs-ai-harness`, the name its folder and the factory's dependency use.
 - How the harness learns the repo-access toggles and guardrails at run time: passed in by

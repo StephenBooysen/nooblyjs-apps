@@ -52,7 +52,7 @@ move things; none of them moves an item on its own.
 | Repo | Mounted at | What it is |
 | --- | --- | --- |
 | `nooblyjs-ai-host` | `/` | **The host.** Starts everything. Owns sign-in, the frame (rail, sidebar, chat dock), Home (Overview, For you, Lifecycle, Approvals, Activity, Metrics), team chat, Platform, the Teams bot, the lifecycle engine, and the connection to Jira and Bitbucket |
-| `nooblyjs-core` | `/ui/` | **The shared library.** The service registry (logging, caching, queues, scheduling), the file store, sign-in providers, the UI kit every screen is built from, and the AI module (`nooblyjs-ai-common`) that talks to models |
+| `nooblyjs-core` | `/ui/` | **The shared library.** The service registry (logging, caching, queues, scheduling), the file store, sign-in providers, the UI kit every screen is built from, and the AI module (`nooblyjs-core/ai`) that talks to models |
 | `nooblyjs-ai-product` | `/product` | **Product Factory.** Signals, ideas, specs, architecture, UX and UI design, and the drafting pipeline |
 | `nooblyjs-ai-teammate` | `/teammates` | **Digital Teammates.** The AI agents you hire: their role, model, rate, budget, memory, timesheets. Every agent action in NooblyJS runs here as a **task** |
 | `nooblyjs-ai-factory` | `/factory` | **Software Factory.** Runs a work item through stations (triage, build, verify, review, deliver) to a pull request. It never merges |

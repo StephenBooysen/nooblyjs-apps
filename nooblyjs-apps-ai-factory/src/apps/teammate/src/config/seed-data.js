@@ -1,7 +1,7 @@
 // Seed content written to the data directory on first run. Matches the design mockups.
-import { getModel } from 'nooblyjs-ai-common/models';
+import { getModel } from 'nooblyjs-core/ai/models';
 
-/** A model's list price and when it was checked, from the shared catalogue in nooblyjs-ai-common. */
+/** A model's list price and when it was checked, from the shared catalogue in nooblyjs-core/ai. */
 const listPrice = (modelId) => {
   const { pricing, pricingReviewedAt } = getModel(modelId);
   return { pricing: { ...pricing }, pricingReviewedAt };

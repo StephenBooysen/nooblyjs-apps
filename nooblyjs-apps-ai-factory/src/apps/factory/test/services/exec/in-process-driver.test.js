@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { inProcessDriver } from '../../../src/services/exec/harness/in-process.js';
-import { costOf } from 'nooblyjs-ai-common/cost';
+import { costOf } from 'nooblyjs-core/ai/cost';
 import { createMockProvider } from '../../../src/services/harness.js';
 
 function tempDir() {

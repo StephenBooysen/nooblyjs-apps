@@ -20,7 +20,7 @@ database, no account, no React.
 ## Quick start
 
 ```bash
-git clone https://github.com/nooblyjs/nooblyjs-core.git ../../nooblyjs-core   # nooblyjs-core, beside the nooblyjs-apps repo: its src/aiservice/common is the AI module (nooblyjs-ai-common), linked as a file: dependency
+git clone https://github.com/nooblyjs/nooblyjs-core.git ../../nooblyjs-core   # nooblyjs-core, beside the nooblyjs-apps repo: linked as a file: dependency; its AI module is imported as nooblyjs-core/ai
 npm install
 cp .env.example .env     # add at least one API key
 npm start                # http://127.0.0.1:3000
@@ -55,7 +55,7 @@ more.
 `DEEPSEEK_BASE_URL`) move a provider's address if you route through a gateway.
 
 The app calls every provider over plain HTTP through
-[nooblyjs-ai-common](https://github.com/nooblyjs/nooblyjs-core/tree/main/src/aiservice/common)'s provider layer — no vendor
+[nooblyjs-core/ai](https://github.com/nooblyjs/nooblyjs-core/tree/main/src/aiservice/common)'s provider layer — no vendor
 SDKs. Gemini is reached through its OpenAI-compatible endpoint.
 
 ## Your data
@@ -152,11 +152,11 @@ Switching provider mid-chat sends the existing conversation to the new model as-
 The models the app offers are listed in [`src/config/models.js`](src/config/models.js) — one
 line of model ids per provider. Add or remove ids there; no adapter change is needed. The facts
 about each model (label, context window, request quirks) come from the shared catalogue in
-[nooblyjs-ai-common](https://github.com/nooblyjs/nooblyjs-core/tree/main/src/aiservice/common), so a new model is added there first.
+[nooblyjs-core/ai](https://github.com/nooblyjs/nooblyjs-core/tree/main/src/aiservice/common), so a new model is added there first.
 
 ## Adding a provider
 
-1. Add the provider and its models to the nooblyjs-ai-common catalogue. If it speaks one of
+1. Add the provider and its models to the nooblyjs-core/ai catalogue. If it speaks one of
    common's API styles (Anthropic, OpenAI Responses, or OpenAI-compatible Chat Completions),
    that's all common needs.
 2. List the models the app offers in `src/config/models.js`.

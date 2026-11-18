@@ -29,7 +29,7 @@ tags: [nooblyjs-ai-product, steering]
 | Entry | `index.js` (`"main"`, `"exports"`) |
 | `register()` | default mount `/product`, name `product`, styles `css/product.css`, data under `data/product/`. It owns every URL under `/product` (`/product/specs/PRD-031`): the frame answers and this repo's UI module draws them |
 | Standalone | **None** (removed 2026-11-18): the tests use the stand-in host in `test/fixtures/host.js` |
-| Dependencies | `js-yaml`, `nooblyjs-core`, `nooblyjs-ai-common`, `nooblyjs-ai-harness`, from the solution's root `package.json` |
+| Dependencies | `js-yaml`, `nooblyjs-core`, `nooblyjs-core/ai`, `nooblyjs-ai-harness`, from the solution's root `package.json` |
 | `agent.action` | `system: 'product'`. Drafts are teammate tasks by work type; in production a draft without Teammates is refused (503), never mocked |
 | `services`, events | `host.service('product')` is in noobly `tech.md` §8b; events in `structure.md` |
 

@@ -1,5 +1,5 @@
 // Models & pricing, live (NooblyJS): the models each provider offers right now, offered to teammates under a tier.
-// The list is a fake here (nooblyjs-ai-common's discovery is tested in nooblyjs-core); nothing reaches a provider.
+// The list is a fake here (nooblyjs-core/ai's discovery is tested in nooblyjs-core); nothing reaches a provider.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startApp } from '../helpers.js';

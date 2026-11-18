@@ -1,13 +1,13 @@
-// A model provider on nooblyjs-ai-common's provider layer (plain HTTP, no SDK): Claude's Messages API, a cloud host serving
+// A model provider on nooblyjs-core/ai's provider layer (plain HTTP, no SDK): Claude's Messages API, a cloud host serving
 // Claude, or another provider the layer speaks (OpenAI, Grok, Gemini, DeepSeek, Ollama). The name is historical.
 // Streams text deltas and returns normalized usage.
-import { complete, createProvider } from 'nooblyjs-ai-common/providers';
+import { complete, createProvider } from 'nooblyjs-core/ai/providers/index';
 
 export class AnthropicProvider {
   /**
    * Signs in with ANTHROPIC_API_KEY, or else ANTHROPIC_AUTH_TOKEN; ANTHROPIC_BASE_URL moves the address.
    * `host` serves the same Claude models through a cloud host instead: 'bedrock', 'vertex' or 'azure' (NooblyJS
-   * governance; their credentials come from the environment, see nooblyjs-ai-common's CLOUD_HOSTS), or names another
+   * governance; their credentials come from the environment, see nooblyjs-core/ai's CLOUD_HOSTS), or names another
    * provider: 'openai', 'grok', 'gemini', 'deepseek', 'ollama'.
    * @param {object} [options]  passed to common's createProvider (tests pass `fetchImpl` and `env`)
    */

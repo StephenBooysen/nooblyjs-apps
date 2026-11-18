@@ -600,12 +600,12 @@ answers, and `nooblyjs-ai-teammate` passes the **hosted-app checklist**.
 ## Phase 9 — Platform and governance
 
 **Goal:** repos, sandboxes, models, budgets and guardrails are managed in one place, and changes affect agents immediately.
-**Repos:** `nooblyjs-ai-host`, `nooblyjs-ai-common` (Bedrock / Vertex / Azure adapters), `nooblyjs-ai-harness`, `nooblyjs-core`.
+**Repos:** `nooblyjs-ai-host`, `nooblyjs-core/ai` (Bedrock / Vertex / Azure adapters), `nooblyjs-ai-harness`, `nooblyjs-core`.
 
 **Before you start** (answered 2026-10-10)
 - Hosting target and container runtime (`product.md` §12 Q3): **still undecided.** Containers are built over a
   **simulated runtime** behind an interface; AKS / EKS / GKE stays `[PLACEHOLDER]`.
-- Provider (Q4): **still undecided.** All three adapters (**Bedrock, Vertex, Azure**) are built in `nooblyjs-ai-common`
+- Provider (Q4): **still undecided.** All three adapters (**Bedrock, Vertex, Azure**) are built in `nooblyjs-core/ai`
   and each model route names its provider. Development and test stay on the Anthropic API, refused in production.
 
 > **Done 2026-10-10** (signed off as built). Spec: `.claude/specs/phase-09-platform-governance/`. Summary:

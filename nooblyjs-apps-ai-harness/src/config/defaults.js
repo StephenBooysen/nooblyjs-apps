@@ -44,5 +44,5 @@ export const DEFAULTS = {
 };
 
 // Model prices (PRICES) and context windows (CONTEXT_WINDOWS, Phase 08) now live in
-// nooblyjs-ai-common (src/models.js), shared with the other nooblyjs AI projects.
-export { CONTEXT_WINDOWS, DEFAULT_CONTEXT_WINDOW, PRICES } from 'nooblyjs-ai-common/models';
+// nooblyjs-core/ai (src/models.js), shared with the other nooblyjs AI projects.
+export { CONTEXT_WINDOWS, DEFAULT_CONTEXT_WINDOW, PRICES } from 'nooblyjs-core/ai/models';

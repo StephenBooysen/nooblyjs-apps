@@ -1,10 +1,10 @@
 // LIVE: one short real call to each cloud host whose credentials are set (Bedrock, Vertex AI, Azure). It costs a
 // fraction of a cent per host. Not part of `npm test`; run it with `npm run test:live`, which loads .env. A host
-// without its variables (CLOUD_HOSTS[host].env in nooblyjs-ai-common) is skipped, so with none set nothing runs.
+// without its variables (CLOUD_HOSTS[host].env in nooblyjs-core/ai) is skipped, so with none set nothing runs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CLOUD_HOSTS } from 'nooblyjs-ai-common/models';
-import { complete, createProvider } from 'nooblyjs-ai-common/providers';
+import { CLOUD_HOSTS } from 'nooblyjs-core/ai/models';
+import { complete, createProvider } from 'nooblyjs-core/ai/providers/index';
 
 // The cheapest Claude model by default; LIVE_CLOUD_MODEL picks another.
 const model = process.env.LIVE_CLOUD_MODEL || 'claude-haiku-4-5';
@@ -15,7 +15,7 @@ const ready = {
 };
 
 for (const host of Object.keys(CLOUD_HOSTS)) {
-  test(`${CLOUD_HOSTS[host].label} answers through nooblyjs-ai-common (${model})`, { skip: ready[host] ? false : `set ${CLOUD_HOSTS[host].env.join(', ')}` }, async () => {
+  test(`${CLOUD_HOSTS[host].label} answers through nooblyjs-core/ai (${model})`, { skip: ready[host] ? false : `set ${CLOUD_HOSTS[host].env.join(', ')}` }, async () => {
     const provider = createProvider(host);
     const reply = await complete(provider, { model, maxTokens: 20, messages: [{ role: 'user', content: 'Reply with the single word: ready' }] });
     assert.match(reply.text, /ready/i);

@@ -82,7 +82,6 @@
     "mammoth": "^1.11.0",
     "mime-types": "^3.0.1",
     "multer": "^2.0.0-rc.4",
-    "nooblyjs-ai-common": "file:../../nooblyjs-core/src/aiservice/common",
     "nooblyjs-ai-harness": "file:../nooblyjs-apps-ai-harness",
     "nooblyjs-core": "file:../../nooblyjs-core",
     "openai": "^6.16.0",

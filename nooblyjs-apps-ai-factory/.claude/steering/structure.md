@@ -20,12 +20,12 @@ NooblyJS is **one solution**: `nooblyjs-apps-ai-factory/`, a folder of the `noob
 `src/apps/`, with no `package.json` of their own. The host finds an app through `LOCAL_APPS` in `src/hosted-apps.js`,
 which maps the package name `hosted-apps.yaml` lists (`nooblyjs-ai-product`) to `src/apps/product/index.js`. The harness,
 the desktop app and the blog, CMS and wiki apps are sibling folders in `nooblyjs-apps/`. `nooblyjs-core` is its own repo
-beside `nooblyjs-apps`: the root `package.json` links it as `file:../../nooblyjs-core`, the AI module as
-`file:../../nooblyjs-core/src/aiservice/common`, and the harness as `file:../nooblyjs-apps-ai-harness`.
+beside `nooblyjs-apps`: the root `package.json` links it as `file:../../nooblyjs-core` (its AI module is imported as `nooblyjs-core/ai`),
+and the harness as `file:../nooblyjs-apps-ai-harness`.
 
 ```
 nooblyjs-core/                 shared services + FsStore + event bus + UI kit and shell     (library, its own repo)
-  src/aiservice/common/        the AI module (imported as nooblyjs-ai-common): providers (incl. Bedrock, Vertex, Azure), model catalogue, tokens, cost, SSE
+  src/aiservice/common/        the AI module (imported as nooblyjs-core/ai): providers (incl. Bedrock, Vertex, Azure), model catalogue, tokens, cost, SSE
 nooblyjs-apps/                 the git repo
   nooblyjs-apps-ai-harness/    agent runtime                                   (library + CLI; beside the solution)
   nooblyjs-apps-ai-desktop/    projects, documents and chat for any LLM         (not hosted; beside the solution)
@@ -59,7 +59,7 @@ flowchart TB
   H --> K["src/apps/knowledge"]
   H --> T["src/apps/teammate"]
   H & F & K & T --> C["nooblyjs-core"]
-  H & F & K & T --> HA["nooblyjs-ai-harness"] --> CO["nooblyjs-ai-common"]
+  H & F & K & T --> HA["nooblyjs-ai-harness"] --> CO["nooblyjs-core/ai"]
   ALL["(all may use)"] -.-> C
   ALL -.-> CO
 ```
@@ -108,7 +108,7 @@ noobly/
                             (helmet, rate limits, session, Passport), nooblyjs-core and sign-in, then mounts NooblyJS;
                             `node app.js` also creates the HTTP/HTTPS server, listens and shuts down gracefully
   package.json              "type": "module"; deps: express, js-yaml, helmet, compression, express-rate-limit,
-                            express-session, passport, nooblyjs-core (file:), nooblyjs-ai-common (file:), child modules (file:)
+                            express-session, passport, nooblyjs-core (file:), nooblyjs-core/ai (file:), child modules (file:)
   .env.example              every variable from tech.md §9, with safe defaults
   src/
     noobly.js                 prepareData() (seed on first start) and mountNoobly(): audit, CSRF, sign-in routes,
@@ -208,7 +208,7 @@ stays in place. Why: `.claude/adr/ADR-001-host-owned-shell.md`.
 | `nooblyjs-ai-teammate` | `/teammates` | yes | `/teammates/api/v1/…` |
 | `nooblyjs-ai-knowledge` (the Wiki Platform; provides `knowledge`) | `/wiki` | yes | `/wiki/api/v1/…` |
 | the lifecycle engine (**not a child project**: `noobly/src/lifecycle/`, mounted by `src/noobly.js` before any hosted app; it was the hosted app `nooblyjs-ai-workflows` until 2026-10-10) | `/workflows` (reserved) | no (API only; its screens are Home's Overview, Lifecycle and Approvals) | `/workflows/api/v1/…`, and `host.service('workflows')` |
-| `nooblyjs-core`, `nooblyjs-ai-common`, `nooblyjs-ai-harness` | — | libraries, not hosted | — |
+| `nooblyjs-core`, `nooblyjs-core/ai`, `nooblyjs-ai-harness` | — | libraries, not hosted | — |
 
 The Software Factory owns everything under `/factory`, its section included: its page URLs
 (`/factory/quality/test-analysis`) answer with the frame and the Factory's UI module draws them. Product and Design are

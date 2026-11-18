@@ -1,13 +1,13 @@
 'use strict';
 
-// Every provider adapter, built on nooblyjs-ai-common's provider layer. Common
+// Every provider adapter, built on nooblyjs-core/ai's provider layer. Common
 // talks to each API over plain HTTP and translates its streamed reply into one
 // shape; this file turns that into the contract in types.js. No vendor SDKs.
 //
 // Each provider's address can be moved with <ID>_BASE_URL (e.g. DEEPSEEK_BASE_URL),
 // for a gateway or a local fake in tests.
 
-const { EVENT, PROVIDERS, createProvider, explainError, normalizeUsage, withRetry } = require('nooblyjs-ai-common');
+const { EVENT, PROVIDERS, createProvider, explainError, normalizeUsage, withRetry } = require('nooblyjs-core/ai');
 const catalogue = require('../config/models');
 
 /**

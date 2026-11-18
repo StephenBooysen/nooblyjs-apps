@@ -7,7 +7,7 @@
 //   for await (const event of session.stream('hi')) { ... }
 //
 // From Phase 04 on, tool calls will be reported through these same events.
-import { EVENT as PROVIDER_EVENT } from 'nooblyjs-ai-common/providers/events';
+import { EVENT as PROVIDER_EVENT } from 'nooblyjs-core/ai/providers/events';
 
 /**
  * Events a provider yields:
@@ -41,7 +41,7 @@ import { EVENT as PROVIDER_EVENT } from 'nooblyjs-ai-common/providers/events';
  */
 
 // The provider events (message_start, text_delta, thinking_delta, message, retry) are
-// defined in nooblyjs-ai-common, with the adapters that yield them; the rest are noobly's own.
+// defined in nooblyjs-core/ai, with the adapters that yield them; the rest are noobly's own.
 export const EVENT = Object.freeze({
   ...PROVIDER_EVENT,
   TOOL_START: 'tool_start',

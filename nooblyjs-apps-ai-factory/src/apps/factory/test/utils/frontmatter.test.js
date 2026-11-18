@@ -1,4 +1,4 @@
-// "key: value" settings at the top of a Markdown file (from nooblyjs-ai-common).
+// "key: value" settings at the top of a Markdown file (from nooblyjs-core/ai).
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { formatFrontmatter, parseFrontmatter } from '../../src/utils/frontmatter.js';

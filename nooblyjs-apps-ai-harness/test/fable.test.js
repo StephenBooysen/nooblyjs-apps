@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { costOf } from '../src/core/cost.js';
 import { contextWindowFor } from '../src/context/tokens.js';
 import { providerForModel } from '../src/providers/index.js';
-import { buildRequest } from 'nooblyjs-ai-common/providers/anthropic';
+import { buildRequest } from 'nooblyjs-core/ai/providers/anthropic';
 
 const FABLE = ['claude-fable-5-2', 'claude-fable-5-1', 'claude-fable-5'];
 

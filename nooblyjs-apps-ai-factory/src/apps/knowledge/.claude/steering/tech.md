@@ -81,7 +81,7 @@ app covers what people use `[CONFIRM retirement date]`.
 | Socket.IO, and FileWatcher → EventBus broadcasts | `host.events.emit()` plus the host's SSE stream (`ctx.sse` in pages). No Socket.IO |
 | JSON in `.application/` (spaces, workflows, change events, config) | Markdown + YAML in `data/knowledge/` through `host.store` (`structure.md` §3). A one-off `scripts/import-application.mjs` converts existing content |
 | Vite apps (`src/web/wiki`, `src/web/datasources`), and `public/index.html` | `public/js/module.js` + `public/js/pages/*.js` in plain JS with the NooblyJS kit, and `public/css/knowledge.css` scoped under `[data-module="knowledge"]`. The Vite apps serve only the legacy app. The hosted app serves `public/` with `index: false` and never serves the legacy `.html` files |
-| `AIService` | `nooblyjs-ai-common`, routed by work type (`knowledge-answer`, `knowledge-ingest`, `knowledge-summarise`) |
+| `AIService` | `nooblyjs-core/ai`, routed by work type (`knowledge-answer`, `knowledge-ingest`, `knowledge-summarise`) |
 | Datasources workflows (pipelines, schedules) | **Sources** with sync status. Connectors and indexers run as **workers** queued with `serverManager.queue()` and report through `/knowledge/internal/v1/…` |
 | Jest (`tests/`) | `node:test` in `test/` for the hosted code. Jest stays for legacy until it's retired |
 | `nooblyjs-core` in `CLAUDE.md` and docs | `nooblyjs-core` |
@@ -91,6 +91,6 @@ app covers what people use `[CONFIRM retirement date]`.
 (governance), cited answers (every answer lists its sources), the "This is wrong" flag, Needs
 review, and the L0 → L1 → L2 process-model viewer from the mockups.
 
-**Dependencies for the hosted path:** `js-yaml` and `nooblyjs-ai-common` (`file:../../nooblyjs-core/src/aiservice/common`)
+**Dependencies for the hosted path:** `js-yaml` and `nooblyjs-core` (its AI module, imported as `nooblyjs-core/ai`)
 are added. `nooblyjs-core` is already there. Express comes from the host. Legacy dependencies stay
 until the legacy app is retired. Don't use them from `src/`.

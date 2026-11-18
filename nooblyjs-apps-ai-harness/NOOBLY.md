@@ -3,7 +3,7 @@
 An AI coding CLI harness like Claude Code (`noobly`), built one concept ("phase") at a time so people can learn how it works. Plain JavaScript and Node, with an Ink (React) terminal UI.
 
 ## Commands
-- `npm install`: needs `../../nooblyjs-core` to exist. `nooblyjs-ai-common` is a `file:` dependency on `../../nooblyjs-core/src/aiservice/common`, symlinked into node_modules.
+- `npm install`: needs `../../nooblyjs-core` to exist. `nooblyjs-core` is a `file:` dependency, symlinked into node_modules; the AI module is imported as `nooblyjs-core/ai`.
 - `npm test`: offline, about 40s, around 385 tests. Some tests skip when bubblewrap (`bwrap`) is missing. `npm run coverage` adds coverage.
 - One test file: `node --import tsx --import ./test/no-color.js --test test/tool.test.js`
 - `npm start` (= `node bin/noobly.js`). Use `node bin/noobly.js --echo` to try the UI offline with no API key.
@@ -30,7 +30,7 @@ An AI coding CLI harness like Claude Code (`noobly`), built one concept ("phase"
 - `src/index.js`: library API (`createSession`, `query`).
 - `src/core/`: `Session`, the agent `loop`, messages, events, cost, trace.
 - `src/tools/`: one file per tool. Each is built with `defineTool({ name, description, inputSchema, isReadOnly, call })` from `tool.js` and registered in `createDefaultTools()` in `tools/index.js`.
-- `src/providers/`: Anthropic, OpenAI Responses, OpenAI-compatible (Grok and others), echo and mock. `mock.js`, `sse.js`, `errors.js`, `retry.js` are 5-line re-exports from `nooblyjs-ai-common`.
+- `src/providers/`: Anthropic, OpenAI Responses, OpenAI-compatible (Grok and others), echo and mock. `mock.js`, `sse.js`, `errors.js`, `retry.js` are 5-line re-exports from `nooblyjs-core/ai`.
 - `src/context/`: system prompt, NOOBLY.md/AGENTS.md loading (`instructions.js`), compaction, repo map, token counting.
 - `src/permissions/`, `src/sandbox/` (bwrap and seatbelt), `src/checkpoints/`, `src/hooks/`, `src/mcp/`, `src/skills/`, `src/memory/`, `src/agents/` (subagents, worktrees), `src/tasks/` (background processes), `src/config/` (settings, trust).
 - `src/commands/` (slash commands, never sent to the model), `src/feedback/` (checks after edits), `src/session-store/` (saved transcripts), `src/util/` (`log.js`, `paths.js` with `nooblyHome()`, `frontmatter.js`).

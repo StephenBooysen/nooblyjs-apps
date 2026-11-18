@@ -61,7 +61,7 @@ the one log, the root's `.claude/specs/bugs-and-changes/tasks.md`, and fixed her
 - **Everything is accounted for.** Every write is audited (`host.audit`). Every agent action records actor, item,
   system, model route and cost, and is a teammate task (`host.service('teammates').runTask`), checked by
   `host.service('platform').checkAgentWork` first.
-- **Models** only through `nooblyjs-ai-common`, on AWS Bedrock, Google Vertex AI or Azure, asked for by work type, never
+- **Models** only through `nooblyjs-core/ai`, on AWS Bedrock, Google Vertex AI or Azure, asked for by work type, never
   by model id. Direct consumer APIs in development only. No GitHub Copilot integrations.
 - **Permissions come only from the access role** (Viewer, Contributor, Approver, Architect, Owner). A work role only
   shapes a person's home.

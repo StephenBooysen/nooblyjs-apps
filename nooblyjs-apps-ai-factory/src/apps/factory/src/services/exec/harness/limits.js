@@ -20,8 +20,8 @@
 //
 // (The harness doesn't pass on the per-request `message` event with exact
 // output tokens. Doing the budget INSIDE the harness is harness track H32.)
-import { costOf } from 'nooblyjs-ai-common/cost';
-import { CHARS_PER_TOKEN } from 'nooblyjs-ai-common/tokens';
+import { costOf } from 'nooblyjs-core/ai/cost';
+import { CHARS_PER_TOKEN } from 'nooblyjs-core/ai/tokens';
 import { EVENT } from '../../harness.js';
 
 /**

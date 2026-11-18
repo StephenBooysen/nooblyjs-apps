@@ -26,7 +26,7 @@ tags: [nooblyjs-ai, steering]
 | Browser | Plain HTML, CSS and JS as native ES modules, on the shared UI kit (`nooblyjs-core/public/ui/`) | React, TypeScript, bundlers, CSS frameworks, CDNs |
 | Storage | Markdown + YAML front matter, YAML config, append-only daily YAML event streams, through FsStore (atomic writes, per-path locks, path checks) | SQLite, Postgres, Mongo, Redis as a store of record, JSON databases |
 | Shared services | `nooblyjs-core`: auth (local, Google, Entra), logging, caching, queueing, scheduling, notifying, measuring, searching, workflow, filing | Re-implementing any of them per project |
-| AI | The AI module (`nooblyjs-core/src/aiservice/common`, linked as `nooblyjs-ai-common`): providers, discovery, catalogue, tokens, cost. Asked for by **work type** through Platform's model routes | Calling a provider SDK from a feature |
+| AI | The AI module (`nooblyjs-core/src/aiservice/common`, imported as `nooblyjs-core/ai`): providers, discovery, catalogue, tokens, cost. Asked for by **work type** through Platform's model routes | Calling a provider SDK from a feature |
 | Agent runtime | `nooblyjs-ai-harness`: agent loop, tools, permissions, sandbox (bubblewrap on Linux, seatbelt on macOS), hooks, MCP, skills, memory | Agents outside the harness |
 | Tests | `node:test` + `node:assert`, offline with a mock provider; Playwright + axe for screens; live tests opt-in (`*.live.test.js`) | Jest, Mocha, Vitest in new code |
 | Identity | Microsoft Entra ID (OIDC) in production; Google sign-in when `AUTH_METHOD=google`; dev person picker, refused in production | A login of each app's own |
