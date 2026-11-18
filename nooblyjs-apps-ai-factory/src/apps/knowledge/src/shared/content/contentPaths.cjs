@@ -19,7 +19,7 @@
  * LEGACY: the old locations are still READ as a fallback (never written), so an
  * un-migrated install keeps working and the first admin save relocates the file
  * naturally. Relocate them explicitly with
- * `scripts/migrate-system-content-to-content.js`.
+ * `scripts/migrate-system-content-to-content.cjs`.
  *
  * @author noobly Team
  * @version 1.0.0

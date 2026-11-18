@@ -20,7 +20,7 @@
  * stamped on them (the last space on each root still wins).
  */
 
-const SearchIndexer = require('../../../src/wiki/activities/searchIndexer');
+const SearchIndexer = require('../../../src/wiki/activities/searchIndexer.cjs');
 
 const ENGINEERING_ROOT = '../knowledge-content/engineering';
 

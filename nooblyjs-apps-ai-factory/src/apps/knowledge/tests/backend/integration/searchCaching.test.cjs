@@ -9,7 +9,7 @@
 'use strict';
 
 const request = require('supertest');
-const express = require('express');
+const express = require('express4');
 const { EventEmitter } = require('events');
 
 describe('Search Caching Integration', () => {
@@ -92,7 +92,7 @@ describe('Search Caching Integration', () => {
     });
 
     // Register search routes
-    const searchRoutes = require('../../../src/wiki/routes/searchRoutes');
+    const searchRoutes = require('../../../src/wiki/routes/searchRoutes.cjs');
     searchRoutes(
       { 'express-app': app },
       new EventEmitter(),

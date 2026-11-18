@@ -19,7 +19,7 @@ test('--help lists a controller for every command, one per line', () => {
 });
 
 test('--version prints the package version; no command prints the help', () => {
-  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, '..', '..', '..', 'package.json'), 'utf8')); // the solution's one package.json
   assert.equal(factory('--version').stdout.trim(), pkg.version);
   assert.match(factory().stdout, /^Usage: factory <command>/m);
 });

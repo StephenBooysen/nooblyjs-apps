@@ -6,7 +6,7 @@
  * (`backend/src/shared/prompts/promptStore`). Prompts are authored in the
  * datasources app (AI → Prompts) and read back here by KEY:
  *
- *     const { prompts } = require('../../common/prompts/prompts');
+ *     const { prompts } = require('./prompts.cjs');
  *     const system = prompts.get('document-cleaning');
  *     const system = prompts.get('document-summary', { maxChars: 500 });
  *
@@ -33,7 +33,7 @@
 
 const {
   PromptStore, prompts, configure, applyVariables, slugify
-} = require('../../../src/shared/prompts/promptStore');
+} = require('../../../src/shared/prompts/promptStore.cjs');
 
 /**
  * Build a prompt library bound to a specific application base directory.

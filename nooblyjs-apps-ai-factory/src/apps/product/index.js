@@ -43,7 +43,8 @@ import { strategyDocs } from './src/services/strategy-context.js';
 const NAME = 'product';
 // One or more path segments (/product, or deeper for a host that nests it).
 const MOUNT = /^(\/[a-z0-9][a-z0-9-]{0,62})+$/;
-const { version: VERSION } = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+// One version for the whole solution: the root package.json (this app is src/apps/<name>).
+const { version: VERSION } = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const NEEDS = ['express', 'auth', 'requireRole', 'audit', 'events', 'store', 'people', 'service', 'frame'];
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 // Where the Design app is: its Architecture rows show this app's architecture pages (see above).

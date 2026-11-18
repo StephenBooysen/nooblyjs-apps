@@ -3,9 +3,9 @@
     "name": "Refresh Digital Platforms",
     "description": "Retrieve the Data for the Digital Platforms and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Digital Platforms"
@@ -20,9 +20,9 @@
     "name": "Refresh Enterprise Technologies",
     "description": "Retrieve the Data for the Enterprise Technologies and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Enterprise Technologies"
@@ -37,9 +37,9 @@
     "name": "Refresh Digital Infrastructure Technologies",
     "description": "Retrieve the Data for the Digital Infrastructure Technologies and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Digital Infrastructure Technologies"
@@ -54,9 +54,9 @@
     "name": "Refresh Shared Services",
     "description": "Retrieve the Data for the Shared Services and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Shared Services"
@@ -71,9 +71,9 @@
     "name": "Refresh Analytics Technologies",
     "description": "Retrieve the Data for the Data and Analytics Technologies and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Analytics Technologies"
@@ -88,9 +88,9 @@
     "name": "Refresh Commercial Services",
     "description": "Retrieve the Data for the Commercial Services and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Commercial Technologies"
@@ -105,9 +105,9 @@
     "name": "Refresh People Technologies",
     "description": "Retrieve the Data for all People value stream solutions and create content in the People space",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "People Technologies"
@@ -122,9 +122,9 @@
     "name": "Refresh Fintech Technologies",
     "description": "Retrieve the Data for the Fintech Technologies and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Fintech Technologies"

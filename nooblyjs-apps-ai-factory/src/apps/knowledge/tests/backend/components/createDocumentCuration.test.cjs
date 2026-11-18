@@ -34,7 +34,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { compileVisibility } = require('../../../src/shared/spaces/spaceVisibility');
+const { compileVisibility } = require('../../../src/shared/spaces/spaceVisibility.cjs');
 
 const CREATE = 'POST /applications/wiki/api/documents';
 
@@ -136,7 +136,7 @@ function mountRoutes() {
         fs.readFileSync(path.join(APP_BASE, 'spaces', 'spaces.json'), 'utf8')
     );
 
-    require('../../../src/wiki/routes/documentRoutes')(
+    require('../../../src/wiki/routes/documentRoutes.cjs')(
         { app },
         { emit() {} },
         {

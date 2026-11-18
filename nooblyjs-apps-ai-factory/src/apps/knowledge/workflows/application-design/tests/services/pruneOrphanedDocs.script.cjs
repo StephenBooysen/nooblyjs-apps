@@ -13,7 +13,7 @@
 const path = require('node:path');
 const fs = require('node:fs');
 
-const CodeProcessorClass = require('../../services/codeProcessor');
+const CodeProcessorClass = require('../../services/codeProcessor.cjs');
 
 const TMP = path.join(__dirname, '.tmp-prune-test');
 const SOURCE = path.join(TMP, 'src');

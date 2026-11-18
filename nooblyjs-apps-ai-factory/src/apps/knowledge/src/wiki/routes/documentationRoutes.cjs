@@ -11,7 +11,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { containedPath, handlePathError, isInside } = require('../../shared/utils/pathSafety');
+const { containedPath, handlePathError, isInside } = require('../../shared/utils/pathSafety.cjs');
 
 /**
  * Configures and registers documentation routes with the Express application.

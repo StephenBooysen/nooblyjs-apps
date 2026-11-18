@@ -9,16 +9,16 @@
 
 'use strict';
 const path = require('node:path');
-const { templateWriteCheck } = require('../components/spacePermissions');
+const { templateWriteCheck } = require('../components/spacePermissions.cjs');
 const {
   writeFileOrder,
   sanitizeOrderNames,
   renameInFileOrder,
   removeFromFileOrder
-} = require('../utils/fileOrder');
-const { writeFolderType, sanitizeStatus } = require('../utils/folderTypes');
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
-const { isInside } = require('../../shared/utils/pathSafety');
+} = require('../utils/fileOrder.cjs');
+const { writeFolderType, sanitizeStatus } = require('../utils/folderTypes.cjs');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
+const { isInside } = require('../../shared/utils/pathSafety.cjs');
 
 /**
  * Configures and registers navigation routes with the Express application.

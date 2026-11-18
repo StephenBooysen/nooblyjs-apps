@@ -28,7 +28,7 @@
 'use strict';
 
 const { z } = require('zod');
-const { encodePath } = require('../internalApi');
+const { encodePath } = require('../internalApi.cjs');
 
 /**
  * Default read window, in characters (~10k tokens).

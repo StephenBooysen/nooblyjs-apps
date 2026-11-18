@@ -2,7 +2,7 @@
 inclusion: always
 type: Steering
 title: 'NooblyJS Software Factory: design'
-description: The engine in `nooblyjs-ai-host/src/lifecycle/` keeps its model.
+description: The engine in `src/lifecycle/` keeps its model.
 tags: [nooblyjs-ai, steering]
 ---
 
@@ -11,7 +11,7 @@ tags: [nooblyjs-ai, steering]
 > **Status:** Draft v1 · 2026-10-19, revised 2026-11-17 against the code. How the factory in `product.md` fits together:
 > the layers, the item and its trace, events, checks and gates, how an agent's work happens, environments, data
 > ownership, and what each system offers the others. `stack.md` has the technology; the detailed contracts that already
-> exist stay where they are (`nooblyjs-ai-host/.claude/steering/structure.md` §2a for the hosted-app contract, `tech.md`
+> exist stay where they are (`.claude/steering/structure.md` §2a for the hosted-app contract, `tech.md`
 > §8b for cross-app services). Decisions taken on 2026-10-19 and 2026-10-20 are written as decided. Where a proposal
 > below was built differently, the built name is given and marked **as built**. Anything still open is marked `[CONFIRM]`.
 
@@ -57,7 +57,7 @@ flowchart TB
 
 ## 3. The lifecycle engine, version 3
 
-The engine in `nooblyjs-ai-host/src/lifecycle/` keeps its model. Version 2 (Phase 16a, 2026-10-19) added Verify,
+The engine in `src/lifecycle/` keeps its model. Version 2 (Phase 16a, 2026-10-19) added Verify,
 Release and Operate; version 3 (decided 2026-10-20, Phases 16b–16e, `product.md` §3.2) follows how the teams work.
 
 - **Stages** are `discover, product, design, engineer, build, test, release, operate`. Older keys move once, on
@@ -196,7 +196,7 @@ flowchart LR
 - **Production changes only through a release** (Operations), which asks Infrastructure to apply. Infrastructure
   keeps refusing a production apply without a release that two people approved.
 - Previews: a `pr.recorded` on a repository that a design serves opens a preview environment for it, and `pr.merged`
-  destroys it (built in Phase 21, Infrastructure I8; `nooblyjs-ai-infrastructure/src/services/previews.js`).
+  destroys it (built in Phase 21, Infrastructure I8; `src/apps/infrastructure/src/services/previews.js`).
 
 ## 8. Who owns what data, and what each system offers
 
@@ -233,7 +233,7 @@ name is refused at start.
 | Adapter | Owner | Interface, as built | Mock plays | Chosen by |
 | --- | --- | --- | --- | --- |
 | Scanner | Security (Build scans run as Factory gates through it) | `scan(kind, target, policies)` for `secrets, sast, sca, licence, iac, image, dast, sbom` (`src/scanners/`) | findings for the web and storefront repositories of the seed, in the kinds the mock knows | `SECURITY_SCANNER` |
-| Test runner | Quality (`nooblyjs-ai-factory/quality/src/runners/`) | `run(suite, input)` for `e2e`, `e2e-smoke`, `integration`, `load`, `accessibility`, `resilience` | the environment's baseline of e2e journeys, a measured p95 for `load` against the item's target, and passing `accessibility` and `resilience` | `TEST_RUNNER` |
+| Test runner | Quality (`src/apps/factory/quality/src/runners/`) | `run(suite, input)` for `e2e`, `e2e-smoke`, `integration`, `load`, `accessibility`, `resilience` | the environment's baseline of e2e journeys, a measured p95 for `load` against the item's target, and passing `accessibility` and `resilience` | `TEST_RUNNER` |
 | Deployer | Operations (`src/deployers/`), through Infrastructure | `deploy(release, { percent, by })`, `rollback(release, { reason, by })` | a staged rollout on the clock | `OPERATIONS_DEPLOYER` |
 | Monitor | Operations (`src/monitors/`) | `burn(sloId, minutes)`, `burned(sloId)`, `measure(goal)` | an SLO burn and one incident for the story | `OPERATIONS_MONITOR` |
 

@@ -28,7 +28,7 @@ const {
   sanitizeFileName,
   toDocumentFileName,
   titleFromFileName
-} = require('../../../src/shared/utils/fileNaming');
+} = require('../../../src/shared/utils/fileNaming.cjs');
 
 const CREATE_ROUTE = 'POST /applications/wiki/api/documents';
 
@@ -160,7 +160,7 @@ describe('POST /applications/wiki/api/documents', () => {
       path.join(appBaseDir, 'spaces', 'spaces.json'), JSON.stringify(spaces), 'utf8');
 
     const app = makeApp();
-    require('../../../src/wiki/routes/documentRoutes')({ app }, null, {
+    require('../../../src/wiki/routes/documentRoutes.cjs')({ app }, null, {
       dataManager: { read: async () => spaces },
       cache: { delete: async () => {} },
       log: noopLog,

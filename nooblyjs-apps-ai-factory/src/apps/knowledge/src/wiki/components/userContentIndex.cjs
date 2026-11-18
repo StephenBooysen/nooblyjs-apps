@@ -24,8 +24,8 @@
 
 'use strict';
 
-const userStore = require('./userStore');
-const spaceUserStore = require('./spaceUserStore');
+const userStore = require('./userStore.cjs');
+const spaceUserStore = require('./spaceUserStore.cjs');
 
 /** Turn an email into a filesystem-safe, case-stable key (the activity folder name). */
 function userKey(email) {

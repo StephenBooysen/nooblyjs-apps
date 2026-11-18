@@ -18,7 +18,7 @@
 
 'use strict';
 
-const { rolesOf } = require('../components/spacePermissions');
+const { rolesOf } = require('../components/spacePermissions.cjs');
 
 const ADMIN_STANDALONE = new Set(['approve', 'change-repo-access']);
 

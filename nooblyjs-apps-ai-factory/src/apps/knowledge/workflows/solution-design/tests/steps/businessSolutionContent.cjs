@@ -10,7 +10,7 @@
 
 // Dependancies
 const path = require('node:path');
-const express = require('express');
+const express = require('express4');
 
 // Load our settings
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
@@ -45,7 +45,7 @@ const worker = serviceRegistry.working('default', {
 
 // Start the worker
 worker.start(
-    'businessSolutionContent.js',
+    'businessSolutionContent.cjs',
      {
         settings: settings,
         filter:{"Roadmap": "117e4011-7cca-11f0-00be-005056bd2116" },

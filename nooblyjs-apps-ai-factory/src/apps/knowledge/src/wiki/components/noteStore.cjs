@@ -87,7 +87,7 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 
-const userStore = require('./userStore');
+const userStore = require('./userStore.cjs');
 
 /** Sub-folder of the user's activity folder holding the note files. */
 const NOTES_DIR = 'notes';

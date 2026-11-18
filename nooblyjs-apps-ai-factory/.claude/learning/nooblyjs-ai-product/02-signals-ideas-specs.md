@@ -150,13 +150,13 @@ Then check the data:
 
 ```bash
 # Ideas
-cat ../nooblyjs-ai-product/data/product/ideas/IDEA-*.md
+cat src/apps/product/data/product/ideas/IDEA-*.md
 
 # Specs
-ls ../nooblyjs-ai-product/data/product/specs/
+ls src/apps/product/data/product/specs/
 
 # Roadmap
-cat ../nooblyjs-ai-product/data/product/roadmap.md
+cat src/apps/product/data/product/roadmap.md
 ```
 
 ## Words to know

@@ -26,13 +26,13 @@ async function convertToMarkdown(filePath) {
   const ext = path.extname(filePath).toLowerCase();
 
   if (ext === '.docx' || ext === '.doc') {
-    return require('./docxprocessor').convertToMarkdown(filePath);
+    return require('./docxprocessor.cjs').convertToMarkdown(filePath);
   }
   if (ext === '.pdf') {
-    return require('./pdfprocessor').convertToMarkdown(filePath);
+    return require('./pdfprocessor.cjs').convertToMarkdown(filePath);
   }
   if (ext === '.xlsx' || ext === '.xls') {
-    return require('./xlsxprocessor').convertToMarkdown(filePath);
+    return require('./xlsxprocessor.cjs').convertToMarkdown(filePath);
   }
 
   throw new Error(`Unsupported file type for markdown conversion: ${ext || '(none)'}`);

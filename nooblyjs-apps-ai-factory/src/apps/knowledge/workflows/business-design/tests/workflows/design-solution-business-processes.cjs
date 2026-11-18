@@ -9,7 +9,7 @@ const path = require('node:path');
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 console.log(process.env.aris_server);
 
-const express = require('express');
+const express = require('express4');
 const app = express();
 app.use(express.json());
 
@@ -37,9 +37,9 @@ const worker = serviceRegistry.working('default', {
 const workflow = serviceRegistry.workflow();
 
 workflow.defineWorkflow('design-business-processes', [
-    'authToken.js',
-    "steps/businessProcessesData.js",
-    "steps/businessProcessesContent.js"
+    'authToken.cjs',
+    "steps/businessProcessesData.cjs",
+    "steps/businessProcessesContent.cjs"
 ]);
 
 workflow.runWorkflow('design-business-processes', { settings: settings, useCache: true, cacheAgeDays: 1 }, (status) => {

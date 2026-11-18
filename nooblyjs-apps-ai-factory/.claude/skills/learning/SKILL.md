@@ -12,7 +12,7 @@ just summarise the files.
 
 ## Where the output goes
 
-- Tutorials are written to `.claude/learning/` in the **nooblyjs-ai-host** repo (`<workspace>/noobly\.claude\learning\`).
+- Tutorials are written to `.claude/learning/` at the **solution root** (`nooblyjs-apps/nooblyjs-apps-ai-factory/.claude/learning/`).
   This is the one place for every repo's lessons, so they stay in one folder.
 - One file per repo and per lesson: `.claude/learning/<repo>/<NN>-<topic>.md`, where `NN` counts up from `01`.
   Example: `.claude/learning/nooblyjs-ai-factory/03-the-event-log.md`.
@@ -26,15 +26,15 @@ order, one lesson each run, and keep going round:
 
 | Repo | Folder | What it is |
 | --- | --- | --- |
-| nooblyjs-ai-host | `<workspace>/noobly` | The host app: shell, Home, Product Factory screens, chat, the Teams simulator |
-| nooblyjs-core | `<workspace>/nooblyjs-core` | The shared UI kit (`public/ui/`) and the service registry |
-| nooblyjs-ai-teammate | `<workspace>/nooblyjs-ai-teammate` | Digital teammates: agents, tasks, billing, timesheets |
-| nooblyjs-ai-product | `<workspace>/nooblyjs-ai-product` | Product Factory engine: signals, specs, architecture, drafting |
-| nooblyjs-ai-host (lifecycle engine) | `<workspace>/noobly\src\lifecycle` | Items, stages, approvals, handoffs (was the repo nooblyjs-ai-workflows until 2026-10-10) |
-| nooblyjs-ai-factory | `<workspace>/nooblyjs-ai-factory` | Software Factory: runs, stations, gates, PRs |
-| nooblyjs-ai-knowledge | `<workspace>/nooblyjs-ai-knowledge` | Knowledge: the Wiki Platform hosted at `/wiki` |
-| nooblyjs-ai-harness | `<workspace>/nooblyjs-ai-harness` | The agent runtime library |
-| nooblyjs-ai-infrastructure | `<workspace>/nooblyjs-ai-infrastructure` | Infrastructure app (early) |
+| nooblyjs-ai-host | the solution root (`nooblyjs-apps/nooblyjs-apps-ai-factory`) | The host app: shell, Home, Product Factory screens, chat, the Teams simulator |
+| nooblyjs-core | `<workspace>/nooblyjs-core` (beside `nooblyjs-apps`) | The shared UI kit (`public/ui/`) and the service registry |
+| nooblyjs-ai-teammate | `src/apps/teammate` | Digital teammates: agents, tasks, billing, timesheets |
+| nooblyjs-ai-product | `src/apps/product` | Product Factory engine: signals, specs, architecture, drafting |
+| nooblyjs-ai-host (lifecycle engine) | `src/lifecycle` | Items, stages, approvals, handoffs (was the repo nooblyjs-ai-workflows until 2026-10-10) |
+| nooblyjs-ai-factory | `src/apps/factory` | Software Factory: runs, stations, gates, PRs |
+| nooblyjs-ai-knowledge | `src/apps/knowledge` | Knowledge: the Wiki Platform hosted at `/wiki` |
+| nooblyjs-ai-harness | `nooblyjs-apps/nooblyjs-apps-ai-harness` (beside the solution) | The agent runtime library |
+| nooblyjs-ai-infrastructure | `src/apps/infrastructure` | Infrastructure app (early) |
 
 ## Before you write anything: read the repo
 
@@ -42,7 +42,7 @@ Read these first, in this order, and only as much as you need:
 
 1. The repo's `CLAUDE.md` (its rules and its current state).
 2. `README.md`, and the `.claude/steering/` files if the repo has them (`product.md`, `tech.md`, `structure.md`).
-3. The entry point (`index.js`, `index.mjs`, `app.js` or `server.js`) and the folder layout (`src/`, `public/`, `test/`).
+3. The entry point (`index.js` or `index.mjs` for an app, `app.js` for the host) and the folder layout (`src/`, `public/`, `test/`).
 4. `PROGRESS.md`, so you know what has already been taught.
 
 Pick **one concept** that the repo uses and that has not been taught yet. Good first concepts: what the repo is

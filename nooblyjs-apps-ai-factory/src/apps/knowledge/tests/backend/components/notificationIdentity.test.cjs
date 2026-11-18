@@ -31,7 +31,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const NotificationManager = require('../../../src/wiki/components/notificationManager');
+const NotificationManager = require('../../../src/wiki/components/notificationManager.cjs');
 
 const noopLog = { info() {}, warn() {}, error() {}, debug() {} };
 

@@ -66,9 +66,9 @@ const path = require('node:path');
 
 const multer = require('multer');
 
-const noteStore = require('../components/noteStore');
-const spaceUserStore = require('../components/spaceUserStore');
-const userArtifacts = require('../components/userArtifacts');
+const noteStore = require('../components/noteStore.cjs');
+const spaceUserStore = require('../components/spaceUserStore.cjs');
+const userArtifacts = require('../components/userArtifacts.cjs');
 
 /** Ids are minted server-side; anything else is a malformed request. */
 const ID_PATTERN = /^[a-z0-9_-]+$/i;

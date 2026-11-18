@@ -8,7 +8,7 @@ tags: [nooblyjs-ai-operations, steering]
 
 # nooblyjs-ai-operations: structure
 
-How this repo is laid out. The hosted-app contract it follows is `../../nooblyjs-ai-host/.claude/steering/structure.md`
+How this repo is laid out. The hosted-app contract it follows is `../../../.claude/steering/structure.md`
 §2a (summarised in `nooblyjs-ai.md` here); what Operations does is root `product.md` §3.7.
 
 ## Files
@@ -16,7 +16,6 @@ How this repo is laid out. The hosted-app contract it follows is `../../nooblyjs
 | Path | What |
 | --- | --- |
 | `index.js` | `register(app, serverManager, options)`: checks everything, then mounts the API and the frame's pages; listens for `approval.decided`; returns the rail entry, nav, status card, `services` and `seed` |
-| `server.js` | Standalone (`npm start`, port 11010): the same `register()` with the stand-in host (`test/fixtures/host.js`) |
 | `src/routes/index.js` | The API at `<mountPath>/api/v1`: signed in, every write audited, one error shape |
 | `src/services/releases.js` | Releases: create (one feature in Release), ask for the deploy approval (the risk threshold), the relayed decision, deploy steps, advance, rollback, deployments |
 | `src/services/evidence.js` | The evidence pack, read from the lifecycle, the Test section and Security |

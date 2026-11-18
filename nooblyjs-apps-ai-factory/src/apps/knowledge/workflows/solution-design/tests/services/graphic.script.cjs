@@ -17,10 +17,10 @@ const fs = require('node:fs');
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
 // Import some libraries
-const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate');
+const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate.cjs');
 
 // Import the Graphic Object
-const GraphicClass = require('../../../common/architecture/models/graphic.js');
+const GraphicClass = require('../../../common/architecture/models/graphic.cjs');
 
 // Load settings data
 const settings = {

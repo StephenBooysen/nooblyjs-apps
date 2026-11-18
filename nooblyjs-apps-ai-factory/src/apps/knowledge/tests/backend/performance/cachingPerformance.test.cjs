@@ -10,7 +10,7 @@
 'use strict';
 
 const request = require('supertest');
-const express = require('express');
+const express = require('express4');
 const { EventEmitter } = require('events');
 
 describe('Cache Performance Improvements', () => {
@@ -66,7 +66,7 @@ describe('Cache Performance Improvements', () => {
 
     app.set('workflowBridge', mockBridge);
 
-    const workflowRoutes = require('../../../src/datasources/routes/workflowdashboard');
+    const workflowRoutes = require('../../../src/datasources/routes/workflowdashboard.cjs');
     workflowRoutes('test-routes', {
       'express-app': app,
       dependencies: {

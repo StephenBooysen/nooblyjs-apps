@@ -17,7 +17,7 @@ import { STEP_TOOLS } from '../../services/mcp/step-tools.js';
 import { verifyStepToken } from '../../services/mcp/tokens.js';
 import { openStore } from '../../models/store/events.js';
 
-const pkg = createRequire(import.meta.url)('../../../package.json');
+const pkg = createRequire(import.meta.url)('../../../../../../package.json');
 
 /** @param {string[]} argv */
 export async function mcpCommand(argv) {

@@ -9,7 +9,7 @@
 
 'use strict';
 
-const express = require('express');
+const express = require('express4');
 const passport = require('passport');
 
 const router = express.Router();

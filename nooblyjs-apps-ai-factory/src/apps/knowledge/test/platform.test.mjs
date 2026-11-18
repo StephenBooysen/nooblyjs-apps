@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
-import express from 'express5';
+import express from 'express';
 import { register } from '../index.mjs';
 import { createHost, PERSON_HEADER } from './fixtures/host.mjs';
 import { filesUnder, FALLBACK } from './helpers.mjs';

@@ -10,8 +10,8 @@
 
 const mammoth = require('mammoth');
 const path = require('node:path');
-const docxToJson = require('./docxToJson');
-const jsonToMarkdown = require('./jsonToMarkdown');
+const docxToJson = require('./docxToJson.cjs');
+const jsonToMarkdown = require('./jsonToMarkdown.cjs');
 
 /**
  * Convert a DOCX file to markdown.

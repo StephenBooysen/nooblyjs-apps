@@ -29,7 +29,8 @@ import { seed as seedStory } from './src/seed/index.js';
 
 const NAME = 'operations';
 const MOUNT = /^\/[a-z0-9][a-z0-9-]{0,62}$/;
-const { version: VERSION } = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+// One version for the whole solution: the root package.json (this app is src/apps/<name>).
+const { version: VERSION } = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const NEEDS = ['express', 'auth', 'requireRole', 'can', 'audit', 'events', 'store', 'people', 'service', 'frame'];
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 

@@ -18,4 +18,4 @@
 
 'use strict';
 
-module.exports = require('../../../src/shared/processors/pptxprocessor');
+module.exports = require('../../../src/shared/processors/pptxprocessor.cjs');

@@ -25,14 +25,14 @@ const {
   sidecarStatus,
   ensureSidecar,
   removeSidecar
-} = require('../../../src/wiki/utils/derivedSidecar');
+} = require('../../../src/wiki/utils/derivedSidecar.cjs');
 
-const SearchIndexer = require('../../../src/wiki/activities/searchIndexer');
+const SearchIndexer = require('../../../src/wiki/activities/searchIndexer.cjs');
 
 // The sidecar module converts real files, so stub the dispatcher: these tests are
 // about WHEN a sidecar is written and what the indexer does with it, not about
 // PDF parsing.
-jest.mock('../../../src/shared/processors/documentConverter', () => {
+jest.mock('../../../src/shared/processors/documentConverter.cjs', () => {
   const nodePath = require('node:path');
   const SUPPORTED_EXTENSIONS = new Set(['.docx', '.doc', '.pdf', '.xlsx', '.xls']);
   return {
@@ -47,7 +47,7 @@ jest.mock('../../../src/shared/processors/documentConverter', () => {
   };
 });
 
-const { convertToMarkdown } = require('../../../src/shared/processors/documentConverter');
+const { convertToMarkdown } = require('../../../src/shared/processors/documentConverter.cjs');
 
 const silentLogger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} };
 

@@ -24,8 +24,8 @@
 
 'use strict';
 
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
-const { contentRootKey } = require('../../shared/spaces/contentRoot');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
+const { contentRootKey } = require('../../shared/spaces/contentRoot.cjs');
 
 // mime-types is already a dependency (used by documentRoutes). Guard the require
 // so the service degrades gracefully rather than failing to load.

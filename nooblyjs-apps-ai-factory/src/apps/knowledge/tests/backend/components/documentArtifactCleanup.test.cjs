@@ -28,9 +28,9 @@ const path = require('node:path');
 const {
   artifactRelPathsFor,
   removeDocumentArtifacts
-} = require('../../../src/wiki/utils/documentArtifacts');
+} = require('../../../src/wiki/utils/documentArtifacts.cjs');
 
-const { isHiddenPath, ownsContext } = require('../../../src/wiki/activities/artifactCleanup');
+const { isHiddenPath, ownsContext } = require('../../../src/wiki/activities/artifactCleanup.cjs');
 
 const silentLogger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} };
 

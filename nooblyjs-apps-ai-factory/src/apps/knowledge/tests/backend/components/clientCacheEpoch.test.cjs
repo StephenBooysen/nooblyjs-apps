@@ -35,7 +35,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const featureFlags = require('../../../src/wiki/config/featureFlags');
+const featureFlags = require('../../../src/wiki/config/featureFlags.cjs');
 
 const CLIENT_CACHE = path.resolve(
   __dirname,

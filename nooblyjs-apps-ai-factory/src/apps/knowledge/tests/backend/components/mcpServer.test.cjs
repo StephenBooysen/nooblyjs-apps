@@ -36,10 +36,10 @@
  * failures live.
  */
 
-const searchKnowledge = require('../../../src/wiki/mcp/tools/searchKnowledge');
-const readDocument = require('../../../src/wiki/mcp/tools/readDocument');
-const { encodePath, originFor } = require('../../../src/wiki/mcp/internalApi');
-const { createKnowledgeServer, TOOLS, INSTRUCTIONS } = require('../../../src/wiki/mcp/server');
+const searchKnowledge = require('../../../src/wiki/mcp/tools/searchKnowledge.cjs');
+const readDocument = require('../../../src/wiki/mcp/tools/readDocument.cjs');
+const { encodePath, originFor } = require('../../../src/wiki/mcp/internalApi.cjs');
+const { createKnowledgeServer, TOOLS, INSTRUCTIONS } = require('../../../src/wiki/mcp/server.cjs');
 
 /**
  * Stub API client. `routes` maps a matcher to a canned response; every call is

@@ -11,7 +11,7 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 const { v4: uuidv4 } = require('uuid');
-const { sanitizeDirectoryName, validateWorkflowPath } = require('../utils/pathSanitizer');
+const { sanitizeDirectoryName, validateWorkflowPath } = require('../utils/pathSanitizer.cjs');
 
 class WorkflowManager {
 

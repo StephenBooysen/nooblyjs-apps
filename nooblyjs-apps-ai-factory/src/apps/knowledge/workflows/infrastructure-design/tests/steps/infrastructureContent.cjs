@@ -15,7 +15,7 @@
 
 // Dependancies
 const path = require('node:path');
-const express = require('express');
+const express = require('express4');
 
 // Load our settings
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
@@ -50,7 +50,7 @@ const worker = serviceRegistry.working('default', {
 
 // Start the worker
 worker.start(
-    'infrastructureContent.js',
+    'infrastructureContent.cjs',
      {
         settings: settings,
         filter: {},

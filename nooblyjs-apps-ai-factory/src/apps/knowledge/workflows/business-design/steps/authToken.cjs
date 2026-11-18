@@ -10,7 +10,7 @@
 'use strict';
 
 let path = require('node:path');
-const authenticateStep = require('../../common/architecture/authentication/authenticateStep');
+const authenticateStep = require('../../common/architecture/authentication/authenticateStep.cjs');
 
 /**
  * Retrieve authentication token from ARIS system.

@@ -3,8 +3,8 @@
     "name": "Rebuild Solution: Retrieve and Build Roadmap content ignoring Cache",
     "description": "Build all the content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Content All"
@@ -18,9 +18,9 @@
     "name": "Rebuild Solution: Digital Platforms",
     "description": "Refresh the Digital Platforms and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Digital Platforms"
@@ -35,9 +35,9 @@
     "name": "Rebuild Solution: Enterprise Technologies",
     "description": "Rebuild the Enterprise Technologies and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Enterprise Technologies"
@@ -52,9 +52,9 @@
     "name": "Rebuild Solution: Digital Infrastructure Technologies",
     "description": "Rebuild the Digital Infrastructure Technologies and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Digital Infrastructure Technologies"
@@ -69,9 +69,9 @@
     "name": "Rebuild Solution: Retrieve Shared Services",
     "description": "Rebuild the Shared Services and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Shared Services"
@@ -86,9 +86,9 @@
     "name": "Rebuild Solution: Retrieve Analytics Technologies",
     "description": "Rebuild the Data for the Data and Analytics Technologies and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Analytics Technologies"
@@ -103,9 +103,9 @@
     "name": "Rebuild Solution: Retrieve Commercial Services",
     "description": "Rebuild the Data for the Commercial Services and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Commercial Technologies"
@@ -120,9 +120,9 @@
     "name": "Rebuild Solution: Retrieve People Technologies",
     "description": "Rebuild the Data for all People value stream solutions and create content in the People space",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "People Technologies"
@@ -137,9 +137,9 @@
     "name": "Rebuild Solution: Retrieve Fintech Technologies",
     "description": "Rebuild the Data for the Fintech Technologies and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessSolutionData.js",
-      "steps/businessSolutionContent.js"
+      "steps/authToken.cjs",
+      "steps/businessSolutionData.cjs",
+      "steps/businessSolutionContent.cjs"
     ],
     "tags": [
       "Fintech Technologies"

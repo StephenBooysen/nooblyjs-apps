@@ -4,7 +4,7 @@ const fs = require('node:fs').promises;
 const os = require('node:os');
 const path = require('node:path');
 
-const userStore = require('../../../src/wiki/components/userStore');
+const userStore = require('../../../src/wiki/components/userStore.cjs');
 
 describe('userStore — folder naming (userDir)', () => {
     test('email maps to lowercased local-part', () => {

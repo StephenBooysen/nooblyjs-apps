@@ -27,7 +27,7 @@ const {
   isBusy,
   commitAndPush,
   gitHandleFor,
-} = require('../../../src/shared/repositories/repositorySync');
+} = require('../../../src/shared/repositories/repositorySync.cjs');
 
 /**
  * A stand-in for simple-git that records the commands it was given.

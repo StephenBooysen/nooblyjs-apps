@@ -24,7 +24,7 @@ import { workspaceCommand } from '../controllers/cli/workspace.js';
 import { harnessVersion } from '../services/harness.js';
 import { loadFactoryConfig } from '../config/factory-config.js';
 
-const pkg = createRequire(import.meta.url)('../../package.json');
+const pkg = createRequire(import.meta.url)('../../../../../package.json');
 
 /**
  * Each command: a one-line description (for --help) and a run(args) function

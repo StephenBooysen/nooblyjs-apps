@@ -42,25 +42,25 @@ See `project-tutorial.md` for full documentation.
 
 ## Project Structure
 
-This monorepo contains 11 sub-projects:
+This solution (`nooblyjs-apps/nooblyjs-apps-ai-factory/`) is the host, at its root, and 8 apps in `src/apps/`, with one `package.json`:
 
-| Project | Purpose |
+| Project (folder) | Purpose |
 |---------|---------|
-| **nooblyjs-ai-design** | UI/UX design system and components |
-| **nooblyjs-ai-desktop** | Desktop application shell |
-| **nooblyjs-ai-factory** | Factory pattern implementations and generators |
-| **nooblyjs-ai-harness** | Testing framework and development harness |
-| **nooblyjs-ai-host** | Main application host/server |
-| **nooblyjs-ai-infrastructure** | Cloud and deployment infrastructure |
-| **nooblyjs-ai-knowledge** | Knowledge base and learning resources |
-| **nooblyjs-ai-operations** | Operational tools and scripts |
-| **nooblyjs-ai-product** | Product specification and requirements |
-| **nooblyjs-ai-security** | Security policies and implementations |
-| **nooblyjs-ai-teammate** | Teammate/collaboration features |
+| **nooblyjs-ai-host** (the root) | The host process: frame, Home, lifecycle engine, Platform, chat, Teams |
+| **nooblyjs-ai-product** (`src/apps/product`) | Product: screens, artefacts and drafting agents (`/product`) |
+| **nooblyjs-ai-design** (`src/apps/design`) | Design: requirements, solution, functional analysis, stories (`/design`) |
+| **nooblyjs-ai-factory** (`src/apps/factory`) | Software Factory: the line, the `factory` CLI and its Test section (`/factory`) |
+| **nooblyjs-ai-infrastructure** (`src/apps/infrastructure`) | Environments, designs, provisioning runs, drift and cost (`/infrastructure`) |
+| **nooblyjs-ai-security** (`src/apps/security`) | Security by design: threat models, scans, findings (`/security`) |
+| **nooblyjs-ai-operations** (`src/apps/operations`) | Release, rollout, rollback and operate (`/operations`) |
+| **nooblyjs-ai-teammate** (`src/apps/teammate`) | Digital Teammates: tasks, chat and Teams answers (`/teammates`) |
+| **nooblyjs-ai-knowledge** (`src/apps/knowledge`) | Knowledge Repository: the wiki (`/wiki`) |
+
+The agent harness (`nooblyjs-apps-ai-harness`) and the desktop app (`nooblyjs-apps-ai-desktop`) are not in this solution: they sit in `nooblyjs-apps/`, beside it. The `project-tutorial` examples below still name them; they are not in this folder.
 
 ## Tips
 
 - Start with `nooblyjs-ai-product` to understand the overall vision
-- Then explore `nooblyjs-ai-host` to see the main application
+- Then explore `nooblyjs-ai-host` (the solution root) to see the main application
 - Use `--compare` to understand how projects relate to each other
 - Reference the `/steering` folder for design, product, and roadmap docs

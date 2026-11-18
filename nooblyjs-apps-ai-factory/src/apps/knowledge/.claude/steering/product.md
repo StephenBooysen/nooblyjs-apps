@@ -2,14 +2,14 @@
 inclusion: always
 type: Steering
 title: 'Knowledge Repository: what NooblyJS needs from this repo'
-description: Extracted from the NooblyJS product definition (`../nooblyjs-ai-host/.claude/steering/product.md`, the source of truth) and the design mockups in `../nooblyjs-ai-host/.claude/steering/brief/` (`noobl…
+description: Extracted from the NooblyJS product definition (`../../../.claude/steering/product.md`, the source of truth) and the design mockups in the design brief (not in this repo) (`noobl…
 tags: [nooblyjs-ai-knowledge, steering]
 ---
 
 # Knowledge Repository: what NooblyJS needs from this repo
 
-> Extracted from the NooblyJS product definition (`../nooblyjs-ai-host/.claude/steering/product.md`, the source
-> of truth) and the design mockups in `../nooblyjs-ai-host/.claude/steering/brief/`
+> Extracted from the NooblyJS product definition (`../../../.claude/steering/product.md`, the source
+> of truth) and the design mockups in the design brief (not in this repo)
 > (`noobly-knowledge-local`, `noobly-knowledge-enterprise`). This file lists only what the
 > **Knowledge Repository** must provide inside NooblyJS. `tech.md` says how this repo plugs in,
 > including the move from the legacy Wiki Platform, and `structure.md` says where things

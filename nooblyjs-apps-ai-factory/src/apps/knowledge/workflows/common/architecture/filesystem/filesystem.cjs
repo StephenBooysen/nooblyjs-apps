@@ -11,7 +11,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const glob = require("glob");
-const wikiBlocks = require('../../content/wikiBlocks.js');
+const wikiBlocks = require('../../content/wikiBlocks.cjs');
 
 /**
  * Normalise a filesystem PATH (not a single name segment) so values that arrive

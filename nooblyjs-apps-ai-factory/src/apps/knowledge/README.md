@@ -7,6 +7,12 @@ tags: [nooblyjs-ai-knowledge]
 
 # noobly Wiki Platform v2.0
 
+> **2026-11-18: this is now the knowledge app of NooblyJS**, `src/apps/knowledge/` in the one NooblyJS solution, and it
+> runs only inside NooblyJS at `/wiki`. There is no standalone server, port 9101, `app.js`, `package.json` or
+> per-folder install any more: run `npm install` and `npm start` at the solution root (`../../..`). Node-side files are
+> `.cjs`. `CLAUDE.md` ("This app in the solution") is current; the setup, ports and commands below describe the
+> standalone platform as it was.
+
 A unified, multi-platform knowledge management and workflow automation system combining document repositories, real-time synchronization, AI assistance, and workflow orchestration.
 
 **Version**: 2.0.0 (Unified Backend)
@@ -227,7 +233,7 @@ git clone <repo>/nooblyjs-ai-knowledge
 
 2. **Install backend dependencies**:
 ```bash
-cd nooblyjs-ai-knowledge/backend
+cd src/apps/knowledge/backend
 npm install
 ```
 

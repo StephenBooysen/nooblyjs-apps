@@ -37,7 +37,7 @@ const os = require('node:os');
 const path = require('node:path');
 const assert = require('node:assert');
 
-const ContextProcessor = require('../../services/contextProcessor');
+const ContextProcessor = require('../../services/contextProcessor.cjs');
 
 const SILENT = { info() {}, warn() {}, error() {} };
 

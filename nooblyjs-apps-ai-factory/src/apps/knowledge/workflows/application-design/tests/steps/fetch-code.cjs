@@ -21,14 +21,14 @@
 
 const path = require('node:path');
 const fs = require('node:fs');
-const express = require('express');
+const express = require('express4');
 
 // Load environment variables from the repository-root .env file.
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
 const serviceRegistry = require('nooblyjs-core');
-const fetchCodeStep = require('../../steps/fetch-code');
-const GitService = require('../../services/gitService');
+const fetchCodeStep = require('../../steps/fetch-code.cjs');
+const GitService = require('../../services/gitService.cjs');
 
 const REPO_URL = process.env.GIT_TEST_REPO_URL || 'https://github.com/octocat/Hello-World.git';
 const TMP = path.join(__dirname, '.tmp-fetchcode-test');

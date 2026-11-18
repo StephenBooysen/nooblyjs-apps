@@ -9,7 +9,7 @@
 
 'use strict';
 
-const { StartupRunner, formatMs } = require('../../../src/shared/startup/startupRunner');
+const { StartupRunner, formatMs } = require('../../../src/shared/startup/startupRunner.cjs');
 
 /** Silence the runner's own logging during tests. */
 function quietRunner() {

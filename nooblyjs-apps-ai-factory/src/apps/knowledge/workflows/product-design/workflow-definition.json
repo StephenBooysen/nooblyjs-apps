@@ -3,26 +3,26 @@
     "name": "Product Design: Get Data",
     "description": "Retrieve all Target Process data (projects, portfolio epics, epics, features, release trains, value streams, requirements and every mapping) and cache it for the content builds",
     "steps": [
-      "steps/portfoliosData.js",
-      "steps/portfolioEpicsData.js",
-      "steps/epicsData.js",
-      "steps/featuresData.js",
-      "steps/enablerFeaturesData.js",
-      "steps/releaseTrainsData.js",
-      "steps/portfolioEpicReleaseTrainsData.js",
-      "steps/epicReleaseTrainsData.js",
-      "steps/valueStreamsData.js",
-      "steps/agileReleaseTrainValueStreamsData.js",
-      "steps/valueStreamEpicsData.js",
-      "steps/valueStreamPortfolioEpicsData.js",
-      "steps/requestsData.js",
-      "steps/requestEpicsData.js",
-      "steps/requestPortfolioEpicsData.js",
-      "steps/requestFeaturesData.js",
-      "steps/requirementsData.js",
-      "steps/requirementEpicsData.js",
-      "steps/requirementPortfolioEpicsData.js",
-      "steps/requirementFeaturesData.js"
+      "steps/portfoliosData.cjs",
+      "steps/portfolioEpicsData.cjs",
+      "steps/epicsData.cjs",
+      "steps/featuresData.cjs",
+      "steps/enablerFeaturesData.cjs",
+      "steps/releaseTrainsData.cjs",
+      "steps/portfolioEpicReleaseTrainsData.cjs",
+      "steps/epicReleaseTrainsData.cjs",
+      "steps/valueStreamsData.cjs",
+      "steps/agileReleaseTrainValueStreamsData.cjs",
+      "steps/valueStreamEpicsData.cjs",
+      "steps/valueStreamPortfolioEpicsData.cjs",
+      "steps/requestsData.cjs",
+      "steps/requestEpicsData.cjs",
+      "steps/requestPortfolioEpicsData.cjs",
+      "steps/requestFeaturesData.cjs",
+      "steps/requirementsData.cjs",
+      "steps/requirementEpicsData.cjs",
+      "steps/requirementPortfolioEpicsData.cjs",
+      "steps/requirementFeaturesData.cjs"
     ],
     "tags": [
       "Data"
@@ -36,7 +36,7 @@
     "name": "Product Design: Build Enterprise",
     "description": "Build the Enterprise Product tree into the default Enterprise content space. Inclusive filter: every Agile Release Train EXCEPT the FinTech and People carve-outs (which have their own spaces). Add new trains here to include them in Enterprise.",
     "steps": [
-      "steps/releaseTrainsContent.js"
+      "steps/releaseTrainsContent.cjs"
     ],
     "tags": [
       "Content"
@@ -55,7 +55,7 @@
     "name": "Product Design: Build Fintech",
     "description": "Build only the FinTech Agile Release Train into the Fintech content space (data is shared; only the content build is filtered)",
     "steps": [
-      "steps/releaseTrainsContent.js"
+      "steps/releaseTrainsContent.cjs"
     ],
     "tags": [
       "Content"
@@ -69,7 +69,7 @@
     "name": "Product Design: Build People",
     "description": "Build only the People Enablement and People Technologies Agile Release Trains into the People content space (data is shared; only the content build is filtered)",
     "steps": [
-      "steps/releaseTrainsContent.js"
+      "steps/releaseTrainsContent.cjs"
     ],
     "tags": [
       "Content"

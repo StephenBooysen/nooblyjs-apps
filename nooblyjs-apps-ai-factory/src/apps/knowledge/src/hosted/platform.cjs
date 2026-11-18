@@ -19,9 +19,9 @@
 const path = require('node:path');
 const { EventEmitter } = require('node:events');
 const { AsyncLocalStorage } = require('node:async_hooks');
-const StructuredLogger = require('../shared/utils/StructuredLogger');
+const StructuredLogger = require('../shared/utils/StructuredLogger.cjs');
 const { createLegacyApp } = require('./legacyApp.cjs');
-const agentTasks = require('../shared/ai/agentTasks');
+const agentTasks = require('../shared/ai/agentTasks.cjs');
 
 const INSTANCE = 'wiki';
 // The teammate the wiki's agents work as (NooblyJS Phase 24): Ada Quill, the Research Analyst, unless told otherwise.
@@ -195,7 +195,7 @@ async function mountPlatform({ router, hostApp, registry, appBaseDir, onBroadcas
   router.use(runner.middleware);
   router.use(app.prepare);
 
-  const { initialize } = require('../initialize');
+  const { initialize } = require('../initialize.cjs');
   await initialize({
     app,
     server: new EventEmitter(), // nothing listens here: the host owns the HTTP server

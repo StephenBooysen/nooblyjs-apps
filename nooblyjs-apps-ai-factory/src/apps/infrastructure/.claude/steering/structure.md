@@ -12,7 +12,7 @@ tags: [nooblyjs-ai-infrastructure, steering]
 > does and shows. This repo is NooblyJS's **Infrastructure** module: it owns infrastructure designs,
 > environments, provisioning runs, drift, blueprints, policies and cloud cost, and its **screens**,
 > which are a UI module in the NooblyJS frame at `/infrastructure/…`. They call this repo's API at
-> **`/infrastructure/api/v1`**. The layout follows `../nooblyjs-ai-host/.claude/steering/structure.md` §2a.
+> **`/infrastructure/api/v1`**. The layout follows `../../../.claude/steering/structure.md` §2a.
 >
 > §2 and §3 describe what is on disk. In §4–§7, anything not marked *(built)* in the roadmap is still a
 > **proposal** to settle with NooblyJS, together with the open points in `product.md` §8. `docs/roadmap-history.md`
@@ -38,9 +38,7 @@ run when `approval.decided` arrives.
 ```
 nooblyjs-ai-infrastructure/
   index.js                  register(app, serverManager, options) → HostedApp (ui, nav, status, services, seed, close)
-  server.js                 standalone dev server (stack.md §5); `--seed [--reset]` seeds and exits
-  package.json              "name": "nooblyjs-ai-infrastructure", "type": "module", "main": "index.js",
-                            "exports": { ".": "./index.js" }, engines.node >= 24
+  (no package.json: the solution has one, at its root)
   .env.example
   src/
     routes/index.js         the whole API router, mounted under /infrastructure/api/v1: auth, audit, the routes
@@ -72,7 +70,7 @@ nooblyjs-ai-infrastructure/
                             version, a blocking policy, a stale If-Match, an agent on drift, a non-Owner on policies
     public/module.test.js   CSS scoped, nav rows routed, every page exports render(), no inline styles
     routes/story.test.js    the seed story through the API: both mocked screens, a decision, runs, drift
-    fixtures/host.js        stand-in host (also used by server.js), test serverManager, fake partner services
+    fixtures/host.js        stand-in host, test serverManager, fake partner services
     helpers.js              startApp(): the app on a bare Express 5 app, port 0, temp data folder
   .claude/
     steering/               product.md · stack.md · structure.md · ui/ (design input, read-only)
@@ -197,7 +195,7 @@ PRD-031 and ADR-014 by id only, because those belong to `nooblyjs-ai-product`. M
 ## 9. Where to put new things
 
 - **A new screen:** a page in `public/js/pages/`, a route in `module.js`, a `nav` row in `index.js`
-  if it has one, its API in `src/routes/`, and an e2e spec in `../nooblyjs-ai-host/test/e2e/`.
+  if it has one, its API in `src/routes/`, and an e2e spec in `../../../test/e2e/`.
 - **A component other apps would use:** the UI kit in `nooblyjs-core/public/ui/`, never here.
 - **A new entity:** a repo in `src/repos/`, a folder in `data/infrastructure/` (update §5), seed
   files, and the events it emits (update §6).

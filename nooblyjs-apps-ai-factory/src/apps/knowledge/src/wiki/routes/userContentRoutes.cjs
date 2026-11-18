@@ -21,8 +21,8 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const U = require('../components/userContentBlocks');
-const { writeContentCache } = require('../utils/documentContentCache');
+const U = require('../components/userContentBlocks.cjs');
+const { writeContentCache } = require('../utils/documentContentCache.cjs');
 
 /**
  * Resolve a document path within its space, with the same traversal guard

@@ -24,7 +24,7 @@ const fsp = fs.promises;
 const os = require('node:os');
 const path = require('node:path');
 
-const userStore = require('../../../src/wiki/components/userStore');
+const userStore = require('../../../src/wiki/components/userStore.cjs');
 
 const IDENTITY = 'someone@example.com';
 
@@ -161,7 +161,7 @@ describe('writeText is atomic', () => {
 });
 
 describe('NotificationManager survives one unusable file', () => {
-  const NotificationManager = require('../../../src/wiki/components/notificationManager');
+  const NotificationManager = require('../../../src/wiki/components/notificationManager.cjs');
 
   /** appBaseDir with a spaces.json, plus a content dir holding user activity. */
   function setupSpace() {

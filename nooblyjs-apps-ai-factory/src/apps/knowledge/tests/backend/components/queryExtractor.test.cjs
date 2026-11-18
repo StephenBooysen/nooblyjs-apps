@@ -16,7 +16,7 @@ const {
     stripFillerWords,
     extractQuotedQuery,
     MAX_QUERY_WORDS
-} = require('../../../src/wiki/components/queryExtractor');
+} = require('../../../src/wiki/components/queryExtractor.cjs');
 
 describe('sanitizeExtractedQuery', () => {
     test('returns empty for falsy / non-string input', () => {

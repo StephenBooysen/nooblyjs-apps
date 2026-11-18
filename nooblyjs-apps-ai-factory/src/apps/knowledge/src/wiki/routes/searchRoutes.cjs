@@ -8,11 +8,11 @@
  */
 
 'use strict';
-const SearchIndexer = require('../activities/searchIndexer');
-const { withCache, invalidateCache } = require('../../shared/middleware/cacheMiddleware');
-const { startup } = require('../../shared/startup/startupRunner');
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
-const { contentRootKey, equivalentSpaceNames } = require('../../shared/spaces/contentRoot');
+const SearchIndexer = require('../activities/searchIndexer.cjs');
+const { withCache, invalidateCache } = require('../../shared/middleware/cacheMiddleware.cjs');
+const { startup } = require('../../shared/startup/startupRunner.cjs');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
+const { contentRootKey, equivalentSpaceNames } = require('../../shared/spaces/contentRoot.cjs');
 
 /**
  * Configures and registers search routes with the Express application.

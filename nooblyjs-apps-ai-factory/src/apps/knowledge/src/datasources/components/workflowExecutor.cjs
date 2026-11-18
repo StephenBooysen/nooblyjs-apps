@@ -534,9 +534,14 @@ class WorkflowExecutor {
       // Module steps (e.g. AI processing) can be long-running — default 10 min.
       const stepTimeout = ((step && step.timeout) || 600) * 1000;
       try {
-        const resolvedPath = path.isAbsolute(modulePath)
+        let resolvedPath = path.isAbsolute(modulePath)
           ? modulePath
           : path.resolve(modulePath);
+        // Steps are .cjs since the knowledge app joined the one ES-module solution; a saved definition may still name x.js.
+        const { existsSync } = require('node:fs');
+        if (resolvedPath.endsWith('.js') && !existsSync(resolvedPath) && existsSync(resolvedPath.slice(0, -3) + '.cjs')) {
+          resolvedPath = resolvedPath.slice(0, -3) + '.cjs';
+        }
         const stepModule = require(resolvedPath);
         if (!stepModule || typeof stepModule.run !== 'function') {
           throw new Error(`module "${resolvedPath}" does not export a run(data) function`);

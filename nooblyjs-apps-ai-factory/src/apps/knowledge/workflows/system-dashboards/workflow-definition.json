@@ -3,8 +3,8 @@
     "name": "Dashboards: Rebuild All Dashboards",
     "description": "Walk the content repository for every business-solution home page, then build the Executive, HOD and Solution Architect dashboards under the .dashboards folder.",
     "steps": [
-      "steps/dashboardDataStep.js",
-      "steps/dashboardContentStep.js"
+      "steps/dashboardDataStep.cjs",
+      "steps/dashboardContentStep.cjs"
     ],
     "tags": [
       "Dashboards"
@@ -24,7 +24,7 @@
     "name": "Dashboards: Extract Business Solution Data",
     "description": "Walk the content repository and extract the business-solution records (owner roles, lifecycle status) into the dashboards cache.",
     "steps": [
-      "steps/dashboardDataStep.js"
+      "steps/dashboardDataStep.cjs"
     ],
     "tags": [
       "Dashboards"
@@ -44,7 +44,7 @@
     "name": "Dashboards: Build Dashboards from Cache",
     "description": "Build the Executive, HOD and Solution Architect dashboard files from the cached records (re-walks the content folder if no cache is present).",
     "steps": [
-      "steps/dashboardContentStep.js"
+      "steps/dashboardContentStep.cjs"
     ],
     "tags": [
       "Dashboards"

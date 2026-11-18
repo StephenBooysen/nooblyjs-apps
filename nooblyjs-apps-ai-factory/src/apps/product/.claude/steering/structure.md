@@ -17,7 +17,7 @@ tags: [nooblyjs-ai-product, steering]
 > Factory**: it owns the product artefacts, the drafting agents, and its **screens** (Portfolios, Product board,
 > Spec, Architecture, UX Design, UI Design, Reviews, Handoffs, Settings), which are a UI module in the NooblyJS frame at
 > `/product/…`, like Teammates. They call this repo's API at **`/product/api/v1`**. What the screens show
-> is in `product.md` §5 (and `../../nooblyjs-ai-host/.claude/steering/product.md` §5.3).
+> is in `product.md` §5 (and `../../../.claude/steering/product.md` §5.3).
 
 ## 1. Who owns what
 
@@ -44,9 +44,7 @@ nooblyjs-ai-product/
                             (strategy.js the Portfolios page · document.js a portfolio's or value stream's document ·
                             settings.js the templates · portfolios.js the board's labels and panel)
     css/product.css         every selector scoped to [data-module="product"]
-  server.js                 standalone dev server (noobly structure.md §2a, standalone mode): the API plus a dev sign-in, no screens;
-                            `--seed [--reset]` seeds and exits (npm run seed)
-  package.json              "name": "nooblyjs-ai-product", "type": "module", "main": "index.js"
+  (no package.json: the solution has one, at its root)
   src/
     routes/                 index.js (the API router: auth, audit, 404, errors) and one file per area,
                             mounted under /product/api/v1: system.js (/about, /seed) · board.js (board,
@@ -69,7 +67,7 @@ nooblyjs-ai-product/
     register.test.js        hosted-app contract (the hosted-app checklist in noobly roadmap.md)
     governance.test.js      refuses: agent accepts an ADR, agent approves, agent sends to Factory, drafting over budget
     routes/*.test.js        API tests: createApp on port 0 + fetch
-    fixtures/host.js        stand-in host (also used by server.js), test serverManager, and fake 'workflows',
+    fixtures/host.js        stand-in host, test serverManager, and fake 'workflows',
                             'teammates' and 'knowledge' services
     helpers.js              startApp(): the engine on a bare Express 5 app, port 0, temp data folder
 ```

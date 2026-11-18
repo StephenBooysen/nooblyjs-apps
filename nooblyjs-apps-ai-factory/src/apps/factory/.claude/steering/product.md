@@ -16,8 +16,8 @@ tags: [nooblyjs-ai-factory, steering]
 > (Design). Infrastructure, a section here from 2026-10-19 to 2026-10-20, is the hosted app `nooblyjs-ai-infrastructure`
 > at `/infrastructure` again (CHG-007).
 
-> Extracted from the NooblyJS product definition (`../nooblyjs-ai-host/.claude/steering/product.md`, the source
-> of truth) and the design mockups in `../nooblyjs-ai-host/.claude/steering/brief/`. This file lists only
+> Extracted from the NooblyJS product definition (`../../../.claude/steering/product.md`, the source
+> of truth) and the design mockups in the design brief (not in this repo). This file lists only
 > what the **Software Factory** must provide inside NooblyJS. `tech.md` says how this repo plugs
 > in, and `structure.md` says where things live. The factory's own design and phase history
 > are in `.claude/steering/` and `.claude/docs/`. If this file and the NooblyJS `product.md`

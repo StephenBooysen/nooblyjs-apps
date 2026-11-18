@@ -11,17 +11,22 @@ This skill helps you understand your sub-projects by analyzing their code and ge
 
 ## Available Sub-Projects
 
-- nooblyjs-ai-design
-- nooblyjs-ai-desktop
-- nooblyjs-ai-factory
-- nooblyjs-ai-harness
-- nooblyjs-ai-host
-- nooblyjs-ai-infrastructure
-- nooblyjs-ai-knowledge
-- nooblyjs-ai-operations
-- nooblyjs-ai-product
-- nooblyjs-ai-security
-- nooblyjs-ai-teammate
+In this solution (`nooblyjs-apps/nooblyjs-apps-ai-factory/`): the host at its root, and the apps in `src/apps/`:
+
+- nooblyjs-ai-host (the solution root)
+- nooblyjs-ai-design (`src/apps/design`)
+- nooblyjs-ai-factory (`src/apps/factory`)
+- nooblyjs-ai-infrastructure (`src/apps/infrastructure`)
+- nooblyjs-ai-knowledge (`src/apps/knowledge`)
+- nooblyjs-ai-operations (`src/apps/operations`)
+- nooblyjs-ai-product (`src/apps/product`)
+- nooblyjs-ai-security (`src/apps/security`)
+- nooblyjs-ai-teammate (`src/apps/teammate`)
+
+Beside the solution, as sibling folders of `nooblyjs-apps-ai-factory/` in `nooblyjs-apps/`:
+
+- nooblyjs-ai-desktop (`nooblyjs-apps-ai-desktop/`)
+- nooblyjs-ai-harness (`nooblyjs-apps-ai-harness/`)
 
 ## How It Works
 

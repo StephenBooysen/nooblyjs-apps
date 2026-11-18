@@ -20,7 +20,7 @@
 
 const path = require('node:path');
 const fs = require('node:fs').promises;
-const { SYSTEM_DIR } = require('../../shared/utils/filePolicy');
+const { SYSTEM_DIR } = require('../../shared/utils/filePolicy.cjs');
 
 const SETTINGS_DIR = SYSTEM_DIR;
 const LEGACY_SETTINGS_DIR = '.settings';

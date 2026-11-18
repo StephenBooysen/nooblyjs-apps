@@ -25,8 +25,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const serviceRegistry = require('nooblyjs-core');
-const { routedRegistry } = require('../../../src/shared/ai/agentTasks');
-const { retry } = require('../utilities/retry');
+const { routedRegistry } = require('../../../src/shared/ai/agentTasks.cjs');
+const { retry } = require('../utilities/retry.cjs');
 
 /** Turn an agent name into a key-safe slug — matches aiInstances.js. */
 function slugify(name) {
@@ -178,7 +178,7 @@ class FolderExpert {
     const agent = this._findAgentInFile();
     const slug = slugify(agent.name);
     let expressApp;
-    try { expressApp = require('express')(); } catch (_) { expressApp = undefined; }
+    try { expressApp = require('express4')(); } catch (_) { expressApp = undefined; }
     const tokensStorePath = path.join(this.appBaseDir, 'data', 'ai-tokens', `${slug}.json`);
 
     // Hosted in NooblyJS the client runs each prompt as a teammate task, through the workflow bridge.

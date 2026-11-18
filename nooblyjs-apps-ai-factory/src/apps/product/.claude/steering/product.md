@@ -18,8 +18,8 @@ tags: [nooblyjs-ai-product, steering]
 > agents** that produce them. It owns its **screens** (a UI module in the NooblyJS frame at `/product`, like
 > Teammates) and exposes a JSON API at `/product/api/v1`.
 >
-> **Source of truth:** the NooblyJS product definition (`../../nooblyjs-ai-host/.claude/steering/product.md` §5.3)
-> and the mockups in `../../nooblyjs-ai-host/.claude/steering/brief/` (`noobly-platform.html` for the Product
+> **Source of truth:** the NooblyJS product definition (`../../../.claude/steering/product.md` §5.3)
+> and the mockups in the design brief (not in this repo) (`noobly-platform.html` for the Product
 > board; `noobly-product-factory-spec`, `-architecture`, `-ux-design`, `-ui-design`). If this
 > file disagrees with the NooblyJS `product.md`, **NooblyJS wins**. See `structure.md` for the API
 > and data layout and `tech.md` for platform rules.

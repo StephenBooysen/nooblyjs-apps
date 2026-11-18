@@ -11,10 +11,10 @@
 const fs = require('node:fs').promises;
 const fsSync = require('node:fs');
 const path = require('node:path');
-const { validate, validateQuery } = require('../middleware/validationMiddleware');
-const { createWorkflowSchema, executeWorkflowSchema, paginationSchema } = require('../validation/workflowSchemas');
-const { withCache, invalidateCache } = require('../../shared/middleware/cacheMiddleware');
-const { summarizeExecution, summarizeExecutions } = require('../lib/executionSummary');
+const { validate, validateQuery } = require('../middleware/validationMiddleware.cjs');
+const { createWorkflowSchema, executeWorkflowSchema, paginationSchema } = require('../validation/workflowSchemas.cjs');
+const { withCache, invalidateCache } = require('../../shared/middleware/cacheMiddleware.cjs');
+const { summarizeExecution, summarizeExecutions } = require('../lib/executionSummary.cjs');
 
 /**
  * noobly Wiki Datasources - Workflow Dashboard Routes
@@ -886,7 +886,7 @@ module.exports = (type, options, eventEmitter) => {
 
       if (isNew && stepFileName) {
         // Creating a new step file
-        relativeStepPath = `steps/${stepFileName}.js`;
+        relativeStepPath = `steps/${stepFileName}.cjs`;
         fullPath = path.join(workflow.path, relativeStepPath);
       } else if (stepFilePath) {
         // Updating existing step file

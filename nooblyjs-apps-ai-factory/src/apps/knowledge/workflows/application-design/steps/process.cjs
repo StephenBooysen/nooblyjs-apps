@@ -14,11 +14,11 @@ const fs = require('fs');
 const path = require('path');
 const serviceRegistry = require('nooblyjs-core');
 
-const CodeProcessorClass = require('../services/codeProcessor');
+const CodeProcessorClass = require('../services/codeProcessor.cjs');
 // Resolves/creates a configured AI agent from the Agents registry (global.aiInstances).
-const { resolveExpert } = require('../../../src/shared/ai/expertResolver');
-const { initializeAIInstances } = require('../../../src/datasources/lib/aiInstances');
-const { libraryFor } = require('../../common/prompts/prompts');
+const { resolveExpert } = require('../../../src/shared/ai/expertResolver.cjs');
+const { initializeAIInstances } = require('../../../src/datasources/lib/aiInstances.cjs');
+const { libraryFor } = require('../../common/prompts/prompts.cjs');
 
 /**
  * Mirror the main app's APP_BASE_DIR resolution. The worker inherits the

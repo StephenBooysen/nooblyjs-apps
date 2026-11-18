@@ -13,8 +13,8 @@
 
 'use strict';
 
-const { writeJSONFile, readJSONFile, fileExists } = require('../utilities/filesystem');
-const md = require('./../utilities/markdown.js');
+const { writeJSONFile, readJSONFile, fileExists } = require('../utilities/filesystem.cjs');
+const md = require('../utilities/markdown.cjs');
 
 /**
  * Base class for all Product Design service classes.

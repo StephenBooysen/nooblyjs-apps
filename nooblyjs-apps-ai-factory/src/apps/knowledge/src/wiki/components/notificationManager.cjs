@@ -18,8 +18,8 @@
 const path = require('path');
 const fs = require('fs').promises;
 const { v4: uuidv4 } = require('uuid');
-const userStore = require('./userStore');
-const spaceUserStore = require('./spaceUserStore');
+const userStore = require('./userStore.cjs');
+const spaceUserStore = require('./spaceUserStore.cjs');
 
 // A NUL separator, written as an ESCAPE. It used to be a literal NUL byte in
 // this source file, which made git treat the whole module as binary (no

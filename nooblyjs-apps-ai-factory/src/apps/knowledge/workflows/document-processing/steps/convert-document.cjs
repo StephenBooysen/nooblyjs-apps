@@ -30,10 +30,10 @@ function loadConverter(ext, modulePath) {
     }
 }
 
-loadConverter('.docx', '../../common/convertors/docxprocessor');
-loadConverter('.pdf', '../../common/convertors/pdfprocessor');
-loadConverter('.pptx', '../../common/convertors/pptxprocessor');
-loadConverter('.xlsx', '../../common/convertors/xlsxprocessor');
+loadConverter('.docx', '../../common/convertors/docxprocessor.cjs');
+loadConverter('.pdf', '../../common/convertors/pdfprocessor.cjs');
+loadConverter('.pptx', '../../common/convertors/pptxprocessor.cjs');
+loadConverter('.xlsx', '../../common/convertors/xlsxprocessor.cjs');
 
 // Extensions that share a converter (treated as the primary extension above).
 const EXT_ALIASES = { '.ppt': '.pptx', '.xls': '.xlsx' };

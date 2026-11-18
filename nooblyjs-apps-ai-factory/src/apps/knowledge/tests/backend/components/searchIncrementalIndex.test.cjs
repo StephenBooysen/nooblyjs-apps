@@ -13,11 +13,11 @@
 
 'use strict';
 
-const SearchIndexer = require('../../../src/wiki/activities/searchIndexer');
+const SearchIndexer = require('../../../src/wiki/activities/searchIndexer.cjs');
 const {
   isSearchIndexablePath,
   isIgnoredPath
-} = require('../../../src/wiki/activities/fileWatcher');
+} = require('../../../src/wiki/activities/fileWatcher.cjs');
 
 const noopLogger = { info() {}, warn() {}, debug() {}, error() {} };
 

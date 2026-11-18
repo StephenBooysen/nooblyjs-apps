@@ -13,7 +13,7 @@ tags: [nooblyjs-ai, steering]
 > from the business case to production and back again. `design.md` says how the parts fit together, `stack.md`
 > what they are built with, and `roadmap.md` the order of the work.
 >
-> **How it relates to the existing steering.** `nooblyjs-ai-host/.claude/steering/product.md` is still the detailed
+> **How it relates to the existing steering.** `.claude/steering/product.md` is still the detailed
 > record of what is **built** (screens, the permissions matrix, approval rules, metrics definitions). This file does
 > not repeat it. It sets the **shape of the whole factory** and names what is missing. Where the two disagree, the
 > host file describes today and this file describes the target; each phase that builds part of the target updates
@@ -59,7 +59,7 @@ for review, and Phase 15 is open, blocked on the cloud, runtime and model decisi
 | UX and UI design | Journeys, flows, research, screens, design-system reuse, accessibility checks, handoff preview | `nooblyjs-ai-product` | Built |
 | Lifecycle and approvals | Items, 8 stages (version 3), readiness, approvals with target times and escalation, send-back, handoffs, Activity, audit | `nooblyjs-ai-host` (`src/lifecycle/`) | Built |
 | Build | Line of stations (triage → spec → approve → build → verify → review → repair → deliver), gates, PR evidence, "a run is asking you", campaigns, bench, hash-chained audit export, secret scan, agent-environment scrubbing | `nooblyjs-ai-factory` | Built; runs on a local demo repository; PRs on real repositories wait for Phase 13's review |
-| Testing | Test analysis per story (cases, requirements), Test approvals, test runs, coverage, defects, gates per PR, runs per environment and previews (Phases 16d–16e, 20–21) | `nooblyjs-ai-factory/quality`, `nooblyjs-ai-infrastructure` | **Built on the mock runner.** No test strategy document of its own; no real test runner (Phase 15) |
+| Testing | Test analysis per story (cases, requirements), Test approvals, test runs, coverage, defects, gates per PR, runs per environment and previews (Phases 16d–16e, 20–21) | `src/apps/factory/quality`, `nooblyjs-ai-infrastructure` | **Built on the mock runner.** No test strategy document of its own; no real test runner (Phase 15) |
 | Security | Governance enforced in services; secret scan and env scrubbing in the Factory; sandboxes (Linux, macOS); threat models (STRIDE, with mitigations), findings with fix-by dates, risk acceptance with expiry, SBOM, scans per change and per environment (Phase 19); base-image CVE status (typed in, not scanned); a code-reading security review (Phase 13) | `nooblyjs-ai-security`, spread across | **Built on the mock scanner.** No real scanner approved. Pen tests are not part of the factory (decided 2026-11-17) |
 | Infrastructure | Designs from architecture, environments, provisioning runs, drift, cloud cost, blueprints, policies | `nooblyjs-ai-infrastructure` | Built on a **mock provisioner**; cloud, region and IaC tool undecided |
 | Release | A release per feature with its evidence, two approvers, a rollout and a rollback; Production only through one | Operations, Infrastructure (I10), the lifecycle engine | **Built** (Phase 22, the mock deployer) |
@@ -372,7 +372,7 @@ flowchart LR
 | Product Factory | Product | Strategy, Discover, Product (spec with elicitation, UX, UI) | `nooblyjs-ai-product` (at `/product`; a Factory section 2026-10-19 to CHG-009) | Built: strategy (Phase 17), elicitation (Phase 18), ideas portal and feedback (Phase 25a), objectives and roadmaps (Phase 25b) |
 | **Design** | Design | Business requirements, solution architecture (feature landscape, impacted systems, NFRs; today's Architecture pages), functional analysis (interface and technical requirements), feature generation (the stories), the Design handoff | `nooblyjs-ai-design` (at `/design`; a Factory section until CHG-009) | Built (Phase 16c, reviewed 2026-10-21): stories go to Engineering one at a time |
 | Software Factory | Factory (Engineering, Build) | Engineer: system / application architecture from the code; Build: the line (the AI builds and tests), runs, pull requests and the engineer's Build approval | `nooblyjs-ai-factory` | Built: Build, and Engineering (Phase 16d); reviewed 2026-10-21 |
-| **Quality** | Factory (Test section: test analysis in Engineering; the Test group) | Test analysis (test cases, automated testing requirements, integration and E2E tests), the human tester's verification and Test approval on each pull request, test runs, coverage, defects, evidence | `nooblyjs-ai-factory/quality` (at `/factory/quality`, decided 2026-10-20) | Built: test analysis (16d), Test approvals (16e), test runs, coverage, cases kept in step and defects (Phase 20); environment runs: previews per pull request and the suites in Test and Staging, on the mock runner (Phase 21) |
+| **Quality** | Factory (Test section: test analysis in Engineering; the Test group) | Test analysis (test cases, automated testing requirements, integration and E2E tests), the human tester's verification and Test approval on each pull request, test runs, coverage, defects, evidence | `src/apps/factory/quality` (at `/factory/quality`, decided 2026-10-20) | Built: test analysis (16d), Test approvals (16e), test runs, coverage, cases kept in step and defects (Phase 20); environment runs: previews per pull request and the suites in Test and Staging, on the mock runner (Phase 21) |
 | **Security** | Security | Threat models, scans, findings, risk acceptance, SBOM, compliance evidence | `nooblyjs-ai-security` (at `/security`) | Built (Phase 19; the scanner is the mock until one is approved) |
 | Infrastructure | Infra | Designs, environments, provisioning, drift, cloud cost | `nooblyjs-ai-infrastructure` | Built on a mock |
 | **Operations** | Ops | Releases, deployments, SLOs, incidents, post-incident reviews, outcome reviews | `nooblyjs-ai-operations` (at `/operations`) | Built: releases and deployments (Phase 22, the mock deployer); SLOs, incidents, post-incident reviews and outcome reviews (Phase 23, the mock monitor) |
@@ -443,8 +443,8 @@ its own rules.
 | `deploy-production` | Approver and up, two of them | Release exit (stage 7; exists as a rule) |
 | `declare-incident` | Contributor and up (people only) | Opening an incident |
 
-Seven of these permissions are in `nooblyjs-ai-host/src/seed/data/access/roles.yaml` (checked 2026-11-17).
-`accept-release-candidate` is in `nooblyjs-ai-host/src/middleware/roles.js` only, kept so that an older check still
+Seven of these permissions are in `src/seed/data/access/roles.yaml` (checked 2026-11-17).
+`accept-release-candidate` is in `src/middleware/roles.js` only, kept so that an older check still
 answers; it is no longer shown.
 
 **Agents stay capped at Contributor.** They draft business requirements, architectures, stories, test analysis and the automated tests,
@@ -548,7 +548,7 @@ system, agent vs people share) stay. Added, all computed from events:
    other change to Production), or Infrastructure, or the lifecycle engine? Confirm `[CONFIRM]` (Infrastructure I10).
 2. The names and paths of the apps: built as `nooblyjs-ai-security` at `/security` (standalone port 11009) and
    `nooblyjs-ai-operations` at `/operations` (port 11010) in Phases 19 and 22; confirm `[CONFIRM]`. The Test section is
-   `nooblyjs-ai-factory/quality`, at `/factory/quality` (taken 2026-10-20, Phase 16d).
+   `src/apps/factory/quality`, at `/factory/quality` (taken 2026-10-20, Phase 16d).
 3. The work hierarchy above the feature (portfolio epic, epic) against ideas, specs and Jira
    (`nooblyjs-ai-product` §8). Feature → stories is decided: many stories per feature, one feature per story.
    **Taken as a default in Phase 17 (2026-10-21), to confirm:** portfolio epics, epics and features live in the Product

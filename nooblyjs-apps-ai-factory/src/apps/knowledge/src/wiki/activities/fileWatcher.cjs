@@ -12,18 +12,18 @@
 const chokidar = require('chokidar');
 const path = require('node:path');
 const fs = require('node:fs').promises;
-const { isTextFile, generateCacheKey } = require('../../shared/utils/fileTypeUtils');
+const { isTextFile, generateCacheKey } = require('../../shared/utils/fileTypeUtils.cjs');
 const {
   getPolicy,
   toOriginalsRelPath,
   ORIGINALS_DIR
-} = require('../../shared/utils/filePolicy');
-const { convertToMarkdown, canConvert } = require('../../shared/processors/documentConverter');
-const { ensureSidecar } = require('../utils/derivedSidecar');
-const { writeContentCache } = require('../utils/documentContentCache');
-const { ContextTrigger, CONTEXT_WORKFLOW_NAME, CONTEXT_ON_CHANGE_ENABLED, CONTEXT_DEBOUNCE_MS } = require('./contextTrigger');
-const { startArtifactCleanup } = require('./artifactCleanup');
-const { isPathVisible } = require('../../shared/spaces/spacePaths');
+} = require('../../shared/utils/filePolicy.cjs');
+const { convertToMarkdown, canConvert } = require('../../shared/processors/documentConverter.cjs');
+const { ensureSidecar } = require('../utils/derivedSidecar.cjs');
+const { writeContentCache } = require('../utils/documentContentCache.cjs');
+const { ContextTrigger, CONTEXT_WORKFLOW_NAME, CONTEXT_ON_CHANGE_ENABLED, CONTEXT_DEBOUNCE_MS } = require('./contextTrigger.cjs');
+const { startArtifactCleanup } = require('./artifactCleanup.cjs');
+const { isPathVisible } = require('../../shared/spaces/spacePaths.cjs');
 
 // Binary document types the watcher processes when one is dropped into a watched
 // space. The handling splits by file-handling policy (see filePolicy.js):

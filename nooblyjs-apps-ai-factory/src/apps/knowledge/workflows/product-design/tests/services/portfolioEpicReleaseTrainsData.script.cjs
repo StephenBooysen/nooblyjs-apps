@@ -23,7 +23,7 @@ const path = require('node:path');
 // __dirname-relative so it works regardless of the current working directory.
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
-const PortfolioEpicReleaseTrainsService = require('../../services/portfolioEpicReleaseTrainsService');
+const PortfolioEpicReleaseTrainsService = require('../../services/portfolioEpicReleaseTrainsService.cjs');
 
 // Build the Product Design settings object from the .env product_design_* keys.
 const settings = {

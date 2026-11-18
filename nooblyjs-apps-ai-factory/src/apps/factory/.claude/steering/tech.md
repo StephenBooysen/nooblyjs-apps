@@ -9,9 +9,9 @@ tags: [nooblyjs-ai-factory, steering]
 # Software Factory: this repo in NooblyJS
 
 > **Read `NOOBLY.md` first** (in this folder; generated from noobly). noobly owns everything shared, and this file does not
-> repeat it: the hosted-app contract is `../nooblyjs-ai-host/.claude/steering/structure.md` §2a, the cross-app services are
-> `../nooblyjs-ai-host/.claude/steering/tech.md` §8b, governance and the permissions matrix are `../nooblyjs-ai-host/.claude/steering/product.md`,
-> and the one roadmap is `../.claude/steering/roadmap.md` (with the hosted-app checklist this repo must pass).
+> repeat it: the hosted-app contract is `../../../.claude/steering/structure.md` §2a, the cross-app services are
+> `../../../.claude/steering/tech.md` §8b, governance and the permissions matrix are `../../../.claude/steering/product.md`,
+> and the one roadmap is `../../../.claude/steering/roadmap.md` (with the hosted-app checklist this repo must pass).
 > If this file and noobly disagree, **noobly wins**: follow it and fix this file in the same change.
 >
 > NooblyJS mounts this repo at **`/factory`**. This file gives only this repo's values for the contract, where it
@@ -25,7 +25,7 @@ tags: [nooblyjs-ai-factory, steering]
 | `register()` | default mount `/factory`, name `factory`, styles `css/factory.css` plus each section's, data under `data/factory/` (its event log is daily YAML streams, `src/models/store/`) |
 | Sections | The Test section at `/factory/quality` (data `data/factory/quality/`), mounted by `src/services/sections.js` before the Factory's own router. `provides: { quality }` answers `host.service('quality')`. `FACTORY_SECTIONS` (e.g. empty) leaves one out; unset, all run. Product and Design were sections until CHG-009 (2026-10-21) and are hosted apps of their own (`nooblyjs-ai-product`, `nooblyjs-ai-design`). Infrastructure was a section from 2026-10-19 to 2026-10-20 and is the hosted app `nooblyjs-ai-infrastructure` again (CHG-007) |
 | Dependencies | The harness and the AI module for the line; `nooblyjs-core` (`FsStore`, and the shell in tests) and `js-yaml` for the sections (Architecture §17) |
-| Standalone | No `server.js`: `npm start` is the CLI (`bin/factory.js`), which keeps working on its own `$FACTORY_HOME`. When NooblyJS hosts the factory, only the NooblyJS process writes `data/factory/` |
+| Standalone | No `server.js`: the CLI (`bin/factory.js`, `npm run factory` from the solution root), which keeps working on its own `$FACTORY_HOME`. When NooblyJS hosts the factory, only the NooblyJS process writes `data/factory/` |
 | `host.development` | A demo repository's gate commands run unsandboxed only then, never when `NODE_ENV` is production, and never with the process's secrets |
 | `agent.action` | `system: 'factory'`; every agent step carries its cost; `run.finished` carries `workType: 'implementation'` |
 | `services`, events | `host.service('factory')` is in noobly `tech.md` §8b; the events it emits are in `structure.md` |

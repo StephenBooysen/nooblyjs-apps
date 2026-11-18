@@ -23,4 +23,4 @@
 
 'use strict';
 
-module.exports = require('../../../src/shared/processors/docxprocessor');
+module.exports = require('../../../src/shared/processors/docxprocessor.cjs');

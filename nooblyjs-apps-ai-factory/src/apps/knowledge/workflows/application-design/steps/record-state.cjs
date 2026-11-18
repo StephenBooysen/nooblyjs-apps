@@ -13,7 +13,7 @@
 
 'use strict';
 const serviceRegistry = require('nooblyjs-core');
-const GitService = require('../services/gitService');
+const GitService = require('../services/gitService.cjs');
 
 /**
  * Step 3 - Record State

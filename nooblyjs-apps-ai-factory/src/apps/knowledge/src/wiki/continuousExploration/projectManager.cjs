@@ -25,7 +25,7 @@ const fs = require('node:fs').promises;
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const { writeFolderType } = require('../utils/folderTypes');
+const { writeFolderType } = require('../utils/folderTypes.cjs');
 
 const META_FILE = '.continuous-exploration.json';
 const CHAT_FILE = '.chat.json';

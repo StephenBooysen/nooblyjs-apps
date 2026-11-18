@@ -24,14 +24,14 @@
 
 'use strict';
 
-const { readRepositoryConfigs } = require('../../shared/repositories/repositoryManager');
-const { actionsFor, syncRepository } = require('../../shared/repositories/repositorySync');
-const { resetRepository, findCaseCollisions } = require('../../shared/repositories/repositoryReset');
+const { readRepositoryConfigs } = require('../../shared/repositories/repositoryManager.cjs');
+const { actionsFor, syncRepository } = require('../../shared/repositories/repositorySync.cjs');
+const { resetRepository, findCaseCollisions } = require('../../shared/repositories/repositoryReset.cjs');
 const {
   startCompact, getCompactJob, readObjectStore, isShallow, DEFAULT_DEPTH
-} = require('../../shared/repositories/repositoryCompact');
-const { inspectIndexLock } = require('../../shared/repositories/gitLock');
-const { isGlobalAdmin } = require('../../shared/spaces/spaceAuthority');
+} = require('../../shared/repositories/repositoryCompact.cjs');
+const { inspectIndexLock } = require('../../shared/repositories/gitLock.cjs');
+const { isGlobalAdmin } = require('../../shared/spaces/spaceAuthority.cjs');
 
 /**
  * Register repositories routes.

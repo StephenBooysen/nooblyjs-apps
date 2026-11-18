@@ -19,8 +19,8 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const userContentIndex = require('../components/userContentIndex');
-const { writeContentCache } = require('../utils/documentContentCache');
+const userContentIndex = require('../components/userContentIndex.cjs');
+const { writeContentCache } = require('../utils/documentContentCache.cjs');
 
 const FENCE_RE = /(```liked\s*\n)([\s\S]*?)(\n```)/i;
 

@@ -11,11 +11,11 @@ Guidance for Claude Code in this repository.
 
 ## Part of NooblyJS (read first)
 
-This repo is hosted by **NooblyJS** (`../nooblyjs-ai-host`) at `/wiki` (the root `index.mjs` exports `register()`). Before changing how it starts, serves
+This repo is hosted by **NooblyJS** (`../../..`) at `/wiki` (the root `index.mjs` exports `register()`). Before changing how it starts, serves
 pages, signs people in, stores data, emits events or calls models, read
-`.claude/steering/nooblyjs-ai.md` (the shared rules, imported below: noobly owns them, and the full contract is `../nooblyjs-ai-host/.claude/steering/structure.md` §2a), `.claude/steering/tech.md` (this repo's values and how it differs) and
+`.claude/steering/nooblyjs-ai.md` (the shared rules, imported below: noobly owns them, and the full contract is `../../../.claude/steering/structure.md` §2a), `.claude/steering/tech.md` (this repo's values and how it differs) and
 `.claude/steering/structure.md` (this repo's layout as a hosted app). The source of truth is
-`../nooblyjs-ai-host/.claude/steering/structure.md` §2a. Where anything below conflicts with those, they win.
+`../../../.claude/steering/structure.md` §2a. Where anything below conflicts with those, they win.
 
 @.claude/steering/nooblyjs-ai.md
 
@@ -46,10 +46,10 @@ managers are missing). Search itself is not touched: it only asks the indexer an
 
 ## Hosted in NooblyJS (`index.mjs`)
 
-NooblyJS imports `index.mjs` (`package.json` `main`/`exports`) and calls `register(app, serverManager, { mountPath =
+NooblyJS imports `index.mjs` (`LOCAL_APPS` in the host's `src/hosted-apps.js`) and calls `register(app, serverManager, { mountPath =
 '/wiki', dataDir, host })`. It mounts ONE Express 5 router and returns the app description (name `wiki`). It is `.mjs`
-because the rest of this package is CommonJS. NooblyJS lists the app in `../nooblyjs-ai-host/src/seed/data/config/hosted-apps.yaml`
-(and each install's own `data/config/hosted-apps.yaml`) and depends on it as `file:../nooblyjs-ai-knowledge`.
+because the rest of this app is CommonJS (`.cjs`). NooblyJS lists the app in `../../../src/seed/data/config/hosted-apps.yaml`
+(and each install's own `data/config/hosted-apps.yaml`) as `package: nooblyjs-ai-knowledge`, which `LOCAL_APPS` maps to this folder.
 
 **Server: the existing modules run unchanged behind an adapter.** `src/hosted/platform.cjs` builds the core services
 `app.js` builds, but from the host's already-initialised registry (instances named `wiki`, so cache, search, queue and
@@ -70,9 +70,9 @@ schedules do not mix with NooblyJS's) and hands `src/initialize.js` a facade ins
   what they mean standalone. Everything under `/api/v1`, `/media` and `/avatars` is behind `host.auth` first, so the
   paths that are public standalone (`/config`, `/health`) need a session here, and **bearer-token clients (daemon,
   extensions, MCP) cannot write**: NooblyJS refuses a change without its CSRF token before this app sees it.
-- **Data** goes to `dataDir` (`../nooblyjs-ai-host/data/wiki`). `WIKI_APP_BASE_DIR` points it at an existing `.application` instead.
+- **Data** goes to `dataDir` (`../../../data/wiki`). `WIKI_APP_BASE_DIR` points it at an existing `.application` instead.
 - `src/initialize.js` now THROWS where it used to `process.exit(1)`, so a failed start cannot take NooblyJS down
-  (`app.js` still exits, in its own `start().catch`).
+
 - `close()` stops the workflow bridge only. The file watcher and the modules' `setInterval`s have no stop.
 - The modules still use `global.*` (`eventBus`, `io`, `treeCache`, …), now inside the NooblyJS process.
 - **The wiki's AI agents are teammate tasks** (NooblyJS Phase 24, `src/shared/ai/agentTasks.js`). The modules get a
@@ -83,13 +83,13 @@ schedules do not mix with NooblyJS's) and hands `src/initialize.js` a facade ins
   workflow bridge (`agentPrompt`; the main process leaves `workflow/.bridge/agent-tasks.json` while hosted). Without
   Teammates a prompt is refused; with no model configured there, the AI panel answers from the sources as without an
   agent, and other prompts fail with "no model". Standalone nothing changes. Tests: `test/agent-tasks.test.mjs`, and
-  `../nooblyjs-ai-host/test/knowledge-agents.test.js` in the real app.
+  `../../../test/knowledge-agents.test.js` in the real app.
 
 **Browser: the standalone UI is GENERATED into the frame's shape — never edit `public/app`, `public/vendor`,
 `public/css/wiki-app.css` or `public/css/wiki-ds.css`.** `npm run port:ui` (`scripts/port-wiki-ui.mjs`) reads
 `src/web/wiki/public`, `public/js/markdown/*` and the datasources screens (`src/web/datasources/public`, below) and
 writes them out with the same few mechanical changes in every file, so the standalone UI
-keeps working from one source until it is retired. `npm test` fails when the output is stale (`--check`).
+keeps working from one source until it is retired. `npm run test:apps` fails when the output is stale (`test/module.test.mjs` runs `--check`).
 
 | The standalone page does | In the frame |
 |---|---|
@@ -118,7 +118,7 @@ Workflows, Schedules, Execution history, Repositories, Spaces, Agents, Prompts, 
   the `Datasources Administrator` / `admin` role (`roleValidationMiddleware`); hosted, `src/hosted/platform.cjs`
   sets `datasourcesOpenToSignedIn`, which keeps the sign-in and drops the role. Standalone is unchanged.
   **One exception, and it is the host's:** the Settings console calls nooblyjs-core's `/services/settings/api`, which
-  NooblyJS guards itself (`../nooblyjs-ai-host/app.js` `servicesAuth`: a core admin, i.e. an Owner). Anyone else sees
+  NooblyJS guards itself (`../../../app.js` `servicesAuth`: a core admin, i.e. an Owner). Anyone else sees
   "Insufficient privileges" there. Per-space rules (`spaceFilingRoutes`, a private space's files) also still apply.
 - **One page serves them all** (`public/js/pages/datasources.js`). Standalone, `js/app.js` drew a UIService shell
   and gave every screen to the app's own state Router; here the frame is the shell, so `app.js` is NOT ported and
@@ -148,152 +148,71 @@ Workflows, Schedules, Execution history, Repositories, Spaces, Agents, Prompts, 
   client): Refresh, or reopen the screen.
 - A few modules inject their own `<style>` at run time (`.we-root …`), which is outside the scope rule.
 - It still draws its own top bar and navigation tree (`layout: 'full'` hides NooblyJS's sidebar). Not yet checked: axe,
-  phone width, NooblyJS's e2e walk (`../nooblyjs-ai-host/test/e2e`, where the app is listed but disabled).
+  phone width, NooblyJS's e2e walk (`../../../test/e2e`, where the app is listed but disabled).
 
-Tests: `npm test` (`node:test`, `test/*.test.mjs`; Express 5 is the `express5` alias): the contract on a stand-in host
+Tests: `node --test "src/apps/knowledge/test/**/*.test.mjs"` from the solution root (`node:test`; Express 5 is the solution's `express`): the contract on a stand-in host
 (`register.test.mjs`, `module.test.mjs`) and the modules on a real registry (`platform.test.mjs`).
 
-## Project Overview
+## This app in the solution
 
-**noobly Wiki Platform v2.0** — unified multi-platform app (Node.js/Express, port 9101):
-- **Datasources Module** — Workflow automation, data pipeline orchestration
-- **Wiki Module** — Real-time collaborative knowledge management
+The knowledge app is the legacy **Wiki Platform** (Datasources: workflow automation; Wiki: collaborative knowledge
+management), running **only inside NooblyJS** at `/wiki`. It is `src/apps/knowledge/` in the one NooblyJS solution:
+there is no `app.js`, no port of its own, no `package.json` and no per-folder install. The standalone server (port
+9101), its dev static servers and its certificate script were removed on 2026-11-18; the code they started still runs,
+built by `src/hosted/platform.cjs` and mounted through `src/hosted/legacyApp.cjs` (see above).
 
-**Status:** 72% complete. Phases 1–5.5 done (core arch, backend unification, Vite, RBAC, unit/E2E tests, performance, Spaces Filing). Backend: 56+ unit tests (36+ passing), 31 E2E Playwright tests.
-
-## Architecture
-
-```
-app.js (port 9101)
-  ├── Express + Socket.IO + Passport Auth
-  ├── Service Registry (nooblyjs-core)
-  ├── Datasources Module (src/datasources/)
-  │   ├── SpaceManager, WorkflowManager, WorkflowExecutor, WorkflowScheduler, WorkflowBridge
-  │   └── Routes: /api/spaces/*, /api/workflows/*, /api/connections/*, /api/settings/*, /api/agents/*
-  └── Wiki Module (src/wiki/)
-      ├── DataManager, EventBus, FileWatcher, SearchIndexer, AIService
-      └── Routes: /applications/wiki/api/*
-```
-
-**Key points:**
-- Shared services from `nooblyjs-core`: Cache, Queue, Workflow, Scheduling, Filing, Search, Auth, AI, Logger
-- File-based storage in `./.application/` (JSON) — no database required
-- FileWatcher (Chokidar, 300ms debounce) → EventBus → Socket.IO broadcast
-- Each module initializes via `src/{datasources,wiki}/initialize.js`; `src/initialize.js` wires both onto the app that the root `app.js` creates
-- Auth: local (file-based), Google OAuth2, Bearer tokens (24hr)
-
-## Ports
-
-| Port | Service |
-|------|---------|
-| **9101** | Unified backend (primary) - `npm start` |
-| 9101 | Legacy datasources only - `npm run start:datasources` |
-| 11002 | Legacy wiki only - `npm run start:wiki` |
-| 3001 | Datasources UI dev server |
-| 3002 | Wiki UI dev server |
-| 11100 | Wiki sync daemon — live status dashboard (`applications/daemon/wiki`, `DASHBOARD_PORT`) |
-
-## Layout
-
-Server and web frontends live in ONE `src/` folder with ONE `package.json` / `node_modules` at the repo root
-(merged 2026-10-09 from the old `backend/` and `applications/` folders):
+- **CommonJS as `.cjs`.** The solution's `package.json` says `"type": "module"`, so every Node-side file here is `.cjs`
+  (`src/`, `scripts/`, `tests/`, `workflows/`), and a `require` names the file with its extension
+  (`require('./x.cjs')`: CommonJS does not try `.cjs` on its own). Browser files stay `.js`: every `public/` folder and
+  `src/wiki/views/js/`. New workflow step files are written as `.cjs`; a saved definition that still names
+  `steps/x.js` runs the `x.cjs` of the same name (`run-workflow.cjs`, `workflowExecutor.cjs`).
+- **Express 4 is `express4`.** The legacy modules `require('express4')` (an npm alias in the root `package.json`); the
+  solution's `express` is Express 5, which the hosted entry and the tests use.
+- **Dependencies** resolve from the solution's `node_modules` (`require('nooblyjs-core')`), three folders up.
 
 ```
-app.js                    composition root (Express, Socket.IO, Passport, core registry, port)
+index.mjs · src/hosted/ · test/   the NooblyJS hosted entry (see "Hosted in NooblyJS") and its node:test suite
 src/
-  initialize.js           wires the API modules onto the app (was backend/app.js)
-  datasources/ wiki/ shared/   API modules (was backend/src/*)
-  configuration/          worker-thread activities (was backend/configuration)
+  initialize.cjs          wires the API modules onto the (facade) app
+  datasources/ wiki/ shared/   API modules
+  configuration/          worker-thread activities (run-workflow.cjs)
   swagger/                OpenAPI specs
-  web/datasources/ web/wiki/   web frontends: index.js mount module + public/ (was applications/web/*)
-scripts/                  cert generation, one-off migrations, port-wiki-ui.mjs (was backend/scripts)
+  web/datasources/public/ web/wiki/public/   the legacy UI: the SOURCE `npm run port:ui` generates the frame's UI from
+scripts/                  one-off data migrations, port-wiki-ui.mjs
 workflows/                the workflow definitions and their steps, one folder per group (was the sibling workflows repo)
-tests/backend/            Jest suites
-public/                   root landing page and shared assets; ALSO the NooblyJS frame's files (js/module.js, js/pages, js/hosted,
-                          and the generated app/, vendor/, css/wiki-app.css, css/wiki-ds.css)
-index.mjs · src/hosted/ · test/   the NooblyJS hosted entry (see "Hosted in NooblyJS")
+tests/backend/            the legacy Jest suites (jest.config.cjs)
+public/                   the NooblyJS frame's files (js/module.js, js/pages, js/hosted) and the generated app/, vendor/,
+                          css/wiki-app.css, css/wiki-ds.css
 ```
 
-**Workflows live in this repo, in `workflows/`** (moved in 2026-10-10 from the sibling workflows repo).
-`WorkflowBridge`, `WorkflowManager` and the `run-workflow` activity all load from `<repo root>/workflows`
+**Workflows live in this app, in `workflows/`** (moved in 2026-10-10 from the sibling workflows repo).
+`WorkflowBridge`, `WorkflowManager` and the `run-workflow` activity all load from `<app>/workflows`
 (`path.resolve(__dirname, '../../../workflows')`); `WORKFLOWS_PATH` overrides it, and the three must agree or a
 workflow lists in the UI but cannot be scheduled. Wherever this file says "the sibling workflows repo" or
-`noobly-app-wiki-workflows`, read `workflows/`: the lockstep rules below still hold, between two folders of one repo.
-- A step reaches this app's code by relative path: `require('../../../src/shared/…')` from
-  `workflows/<group>/steps|services|utilities/` (one more `../` under `tests/`). The copies that came across still
-  said `../../../nooblyjs-ai-knowledge/backend/src/…`, which resolves to nothing here.
-- Bare dependencies resolve from the root `node_modules`, so the registry is `require('nooblyjs-core')`
-  (`nooblyjs-core` is the old name and is not installed). There is no `workflows/package.json`.
-- A step's fallback for the app's files is `<repo root>/.application` (`../../../.application`), the standalone
-  default; hosted, the platform passes `appBaseDir` and that fallback is not what is used.
+`noobly-app-wiki-workflows`, read `workflows/`: the lockstep rules below still hold, between two folders of one app.
+- A step reaches this app's code by relative path: `require('../../../src/shared/….cjs')` from
+  `workflows/<group>/steps|services|utilities/` (one more `../` under `tests/`).
+- A step's fallback for the app's files is `<app>/.application` (`../../../.application`); hosted, the platform passes
+  `appBaseDir` and that fallback is not what is used.
 
-## Setup & Installation
+## Commands (from the solution root, `../../..`)
 
 ```bash
-npm install        # once, at the repo root — there are no per-folder installs any more
+npm start                         # NooblyJS, with the wiki at /wiki
+npm run test:apps                 # every app's node:test suite, this one's test/*.test.mjs included (and the port:ui check)
+node --test "src/apps/knowledge/test/**/*.test.mjs"   # just this app's node:test suite
+npm run test:knowledge:jest       # the legacy Jest suite (tests/backend; config src/apps/knowledge/jest.config.cjs)
+npx jest -c src/apps/knowledge/jest.config.cjs src/apps/knowledge/tests/backend/datasources/pathSanitizer.test.cjs   # one file
+npm run port:ui                   # regenerate the frame's UI from src/web/*/public (--check: is it up to date?)
 ```
 
-**Prerequisite:** `nooblyjs-core` must sit beside this repo (`package.json` links it as `../nooblyjs-core`):
-```
-parent-directory/
-├── nooblyjs-core/            ← required
-└── nooblyjs-ai-knowledge/
-```
-
-## Running
-
-```bash
-npm run dev:web             # auto-reload (nodemon)
-npm start                   # production
-
-# Frontends on their own static server (optional, connect to port 9101)
-npm run dev:web-datasources # → localhost:3001
-npm run dev:web-wiki        # → localhost:3002
-```
-
-## Commands (run from the repo root)
-
-```bash
-npm start              # Production (port 9101)
-npm run dev            # Dev with auto-reload
-npm run tests          # Run all tests
-npm run test:watch     # Watch mode
-npm run test:coverage  # Coverage report → coverage/
-npm run kill           # Kill process on port 9101
-```
-
-## Testing
-
-- Framework: Jest; config: `"jest"` field in the root `package.json`
-- Tests live in `tests/backend/`; jest runs from the repo root (`modulePaths` points at the root `node_modules` so steps required out of the sibling workflows repo resolve their bare deps)
-- Test dirs: `tests/backend/{components,datasources,integration,performance}/`
-- `tests/backend/configuration/` holds workflow scripts (`*.script.js`, etc.), not unit tests — not matched by `testMatch`
-- Timeout: 10s per test
-
-```bash
-npm run tests                                                  # all tests
-npm run tests -- tests/backend/datasources/pathSanitizer.test.js  # single file
-npm run tests -- --testNamePattern "API"                       # pattern match
-```
+Jest runs `tests/backend/**/*.test.cjs` (`tests/backend/configuration/` holds workflow scripts, not unit tests),
+10s per test. `babel-jest` transforms the `.cjs` files so `jest.mock()` is hoisted above the requires.
 
 ## Configuration
 
-**`.env`** at the repo root (copy from `.env.example`):
-```bash
-PORT=9101
-NODE_ENV=development
-SESSION_SECRET=change-me-in-prod   # CHANGE IN PRODUCTION
-GOOGLE_CLIENT_ID=<id>              # Optional OAuth
-GOOGLE_CLIENT_SECRET=<secret>
-CORS_ORIGINS=/^chrome-extension:\/\//,http://localhost:3000  # Regex or plain URLs, comma-separated
-AI_MODEL=tinyllama:1.1b
-OLLAMA_URL=http://localhost:11434
-LOG_LEVEL=info
-```
-
-**Chrome extension config:** `applications/chrome/wiki/config.json` — set `defaultServerUrl` and `supportedHosts` for your deployment.
-
-**Data storage:** `./.application/` — `data/auth/`, `documents/`, `spaces/`, `workflows/`, `wiki-files/`, `logs/`
+Hosted, the wiki reads NooblyJS's environment (the solution root's `.env`): `WIKI_APP_BASE_DIR` points it at an
+existing `.application` folder; otherwise its data is NooblyJS's `data/wiki/`.
 
 **Configuration files** all live under `<APP_BASE_DIR>/configuration/`: `settings/settings.enc.json` (core settings service — grouped key/value, AES-256-GCM at rest, behind the datasources Settings screen), `settings/settings-agents.json` (AI agents), `settings/settings-general.json`, `prompts/prompts.json`. **Every path is derived from `APP_BASE_DIR`** — app.js once passed the settings service a literal `'../.application/settings/settings.enc.json'`, which the provider resolves with `path.resolve()` against `process.cwd()`, so it was a second relative root that could (and did) drift from `APP_BASE_DIR`: the store ended up in `<APP_BASE_DIR>/settings/` while everything else sat in `configuration/settings/`, and an earlier populated store was silently orphaned. Never give a core service a relative filepath — join it onto `APP_BASE_DIR`.
 
@@ -486,7 +405,7 @@ socket.on('document-updated', (doc) => { pendingUpdates.push(doc); debouncedUpda
 
 ## Debugging / Known Issues
 
-**Installing:** one `npm install` at the repo root. There are no nested packages.
+**Installing:** one `npm install` at the solution root. The app has no package.json of its own.
 
 **Chrome CORS error:** Add `/^chrome-extension:\/\//` to `CORS_ORIGINS` in `.env`, restart backend, reload extension.
 
@@ -497,8 +416,6 @@ socket.on('document-updated', (doc) => { pendingUpdates.push(doc); debouncedUpda
 **Header username display:** Both modules should call their auth check endpoint and display `email` (preferred) or `name`. Never display role in header.
 
 **Login white space:** Set `html, body { min-height: 100vh; }` and `.modal { position: fixed; ... display: flex; align-items: center; }` in `public/styles.css`.
-
-**Port in use:** `npm run kill` or `PORT=3000 npm start`.
 
 **Module init fails:** Check `./.application/` exists, `nooblyjs-core` installed at sibling path, file permissions, logs at `./.application/logs/application.log`.
 

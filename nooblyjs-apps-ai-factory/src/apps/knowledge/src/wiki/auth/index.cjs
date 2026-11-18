@@ -10,9 +10,9 @@
 
 'use strict';
 
-const BlogAuthMiddleware = require('./middleware/authMiddleware');
-const BlogAuthRoutes = require('./routes/authRoutes');
-const UserManager = require('./components/userManager');
+const BlogAuthMiddleware = require('./middleware/authMiddleware.cjs');
+const BlogAuthRoutes = require('./routes/authRoutes.cjs');
+const UserManager = require('./components/userManager.cjs');
 
 /**
  * Creates the blog authentication service

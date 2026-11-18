@@ -1,7 +1,7 @@
 ---
 type: Roadmap
 title: 'NooblyJS: fixes and mock removal, trackable roadmap'
-description: Every item below belongs to one phase, and each phase has a spec (requirements → design → tasks) in `nooblyjs-ai-host/.claude/specs/`.
+description: Every item below belongs to one phase, and each phase has a spec (requirements → design → tasks) in `.claude/specs/`.
 tags: [nooblyjs-ai, specs]
 ---
 
@@ -9,7 +9,7 @@ tags: [nooblyjs-ai, specs]
 
 > **Created 2026-11-17.** Every fix the steering review found, and every mock or simulated behaviour still in shipped
 > code, with what replaces it and what it is blocked on. The mock list starts from the audit in
-> `nooblyjs-ai-host/.claude/audits/mocking-audit.md` (A1–A16, B1–B12) and adds what that audit does not yet cover.
+> `.claude/audits/mocking-audit.md` (A1–A16, B1–B12) and adds what that audit does not yet cover.
 >
 > **How to use it.** Work top to bottom inside each part. Set the status on the line as you go:
 > `[ ]` open · `[~]` in progress · `[x]` done in code, with tests · `[v]` verified by the owner (only the owner ticks
@@ -24,20 +24,20 @@ tags: [nooblyjs-ai, specs]
 ## Specs: where each item is built
 
 Every item below belongs to one phase, and each phase has a spec (requirements → design → tasks) in
-`nooblyjs-ai-host/.claude/specs/`. The spec's `tasks.md` names the tracker IDs it closes; tick an item here when its
+`.claude/specs/`. The spec's `tasks.md` names the tracker IDs it closes; tick an item here when its
 task is done. Phases 27 and 29–32 together are roadmap Phase 15 (No mocks).
 
 | Phase | Spec | Closes | Blocked on | Status |
 | --- | --- | --- | --- | --- |
-| 27 | [No mocks in production](../../nooblyjs-ai-host/.claude/specs/phase-27-no-mocks-in-production/tasks.md) | M-01, M-02, M-05 to M-11, M-32 to M-35 | M-07 (a `nooblyjs-core` PR) | ◐ built 2026-11-17, waiting for review; M-07 open |
-| 28 | [Hygiene and the clock](../../nooblyjs-ai-host/.claude/specs/phase-28-hygiene-and-clock/tasks.md) | FIX-010 to FIX-014, FIX-016 to FIX-019, FIX-025 | nothing (D11, D13 decided) | ◐ in progress (FIX-019 done) |
-| 29 | [Scripted answers out](../../nooblyjs-ai-host/.claude/specs/phase-29-scripted-answers-out/tasks.md) | M-03, M-04, M-21, M-28 (cost) | nothing (D1: direct APIs) | ☐ ready |
-| 30 | [Real platform adapters](../../nooblyjs-ai-host/.claude/specs/phase-30-real-platform-adapters/tasks.md) | M-12, M-19, M-20, M-23, M-36 | D3's region and IaC tool to confirm | ☐ ready to start |
-| 31 | [Real assurance adapters](../../nooblyjs-ai-host/.claude/specs/phase-31-real-assurance-adapters/tasks.md) | M-13 to M-16, M-31 | Phase 30 (D5–D8 decided) | ☐ waits on Phase 30 |
-| 32 | [Microsoft 365 and the write gate for real](../../nooblyjs-ai-host/.claude/specs/phase-32-microsoft-365-for-real/tasks.md) | M-17, M-18, M-22, GATE-12, GATE-13 | D9: a tenant admin; write tokens | ☐ blocked |
-| 33 | [Settings, not sample data](../../nooblyjs-ai-host/.claude/specs/phase-33-settings-not-sample-data/tasks.md) | M-24 to M-30, M-34 | the company's figures and facts | ☐ not started |
-| 34 | [Product gaps the steering promises](../../nooblyjs-ai-host/.claude/specs/phase-34-product-gaps/tasks.md) | FIX-015, FIX-020 to FIX-024 | FIX-021, FIX-024 answers (pen tests: dropped) | ◐ in progress (FIX-020 done) |
-| — | [Bug and change log](../../nooblyjs-ai-host/.claude/specs/bugs-and-changes/tasks.md) | BUG-008 to BUG-012, CHG-010 to CHG-012 | — | open |
+| 27 | [No mocks in production](.claude/specs/phase-27-no-mocks-in-production/tasks.md) | M-01, M-02, M-05 to M-11, M-32 to M-35 | M-07 (a `nooblyjs-core` PR) | ◐ built 2026-11-17, waiting for review; M-07 open |
+| 28 | [Hygiene and the clock](.claude/specs/phase-28-hygiene-and-clock/tasks.md) | FIX-010 to FIX-014, FIX-016 to FIX-019, FIX-025 | nothing (D11, D13 decided) | ◐ in progress (FIX-019 done) |
+| 29 | [Scripted answers out](.claude/specs/phase-29-scripted-answers-out/tasks.md) | M-03, M-04, M-21, M-28 (cost) | nothing (D1: direct APIs) | ☐ ready |
+| 30 | [Real platform adapters](.claude/specs/phase-30-real-platform-adapters/tasks.md) | M-12, M-19, M-20, M-23, M-36 | D3's region and IaC tool to confirm | ☐ ready to start |
+| 31 | [Real assurance adapters](.claude/specs/phase-31-real-assurance-adapters/tasks.md) | M-13 to M-16, M-31 | Phase 30 (D5–D8 decided) | ☐ waits on Phase 30 |
+| 32 | [Microsoft 365 and the write gate for real](.claude/specs/phase-32-microsoft-365-for-real/tasks.md) | M-17, M-18, M-22, GATE-12, GATE-13 | D9: a tenant admin; write tokens | ☐ blocked |
+| 33 | [Settings, not sample data](.claude/specs/phase-33-settings-not-sample-data/tasks.md) | M-24 to M-30, M-34 | the company's figures and facts | ☐ not started |
+| 34 | [Product gaps the steering promises](.claude/specs/phase-34-product-gaps/tasks.md) | FIX-015, FIX-020 to FIX-024 | FIX-021, FIX-024 answers (pen tests: dropped) | ◐ in progress (FIX-020 done) |
+| — | [Bug and change log](.claude/specs/bugs-and-changes/tasks.md) | BUG-008 to BUG-012, CHG-010 to CHG-012 | — | open |
 
 ---
 
@@ -96,26 +96,26 @@ Still open from Phase 34: test strategy (FIX-021: build it, or say it is not pla
 
 ### 1a. Fix now (no decision needed)
 
-- [x] **FIX-010** [S] Done 2026-11-17 (D13), with `validationMiddleware.js`, also unused. Was: Delete the four unused CommonJS files in `nooblyjs-ai-host/src/utils/`: `fileNaming.js`,
+- [x] **FIX-010** [S] Done 2026-11-17 (D13), with `validationMiddleware.js`, also unused. Was: Delete the four unused CommonJS files in `src/utils/`: `fileNaming.js`,
   `filePolicy.js`, `pathSafety.js`, `fileTypeUtils.js`. Nothing imports them (checked 2026-11-17). Done when: `npm test`
   passes and `grep` finds no reference. *(depends on D13)*
-- [ ] **FIX-011** [S] Remove the unused provider SDK packages from `nooblyjs-ai-knowledge/package.json`:
+- [ ] **FIX-011** [S] Remove the unused provider SDK packages from `src/apps/knowledge/package.json`:
   `@anthropic-ai/sdk`, `@anthropic-ai/claude-agent-sdk`, `openai`. No source file imports them. Check
   `test/agent-tasks.test.mjs` first (it mentions them). Done when: `npm install` and the knowledge tests pass.
-- [ ] **FIX-013** [S] `nooblyjs-ai-host/scripts/seed.js` header says `--reset` "wipes DATA_DIR first", but the code moves
+- [ ] **FIX-013** [S] `scripts/seed.js` header says `--reset` "wipes DATA_DIR first", but the code moves
   it aside (`data.before-blank-…`). Make the comment match the code.
-- [ ] **FIX-016** [S] Retire `accept-release-candidate` from `nooblyjs-ai-host/src/middleware/roles.js` once no check
+- [ ] **FIX-016** [S] Retire `accept-release-candidate` from `src/middleware/roles.js` once no check
   still uses it. Confirm with a search of stored items first.
 - [ ] **FIX-017** [S] Add `nooblyjs-ai-security` and `nooblyjs-ai-operations` to the project table in the root
   `README.md`. Both are built and missing from it.
-- [ ] **FIX-018** [S] Steering: `nooblyjs-ai-host/.claude/steering/product.md`, `tech.md` and `structure.md` were not
+- [ ] **FIX-018** [S] Steering: `.claude/steering/product.md`, `tech.md` and `structure.md` were not
   reviewed on 2026-11-17. Read them against the code and fix the drift, as was done for the root four.
 
 ### 1b. Code gaps the steering promises (need a decision first)
 
 - [ ] **FIX-014** [M] Remove the `Date.now()` fallbacks in `nooblyjs-ai-product` (`services/*.js`),
-  `nooblyjs-ai-design/src/services/design.js`, `nooblyjs-ai-operations/src/services/{evidence,notes}.js`,
-  `nooblyjs-ai-factory/src/services/{hosted,engineering/architecture}.js` and the `Number(host.clock?.now?.() ?? Date.now())`
+  `src/apps/design/src/services/design.js`, `src/apps/operations/src/services/{evidence,notes}.js`,
+  `src/apps/factory/src/services/{hosted,engineering/architecture}.js` and the `Number(host.clock?.now?.() ?? Date.now())`
   pattern generally. Keep `Date.now()` only for measuring durations. Needs D11. Done when: a test starts each app with
   no `host.clock` and gets an error, not a silent wall-clock time.
 - [ ] **FIX-012** [M] `nooblyjs-ai-knowledge` public pages load CSS and scripts from CDNs (`public/index.html`,
@@ -129,7 +129,7 @@ Still open from Phase 34: test strategy (FIX-021: build it, or say it is not pla
 - [ ] **FIX-021** [M] Test strategy: `product.md` §2 says there is no test strategy document of its own. Decide whether
   one is needed; if so, build it in the Test section.
 - [ ] **FIX-022** [M] Signals from SLO breaches and failed outcome reviews. Only incidents raise a signal into Product
-  today (`nooblyjs-ai-operations/src/services/incidents.js`). Wire the other two, or record that they stay manual.
+  today (`src/apps/operations/src/services/incidents.js`). Wire the other two, or record that they stay manual.
 - [ ] **FIX-023** [M] Knowledge write-back: accepted ADRs, threat models and post-incident reviews as wiki pages
   (`design.md` §8, decided 2026-10-19). Not built.
 - [ ] **FIX-024** [M] The five skills named in `design.md` §6 (`threat-modelling`, `test-writing`, `accessibility`,
@@ -170,35 +170,35 @@ dev-only tool).
 
 ### 2a. Mocks that can reach production today (fix first)
 
-- [x] **M-01** *(Phase 27, 2026-11-17: no default; mock and echo refused in production.)* [A1] **Host defaults `AI_PROVIDER` to `mock`.** `nooblyjs-ai-host/src/config.js:59`
+- [x] **M-01** *(Phase 27, 2026-11-17: no default; mock and echo refused in production.)* [A1] **Host defaults `AI_PROVIDER` to `mock`.** `src/config.js:59`
   (`env.AI_PROVIDER || 'mock'`). A production start with no provider setting runs scripted answers. Action: REMOVE the
   default; refuse `mock` when `NODE_ENV=production`, the same way `anthropic` is refused. Size S. No decision needed.
-- [x] **M-02** *(Phase 27, 2026-11-17: production never returns the mock; no model refuses with `no_model`.)* [A1, A2] **Teammates falls back to the mock in production.** `nooblyjs-ai-teammate/src/services/providers/index.js`
+- [x] **M-02** *(Phase 27, 2026-11-17: production never returns the mock; no model refuses with `no_model`.)* [A1, A2] **Teammates falls back to the mock in production.** `src/apps/teammate/src/services/providers/index.js`
   (lines 31–74) returns `MockProvider` whenever no model is set, and accepts `AI_PROVIDER=mock` in production.
   Action: refuse `mock` in production; with no model configured, a task is refused with a reason, not answered. Size S.
   The real providers still need D1.
 - [ ] **M-03** [A1] **Scripted answers play when no model is set.** Each one is a "scripted" or `mock()` branch:
-  - Product drafts: `nooblyjs-ai-product/src/services/draft-kinds.js` (`mock()` at 96, 124),
+  - Product drafts: `src/apps/product/src/services/draft-kinds.js` (`mock()` at 96, 124),
     `architecture.js` (520, 556), `ux.js` (249, 272, 303), `ui.js` (270, 289), and `drafting.js` (168, 251–265).
-  - Factory architecture: `nooblyjs-ai-factory/src/services/engineering/architecture.js` (153–169).
-  - Test analysis: `nooblyjs-ai-factory/quality/src/services/analysis.js` (159–175) and
+  - Factory architecture: `src/apps/factory/src/services/engineering/architecture.js` (153–169).
+  - Test analysis: `src/apps/factory/quality/src/services/analysis.js` (159–175) and
     `quality/src/services/drafts.js`.
-  - Infrastructure design: `nooblyjs-ai-infrastructure/src/services/drafts.js` (36–113, `scripted`).
+  - Infrastructure design: `src/apps/infrastructure/src/services/drafts.js` (36–113, `scripted`).
   - Host chat and Teams: `chat/scripts.yaml` and `teams/scripts.yaml` (seeded at `src/seed/index.js:40–41`), played by
     `src/teams/bot.js` (75, 203–274) and the chat reply path.
-  - Wiki: `nooblyjs-ai-knowledge/src/wiki/knowledge/answers.js` answers from the source sentences.
+  - Wiki: `src/apps/knowledge/src/wiki/knowledge/answers.js` answers from the source sentences.
   Action: REMOVE the scripted branch from production. With no model, the action says so and nothing is posted, drafted
   or billed. The scripts stay as test fixtures under `test/`. Size L (about ten places). Needs D1 only for the real
   path. *(audit A1; A5 is stale: Infrastructure does draft)*
-- [ ] **M-04** [A1] **The Software Factory's demo repository and scripted agents.** `nooblyjs-ai-factory/src/services/intake/demo-repo.js`,
+- [ ] **M-04** [A1] **The Software Factory's demo repository and scripted agents.** `src/apps/factory/src/services/intake/demo-repo.js`,
   `hosted.js` (475–484, "scripted agents (development and demos)"), `intake/handoff.js` (`<home>/scripts/`), and
   `remote/worker.js` (65). Action: the demo repository is MOVE to a dev seed; production never writes scripted agents;
   a work item with no model fails with "no model configured". Size M.
-- [x] **M-05** *(Phase 27, 2026-11-17: scripts refused in production (line, CLI, intake).)* [audit-new] **Scripted providers in the Factory's line.** `nooblyjs-ai-factory/src/services/exec/harness/script.js`
+- [x] **M-05** *(Phase 27, 2026-11-17: scripts refused in production (line, CLI, intake).)* [audit-new] **Scripted providers in the Factory's line.** `src/apps/factory/src/services/exec/harness/script.js`
   (a model from a JSON file), used by `line/stations/common.js` (51–55), `controllers/cli/agent.js` and
   `controllers/cli/init.js`. Action: GUARD: the `--script` flag exists only with `NODE_ENV` not production, and the line
   refuses a scripted provider in production. Size S.
-- [x] **M-06** *(Phase 27, 2026-11-17: bench oracle/null refused in production (kept: they are the measuring instrument).)* [audit-new] **Scripted runs in the benchmark.** `nooblyjs-ai-factory/src/services/bench/runner.js` (34–65) gives
+- [x] **M-06** *(Phase 27, 2026-11-17: bench oracle/null refused in production (kept: they are the measuring instrument).)* [audit-new] **Scripted runs in the benchmark.** `src/apps/factory/src/services/bench/runner.js` (34–65) gives
   the oracle and null agents scripted providers. Action: MOVE to the bench's test fixtures, or make the bench refuse to
   run without a real model. Size S.
 
@@ -219,7 +219,7 @@ dev-only tool).
 - [x] **M-10** *(Phase 27, 2026-11-17: fake provider moved to `test/support/`, `dev:mock` dropped.)* [A1] **Desktop's fake provider.** `nooblyjs-ai-desktop/scripts/mockProvider.js` and `scripts/dev-mock.js`
   (`npm run dev:mock`), plus the `MOCK_API_KEY` provider it registers. Desktop is standalone. Action: REMOVE the
   `dev:mock` script and the provider from the app; keep one in its test folder. Size S.
-- [x] **M-11** *(Phase 27, 2026-11-17: dry run moved to `test/live-smoke.test.js`; the script makes real calls only.)* [A1] **Teammates' mock in the teammate library's own scripts.** `nooblyjs-ai-teammate/scripts/live-smoke.js`
+- [x] **M-11** *(Phase 27, 2026-11-17: dry run moved to `test/live-smoke.test.js`; the script makes real calls only.)* [A1] **Teammates' mock in the teammate library's own scripts.** `src/apps/teammate/scripts/live-smoke.js`
   (`AI_PROVIDER=mock npm run smoke:live` is a "free dry run"). Action: MOVE the dry run to the test suite. Size S.
 
 ### 2c. Mock adapters for external systems (each needs a decision; the seam already exists)
@@ -227,33 +227,33 @@ dev-only tool).
 Each adapter is `mock` by default and refuses any other name at start, so the switch to real is one place. The work is
 the real adapter, with its credentials, sandbox and tests.
 
-- [ ] **M-12** [A3, B2, B11] **Container runtime is simulated.** `nooblyjs-ai-host/src/services/platform/containers.js`,
+- [ ] **M-12** [A3, B2, B11] **Container runtime is simulated.** `src/services/platform/containers.js`,
   `data/platform/pools.yaml` and `environments.yaml` (typed in), the "Cluster healthy (simulated)" text on
   `public/js/pages/platform/containers.js`. REPLACE with a runtime adapter. Needs D2. Size L.
-- [ ] **M-36** [A4, B2] **Provisioner is a mock.** `nooblyjs-ai-infrastructure/src/provisioners/mock.js` and
+- [ ] **M-36** [A4, B2] **Provisioner is a mock.** `src/apps/infrastructure/src/provisioners/mock.js` and
   `index.js` (`INFRA_PROVISIONER`, `INFRA_MOCK_STEP_MS`, in `index.js:67–68`). Plans, cost and drift come from files
   (`services/cost.js`, `services/drift.js`). REPLACE. Needs D3. Size L.
-- [ ] **M-13** [A12] **Security scanner is a mock.** `nooblyjs-ai-security/src/scanners/mock.js` (plain rules, a fixed DAST
+- [ ] **M-13** [A12] **Security scanner is a mock.** `src/apps/security/src/scanners/mock.js` (plain rules, a fixed DAST
   finding, no image scan) and `src/scanners/index.js`. REPLACE per kind. Needs D5. Size L.
-- [ ] **M-14** [A13] **Test runner runs nothing.** `nooblyjs-ai-factory/quality/src/runners/mock.js` (a fixed p95 of 240 ms,
+- [ ] **M-14** [A13] **Test runner runs nothing.** `src/apps/factory/quality/src/runners/mock.js` (a fixed p95 of 240 ms,
   a baseline e2e count, accessibility and resilience that "find nothing"). REPLACE. Needs D6 and M-12. Size L.
-- [ ] **M-15** [A14] **Deployer records and does not deploy.** `nooblyjs-ai-operations/src/deployers/mock.js` and
+- [ ] **M-15** [A14] **Deployer records and does not deploy.** `src/apps/operations/src/deployers/mock.js` and
   `index.js`. REPLACE through Infrastructure, behind the two-approver rule (I10). Needs D7 and M-36. Size L.
-- [ ] **M-16** [A15] **Monitor is a mock.** `nooblyjs-ai-operations/src/monitors/mock.js`: SLO burn only when a person burns
+- [ ] **M-16** [A15] **Monitor is a mock.** `src/apps/operations/src/monitors/mock.js`: SLO burn only when a person burns
   it, goal measures halfway to target unless set. REPLACE. Needs D8. Size L.
-- [ ] **M-17** [A10, A11] **Teams and mail have only met a simulator and a fake Graph.** `nooblyjs-ai-host/src/services/notify.js`,
+- [ ] **M-17** [A10, A11] **Teams and mail have only met a simulator and a fake Graph.** `src/services/notify.js`,
   `src/teams/connector.js`. REPLACE through the tenant run. Needs D9 and GATE-12. Size M.
-- [ ] **M-18** [A9] **Writes to Jira and Bitbucket are recorded, not sent.** `nooblyjs-ai-host/src/services/devtools/writes.js`.
+- [ ] **M-18** [A9] **Writes to Jira and Bitbucket are recorded, not sent.** `src/services/devtools/writes.js`.
   This is the default on purpose. Action: keep as the default; the Owner's switch to Send is the real path; test it
   against a scratch project (Phase 13 script). Needs write tokens. Size S once tokens exist.
 - [ ] **M-19** [A8] **No sandbox on Windows.** Gate commands run unsandboxed in development. Action: GUARD: refuse to run
   gate commands on Windows outside development, and run them in the M-12 runtime when it exists. Needs D2.
-- [ ] **M-20** [A7] **Secrets are references nobody resolves.** `nooblyjs-ai-host/src/services/platform/index.js`. REPLACE
+- [ ] **M-20** [A7] **Secrets are references nobody resolves.** `src/services/platform/index.js`. REPLACE
   with a secret-store adapter that hands a value to a run and nothing else. Needs D4. Size M.
 - [ ] **M-21** [A2] **Models run on the direct Anthropic API in development.** The Bedrock, Vertex and Azure adapters in
   `nooblyjs-core/src/aiservice/common/providers/` have never run with real credentials. REPLACE the default path with one
   cloud host, proven by a live test (`*.live.test.js`). Needs D1. Size M.
-- [ ] **M-22** [A16] **On-call alerts only reach the simulator.** `nooblyjs-ai-host/src/services/notify.js` (`oncall`), with
+- [ ] **M-22** [A16] **On-call alerts only reach the simulator.** `src/services/notify.js` (`oncall`), with
   `TEAMS_ONCALL_CONVERSATION` unset. REPLACE with the tenant's channel (M-17). Needs D9.
 
 ### 2d. Static data shown as if it were measured (audit part B)
@@ -261,7 +261,7 @@ the real adapter, with its credentials, sandbox and tests.
 - [ ] **M-23** [B1] **Base images typed into a file.** `data/platform/base-images.yaml`: "14 repos", "rolled 3 h ago", CVE
   counts. REPLACE with an image registry and scanner read. Needs D5 and a registry. Size M.
 - [ ] **M-24** [B3] **Which teammate drafts each stage is written in code.** `ada-quill`, `rhea-voss`, `design-agent`,
-  `ui-agent` in `nooblyjs-ai-product/src/services/{spec-writes,architecture,ux,ui}.js` and `ines-tau` in Infrastructure's
+  `ui-agent` in `src/apps/product/src/services/{spec-writes,architecture,ux,ui}.js` and `ines-tau` in Infrastructure's
   `agent.yaml`. REPLACE with a setting per kind of work, and a clear message when nobody is assigned. Size M.
 - [ ] **M-25** [B4, B5] **Onboarding copy and first-week tasks name seed items and agents.** `data/config/work-roles.yaml`
   (`PRD-031`, the tool lists). REPLACE with copy generated from what is hired and connected. Needs M-24. Size S.
@@ -271,29 +271,29 @@ the real adapter, with its credentials, sandbox and tests.
 - [ ] **M-27** [B7] **Budgets, model routes and guardrails start from sample figures.** `data/platform/budgets.yaml`
   ($9,000 for Teammates, $20 a day for the Factory), `model-routes.yaml`, `guardrails.yaml`. REPLACE with figures an
   Owner sets. Needs the figures. Size S.
-- [ ] **M-28** [B8] **Teammate rates and tokens per hour are sample billing settings.** `nooblyjs-ai-teammate/src/config/seed-data.js`
+- [ ] **M-28** [B8] **Teammate rates and tokens per hour are sample billing settings.** `src/apps/teammate/src/config/seed-data.js`
   (`models.md`), and model prices from a public catalogue (`nooblyjs-core/src/aiservice/common/discovery.js`). REPLACE
   with agreed rates and cost from the provider's own usage. Needs D1 and the billing model. Size M.
 - [ ] **M-29** [B9] **Company facts are placeholders.** Data region, cloud, cluster, registry: `[PLACEHOLDER]` in
   `data/config/organisation.yaml`. REPLACE with the facts. Needs the facts.
-- [ ] **M-30** [B10] **"For you" tile with no source.** "New signals" shows a null value (`nooblyjs-ai-host/src/services/for-you.js`).
+- [ ] **M-30** [B10] **"For you" tile with no source.** "New signals" shows a null value (`src/services/for-you.js`).
   REPLACE by wiring it to the Product signals, or REMOVE the tile. Size S.
 
 ### 2e. Mock labels and stubs that go when the real thing lands
 
-- [ ] **M-31** [A12–A15] **"Mock" notices on screens.** `nooblyjs-ai-security/public/js/lib.js` (`mockNote`), Operations'
+- [ ] **M-31** [A12–A15] **"Mock" notices on screens.** `src/apps/security/public/js/lib.js` (`mockNote`), Operations'
   `releases.js`, `deployments.js`, `slos.js`, `policies.js`, the Factory's Test pages, `profile.js` ("offline mock"). Each
   one is honest and stays until its adapter is real; then remove it. Tied to M-13 to M-16.
-- [x] **M-32** *(Phase 27, 2026-11-17: moved to `test/fixtures/clock.js`.)* [audit-new] **`createFakeClock` is exported from the Factory's public index.** `nooblyjs-ai-factory/index.js:6`.
+- [x] **M-32** *(Phase 27, 2026-11-17: moved to `test/fixtures/clock.js`.)* [audit-new] **`createFakeClock` is exported from the Factory's public index.** `src/apps/factory/index.js:6`.
   A test helper in the public API. MOVE to `test/`. Size S.
-- [x] **M-33** *(Phase 27, 2026-11-17: workers pass no app; `initializeAIInstances` works without one.)* [audit-new] **Workflow steps pass a no-op stub app.** `nooblyjs-ai-knowledge/workflows/application-design/steps/process.js`
+- [x] **M-33** *(Phase 27, 2026-11-17: workers pass no app; `initializeAIInstances` works without one.)* [audit-new] **Workflow steps pass a no-op stub app.** `src/apps/knowledge/workflows/application-design/steps/process.js`
   (56–67) and `document-processing/steps/clean-document.js` (60–66): a `Proxy` and a plain object stand in for an Express
   app. Action: pass the real app, or a documented adapter with no stub methods. Size S.
 - [x] **M-34** *(Phase 27, 2026-11-17: D10: kept, absent in production; tests in `test/no-mocks-in-production.test.js`.)* [audit-new] **Dev-only tools in the shipped app.** `/dev/teams`, `/dev/clock`, `/dev/styleguide`, the person
   picker (`NOOBLY_DEV_LOGIN`), `TEAMS_BOT_DEV_UNSIGNED`, the simulator routes (`src/routes/dev.js`, `src/routes/teams.js`
   dev key). Decision D10. Until decided: confirm each is refused in production (a test for each).
-- [x] **M-35** *(Phase 27, 2026-11-17: confirmed: a blank seed writes none (`test/blank.test.js`).)* [audit-new] **Scripted demo data in the seed.** `nooblyjs-ai-host/src/seed/metrics-history.js` writes six weeks of
-  metrics history; `nooblyjs-ai-teammate/src/services/seed.js:133` writes `mock/scripted` task records. The audit's part C
+- [x] **M-35** *(Phase 27, 2026-11-17: confirmed: a blank seed writes none (`test/blank.test.js`).)* [audit-new] **Scripted demo data in the seed.** `src/seed/metrics-history.js` writes six weeks of
+  metrics history; `src/apps/teammate/src/services/seed.js:133` writes `mock/scripted` task records. The audit's part C
   says a blank start writes none of this. Confirm, and make sure the sample story is the only place either appears.
 
 ---
@@ -316,11 +316,11 @@ Work in this order. Each wave can start once the one before it is done; the phas
 
 ## Part 4: corrections to the mocking audit
 
-The audit (`nooblyjs-ai-host/.claude/audits/mocking-audit.md`, updated 2026-10-21) is the source for part 2. These are the
+The audit (`.claude/audits/mocking-audit.md`, updated 2026-10-21) is the source for part 2. These are the
 places it no longer matches the code. Fix them when the audit is next updated, not in this file.
 
-- [ ] Paths are old: `noobly/src/...` is now `nooblyjs-ai-host/src/...`, and Product's drafts are in `nooblyjs-ai-product/`,
-  not `nooblyjs-ai-factory/product/`.
+- [ ] Paths are old: `noobly/src/...` is now `src/...`, and Product's drafts are in `nooblyjs-ai-product/`,
+  not `src/apps/factory/product/`.
 - [ ] **A5 is stale.** Infrastructure does draft: `drafts.js` has a scripted draft and a model draft (see M-03).
 - [ ] **A1 misses** the scripted branches in the Factory's architecture, the test analysis, Infrastructure's draft, the bench,
   the harness echo provider and the desktop app (M-03 to M-10).

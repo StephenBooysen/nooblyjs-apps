@@ -13,10 +13,10 @@ require('dotenv').config({path:'../../../.env'});
 
 // Shared step helpers (ARIS credentials). This step builds content from cached
 // data and does not call ARIS, so it does not authenticate.
-const authenticateStep = require('../../common/architecture/authentication/authenticateStep');
+const authenticateStep = require('../../common/architecture/authentication/authenticateStep.cjs');
 
 // The business solutions class is used to retrieve and publish a Business Solutions (Business Capabilities / Business Processes / Business Applications)
-const BusinessSolutionsClass = require('../services/businessSolutions')
+const BusinessSolutionsClass = require('../services/businessSolutions.cjs')
 
 /**
  * Retrieve authentication token from ARIS system.

@@ -33,7 +33,7 @@ const {
   contentDirOf,
   handleSpacePathError,
   PATH_HIDDEN
-} = require('../../../src/shared/spaces/spacePaths');
+} = require('../../../src/shared/spaces/spacePaths.cjs');
 
 /** A temp content root shared by several spaces, as production has. */
 let ROOT;

@@ -37,10 +37,10 @@ The analogy stops working in one place: a hotel guest can check out. The registr
 
 ## A small piece of code
 
-This is how a hosted app asks the registry for a logger. It comes from `nooblyjs-ai-product/index.js`, line 61:
+This is how a hosted app asks the registry for a logger. It comes from `src/apps/product/index.js`, line 61:
 
 ```js
-// nooblyjs-ai-product/index.js:61
+// src/apps/product/index.js:61
 const log = serverManager.logger(serverManager.getDefaultProviderType('logging'), { instanceName: NAME });
 ```
 

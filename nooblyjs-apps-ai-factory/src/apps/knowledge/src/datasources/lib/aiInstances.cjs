@@ -23,7 +23,7 @@
 const path = require('node:path');
 const fsPromises = require('node:fs/promises');
 const { isMainThread } = require('node:worker_threads');
-const { routedRegistry, runner, stopTeammates } = require('../../shared/ai/agentTasks');
+const { routedRegistry, runner, stopTeammates } = require('../../shared/ai/agentTasks.cjs');
 
 // Last context passed to initializeAIInstances — lets reloadAIInstances()
 // rebuild the registry without the caller re-supplying dependencies.

@@ -8,14 +8,14 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const wikiBlocks = require('../../common/content/wikiBlocks.js');
-const { prompts } = require('../../common/prompts/prompts');
+const wikiBlocks = require('../../common/content/wikiBlocks.cjs');
+const { prompts } = require('../../common/prompts/prompts.cjs');
 // Shared with system-context's FolderExpert: wall-clock budget + bounded
 // retries around an AI prompt call. This class previously called
 // expert.prompt() with no timeout at all — a stalled/slow provider call would
 // hang analyzeDirectory() (and therefore the whole bottom-up sweep) forever,
 // since the try/catch around it only handles a REJECTION, never a hang.
-const { retry } = require('../../system-context/utilities/retry');
+const { retry } = require('../../system-context/utilities/retry.cjs');
 
 // Supported code file extensions
 /*const SUPPORTED_EXTENSIONS = [

@@ -3,9 +3,9 @@
     "name": "Design Infrastructure: Retrieve Infrastructure",
     "description": "Retrieve the data for the technology classification models and create the Infrastructure Design content.",
     "steps": [
-      "steps/authToken.js",
-      "steps/infrastructureData.js",
-      "steps/infrastructureContent.js"
+      "steps/authToken.cjs",
+      "steps/infrastructureData.cjs",
+      "steps/infrastructureContent.cjs"
     ],
     "tags": [
       "Infrastructure"

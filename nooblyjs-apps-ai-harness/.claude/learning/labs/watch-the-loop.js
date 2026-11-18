@@ -6,7 +6,7 @@ import { createMockProvider } from '../../../src/providers/mock.js';
 // We play the model. Reply 1 asks for a tool; reply 2 answers using the result.
 const provider = createMockProvider([
   { text: 'Let me look.', tools: [{ name: 'Read', input: { file_path: 'package.json' } }] },
-  { text: 'The package is called nooblyjs-learn-harness.' },
+  { text: 'The package is called nooblyjs-ai-harness.' },
 ]);
 
 const session = new Session({ provider, providerId: 'anthropic', model: 'fake-model', cwd: process.cwd() });

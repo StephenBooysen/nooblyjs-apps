@@ -41,7 +41,7 @@ the card and the `host` object, and NooblyJS can mark it unavailable if it fails
 This is the status card the app returns to NooblyJS, from `index.js` lines 126 to 133, trimmed:
 
 ```js
-// nooblyjs-ai-product/index.js:126
+// src/apps/product/index.js:126
 return {
   badges: { reviews: specs.filter((s) => s.status === 'in-review').length },
   card: {

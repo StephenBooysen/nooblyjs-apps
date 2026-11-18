@@ -13,8 +13,8 @@
 
 'use strict';
 
-const ProductBase = require('../base/productBase.js');
-const TargetProcess = require('../utilities/targetProcess.js');
+const ProductBase = require('../base/productBase.cjs');
+const TargetProcess = require('../utilities/targetProcess.cjs');
 
 // "Type" on the Requirements table maps to the entity's EntityType — Target
 // Process has no RequirementType field (including it is a 400).

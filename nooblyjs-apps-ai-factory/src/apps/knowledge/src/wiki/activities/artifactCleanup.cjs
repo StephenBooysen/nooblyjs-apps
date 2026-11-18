@@ -29,8 +29,8 @@
 
 const path = require('node:path');
 
-const { needsMarkdownSidecar, isSeededHomeRelPath } = require('../../shared/utils/filePolicy');
-const { removeDocumentArtifacts } = require('../utils/documentArtifacts');
+const { needsMarkdownSidecar, isSeededHomeRelPath } = require('../../shared/utils/filePolicy.cjs');
+const { removeDocumentArtifacts } = require('../utils/documentArtifacts.cjs');
 
 /**
  * True when any segment of a space-relative path is dot-prefixed.

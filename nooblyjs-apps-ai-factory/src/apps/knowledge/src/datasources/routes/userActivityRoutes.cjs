@@ -53,12 +53,12 @@ const path = require('node:path');
 // The layout of `.system/useractivity/<prefix>/` is owned by the wiki, which is
 // what writes it. Reading it from here means one cross-module require rather
 // than a second copy of the path rules that would be free to drift.
-const userStore = require('../../wiki/components/userStore');
-const spaceUserStore = require('../../wiki/components/spaceUserStore');
-const userArtifacts = require('../../wiki/components/userArtifacts');
-const visitTally = require('../../wiki/components/visitTally');
-const { contentRootKey } = require('../../shared/spaces/contentRoot');
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
+const userStore = require('../../wiki/components/userStore.cjs');
+const spaceUserStore = require('../../wiki/components/spaceUserStore.cjs');
+const userArtifacts = require('../../wiki/components/userArtifacts.cjs');
+const visitTally = require('../../wiki/components/visitTally.cjs');
+const { contentRootKey } = require('../../shared/spaces/contentRoot.cjs');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
 
 /** Window for the chart and the list's "recent activity" column. */
 const DEFAULT_WINDOW_DAYS = 30;

@@ -23,8 +23,8 @@
 'use strict';
 
 const path = require('node:path');
-const { rolesOf } = require('../components/spacePermissions');
-const { readContent, writeContent } = require('../../shared/content/contentPaths');
+const { rolesOf } = require('../components/spacePermissions.cjs');
+const { readContent, writeContent } = require('../../shared/content/contentPaths.cjs');
 
 /** Default help seeded the first time the file is read. The view-named
  *  headings let the drawer's "Help for this page" matching work out of the box. */

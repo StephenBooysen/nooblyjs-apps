@@ -13,7 +13,7 @@ const {
   compileVisibility,
   normaliseRule,
   normalisePath
-} = require('../../../src/shared/spaces/spaceVisibility');
+} = require('../../../src/shared/spaces/spaceVisibility.cjs');
 
 /** The Retail space, as configured. */
 const RETAIL = {

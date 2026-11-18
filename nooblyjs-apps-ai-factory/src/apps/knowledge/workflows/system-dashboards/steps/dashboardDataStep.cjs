@@ -16,7 +16,7 @@
 require('dotenv').config({ path: '../../../.env', quiet: true });
 
 const path = require('node:path');
-const DashboardDataClass = require('../services/dashboardData.js');
+const DashboardDataClass = require('../services/dashboardData.cjs');
 
 /** The content repositories walked by default (siblings of this repo). */
 const DEFAULT_CONTENT_FOLDERS = [

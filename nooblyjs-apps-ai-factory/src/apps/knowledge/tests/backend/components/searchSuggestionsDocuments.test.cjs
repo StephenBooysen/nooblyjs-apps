@@ -17,7 +17,7 @@
 
 'use strict';
 
-const SearchIndexer = require('../../../src/wiki/activities/searchIndexer');
+const SearchIndexer = require('../../../src/wiki/activities/searchIndexer.cjs');
 
 const silentLogger = { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} };
 

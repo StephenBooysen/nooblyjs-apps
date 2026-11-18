@@ -11,8 +11,8 @@
 
 'use strict';
 
-const ProductBase = require('../base/productBase.js');
-const TargetProcess = require('../utilities/targetProcess.js');
+const ProductBase = require('../base/productBase.cjs');
+const TargetProcess = require('../utilities/targetProcess.cjs');
 
 const PROJECT_INCLUDE = ['Id', 'Name', 'Description', 'Abbreviation', 'Program[Id,Name]', 'Process[Id,Name]'];
 

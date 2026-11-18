@@ -3,7 +3,7 @@
 // a refused start leaves nothing mounted.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import express from 'express5';
+import express from 'express';
 import { register, DEFAULT_MOUNT_PATH } from '../index.mjs';
 import { createHost, createTestServerManager } from './fixtures/host.mjs';
 import { startApp, filesUnder, FALLBACK } from './helpers.mjs';

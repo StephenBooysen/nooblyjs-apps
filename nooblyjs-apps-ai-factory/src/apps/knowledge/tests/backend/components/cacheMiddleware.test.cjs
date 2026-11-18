@@ -8,7 +8,7 @@
 
 'use strict';
 
-const { withCache, invalidateCache } = require('../../../src/shared/middleware/cacheMiddleware');
+const { withCache, invalidateCache } = require('../../../src/shared/middleware/cacheMiddleware.cjs');
 
 describe('Cache Middleware', () => {
   let cacheService;

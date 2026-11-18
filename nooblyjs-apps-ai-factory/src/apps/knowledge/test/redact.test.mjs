@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { redact, isTextFile } = require('../src/wiki/knowledge/redact.js');
+const { redact, isTextFile } = require('../src/wiki/knowledge/redact.cjs');
 
 test('emails, phone numbers and ID numbers are replaced, and counted', () => {
   const { text, counts, total } = redact([

@@ -24,8 +24,8 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const readVisit = require('../../../src/wiki/components/readVisit');
-const visitTally = require('../../../src/wiki/components/visitTally');
+const readVisit = require('../../../src/wiki/components/readVisit.cjs');
+const visitTally = require('../../../src/wiki/components/visitTally.cjs');
 
 /** A content root in a temp dir; the tally lives under `.system/useractivity/`. */
 let root;

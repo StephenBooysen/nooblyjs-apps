@@ -8,7 +8,7 @@
 
 'use strict';
 
-const ModelBase = require('./modelBase');
+const ModelBase = require('./modelBase.cjs');
 
 /**
  * This class returns the graphic of a model

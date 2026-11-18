@@ -1,6 +1,6 @@
 'use strict';
 
-const R = require('../../../src/wiki/components/reviewBlocks');
+const R = require('../../../src/wiki/components/reviewBlocks.cjs');
 
 const DOC = `# Pricing Doc
 

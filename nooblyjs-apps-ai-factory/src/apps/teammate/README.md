@@ -16,34 +16,22 @@ tags: [nooblyjs-ai-teammate]
 
 ## Run it
 
-Teammates runs two ways: **standalone** (`server.js`, on its own port) or **hosted** inside
-[NooblyJS AI](../nooblyjs-ai-host), which imports `index.js` and calls `register()`. Both run the same `register()`.
-It lives in the `nooblyjs-ai` monorepo; `nooblyjs-core` (which also holds the AI module, `nooblyjs-ai-common`) is a separate repo next to the monorepo:
+From the solution root (`../../..`), which has the one `package.json` for the host and every app:
 
 ```bash
-git clone https://github.com/nooblyjs/nooblyjs-core.git ../../nooblyjs-core   # service registry (logging, caching, queueing…), sign-in, the UI kit
-npm install
-npm start            # standalone: http://127.0.0.1:11202/teammates (see "Sign in and roles")
-npm test             # node:test suite (offline, mock provider)
-npm run smoke:live   # one real task each on Haiku, Sonnet and Opus (needs ANTHROPIC_API_KEY; costs a few cents)
+npm install                                         # once, at the solution root
+npm start                                           # NooblyJS, with Teammates at /teammates (port 11001 by default)
+node --test "src/apps/teammate/test/**/*.test.js"   # this app's tests, offline, on the stand-in host (src/services/standalone-host.js)
+npm run test:live:teammate                          # one real task each on Haiku, Sonnet and Opus (needs ANTHROPIC_API_KEY; costs a few cents)
 ```
 
-**Standalone** (`npm start`), the app is at `/teammates` and core's service dashboards at `/services/`. People sign in
-with nooblyjs-core's authservice; on the first start it creates `admin@localhost`, and the log says where its
-password is (`DEFAULT_ADMIN_PASSWORD`, or a generated one in `data/core/auth/INITIAL_ADMIN_PASSWORD.txt`). Core
-roles become access roles: `owner`/`admin` → Owner, `manager` → Approver, `contributor` → Contributor, anything else
-→ Viewer. The frame and the UI kit come from nooblyjs-core (`src/shell`, `public/ui`), and changes are checked against
-the `noobly.csrf` cookie, as the host does. Settings are in `.env.example`. Data goes to `data/teammates/` (and core's
-to `data/core/`). The standalone host is `src/services/standalone-host.js`; the tests run on it too.
-
-**Hosted**, run NooblyJS AI: in `../nooblyjs-ai-host`, set `enabled: true` on the `nooblyjs-ai-teammate` entry in
-`data/config/hosted-apps.yaml`, then `npm start` there. Teammates is at `/teammates` on NooblyJS's address (port 11001 by
-default), and on first start it seeds `../nooblyjs-ai-host/data/teammates/` with the eight teammates, skills, timesheets and
-invoices from the design mockups.
+Teammates runs only inside NooblyJS (there is no standalone server since 2026-11-18). It is at `/teammates` on
+NooblyJS's address, and on first start it seeds `../../../data/teammates/` with the eight teammates, skills, timesheets
+and invoices from the design mockups. NooblyJS's `.env` supplies its settings.
 
 ### How NooblyJS hosts it
 
-The contract is `../nooblyjs-ai-host/.claude/steering/structure.md` §2a; this repo's `.claude/steering/tech.md` restates it. NooblyJS calls
+The contract is `../../../.claude/steering/structure.md` §2a; this repo's `.claude/steering/tech.md` restates it. NooblyJS calls
 `register(app, serverManager, { mountPath: '/teammates', dataDir, host })` with its Express 5 app, its initialised
 nooblyjs-core `serverManager` and what it shares (`host.express`, `host.auth`, `host.requireRole`, `host.audit`,
 `host.events`, `host.people`, …). `register()` mounts one router at the mount path (`/teammates/…` for the files and
@@ -56,7 +44,7 @@ devDependency here.
 
 The app serves no HTML page of its own: only the files in `public/`, the API, and NooblyJS's frame for every page URL.
 Its UI is a module (`public/js/module.js`) that the NooblyJS frame loads into its content area, next to the NooblyJS rail and
-sidebar. Run it by starting NooblyJS (`npm start` in `../nooblyjs-ai-host`) and opening `/teammates`.
+sidebar. Run it by starting NooblyJS (`npm start` in `../../..`) and opening `/teammates`.
 
 ### Code layout
 
@@ -75,7 +63,7 @@ sidebar. Run it by starting NooblyJS (`npm start` in `../nooblyjs-ai-host`) and 
 
 ### Settings
 
-The process is NooblyJS's, so these are read from NooblyJS's environment (`../nooblyjs-ai-host/.env`). Without Anthropic credentials,
+The process is NooblyJS's, so these are read from NooblyJS's environment (`../../../.env`). Without Anthropic credentials,
 teammates run on an **offline mock provider**.
 
 | Variable | Default | Purpose |
@@ -162,7 +150,7 @@ Calls without a valid key (or owner session) return `401`; a key used for anothe
 
 ## Data layout
 
-NooblyJS's `dataDir` for this app (`../nooblyjs-ai-host/data/teammates/`). People and sign-in sessions are NooblyJS's, not kept here.
+NooblyJS's `dataDir` for this app (`../../../data/teammates/`). People and sign-in sessions are NooblyJS's, not kept here.
 
 ```
 data/teammates/

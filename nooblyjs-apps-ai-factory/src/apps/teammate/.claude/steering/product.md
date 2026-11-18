@@ -21,8 +21,8 @@ tags: [nooblyjs-ai-teammate, steering]
 | Related | [architecture.md](architecture.md), [roadmap history](../../docs/roadmap-history.md), [tech.md](tech.md) (NooblyJS platform rules) |
 
 > **Teammates is part of NooblyJS.** §0 is what NooblyJS needs from Digital Teammates. It was
-> extracted from `../nooblyjs-ai-host/.claude/steering/product.md` (the source of truth) and the mockups in
-> `../nooblyjs-ai-host/.claude/steering/brief/` (`noobly-teammates-team-roster`, `noobly-teams-bot-*`,
+> extracted from `../../../.claude/steering/product.md` (the source of truth) and the mockups in
+> the design brief (not in this repo) (`noobly-teammates-team-roster`, `noobly-teams-bot-*`,
 > `noobly-for-you-*`, `noobly-teams-roles`). Sections 1–12 are this app's own product
 > definition. Where they conflict with §0, §0 wins. The main differences: models come only
 > through Bedrock / Vertex / Azure (FR-2, §5 "Provider"), sign-in and roles belong to NooblyJS
@@ -328,7 +328,7 @@ Teams use general-purpose AI chat tools ad hoc. That leads to:
 | **Performance** | Platform overhead (excluding the model call) under 50 ms p95 for invocation with up to 500 knowledge docs and 1,000 memory notes per teammate. Indexes are cached in memory and rebuilt when files change. |
 | **Scale target (v1)** | A single node and a single process, up to about 50 teammates and about 100k work items per year. |
 | **Observability** | Structured JSON logs, a `/health` endpoint, and a request ID on every call that is written into the work item. |
-| **Portability** | Runs inside NooblyJS (`npm start` in `../nooblyjs-ai-host`) with no external services, apart from the AI providers. It also runs standalone (`npm start`: `server.js` on nooblyjs-core's sign-in). The Mock provider lets the app run fully offline. |
+| **Portability** | Runs inside NooblyJS (`npm start` in `../../..`) with no external services, apart from the AI providers. It also runs standalone (`npm start`: `server.js` on nooblyjs-core's sign-in). The Mock provider lets the app run fully offline. |
 | **Accessibility** | The UI meets WCAG 2.1 AA, including keyboard navigation and light and dark themes. |
 
 ## 9. Example teammates

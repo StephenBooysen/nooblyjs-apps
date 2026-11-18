@@ -73,8 +73,8 @@
 
 'use strict';
 
-const { runExclusive, pauseAutoSync, gitHandleFor } = require('./repositorySync');
-const { withLockRecovery } = require('./gitLock');
+const { runExclusive, pauseAutoSync, gitHandleFor } = require('./repositorySync.cjs');
+const { withLockRecovery } = require('./gitLock.cjs');
 
 /** Most discarded commits described in the result (all of them are counted). */
 const MAX_REPORTED_COMMITS = 20;

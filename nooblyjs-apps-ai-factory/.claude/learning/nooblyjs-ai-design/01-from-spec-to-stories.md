@@ -178,10 +178,10 @@ Then check the data:
 
 ```bash
 # See a design
-cat ../nooblyjs-ai-design/data/design/items/*/design.md | head -50
+cat src/apps/design/data/design/items/*/design.md | head -50
 
 # See the NFR catalogue
-cat ../nooblyjs-ai-design/data/design/nfr-catalogue.yaml
+cat src/apps/design/data/design/nfr-catalogue.yaml
 ```
 
 ## Words to know

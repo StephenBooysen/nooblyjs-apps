@@ -28,7 +28,7 @@ const path = require('path');
 const vm = require('vm');
 const { marked } = require('marked');
 
-const blocks = require('../../../src/wiki/components/sharedLinkVisitBlocks');
+const blocks = require('../../../src/wiki/components/sharedLinkVisitBlocks.cjs');
 
 const REPO = path.resolve(__dirname, '../../..');
 const PARSER = path.join(REPO, 'public/js/markdown/markdown-parser.js');

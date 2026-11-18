@@ -11,8 +11,8 @@ tags: [nooblyjs-ai, steering]
 > **Status:** Draft v1 · 2026-10-19, revised 2026-11-17 against the code. What the factory is built with, what each
 > project actually uses today (checked against every `package.json`, every test folder and every adapter on
 > 2026-11-17), where projects differ from the rules, and the tools the new SDLC stages need. The full rules are in
-> `nooblyjs-ai-host/.claude/steering/tech.md`, and the summary every project carries is
-> `nooblyjs-ai-host/.claude/steering/nooblyjs-ai-shared-rules.md`. This file does not repeat them; it adds the
+> `.claude/steering/tech.md`, and the summary every project carries is
+> `.claude/steering/nooblyjs-ai-shared-rules.md`. This file does not repeat them; it adds the
 > whole-factory view and the decisions still to take.
 
 ---
@@ -35,35 +35,45 @@ tags: [nooblyjs-ai, steering]
 | Desktop and browser | Electron window over the host (optional); Edge side-panel extension | A second build of the app |
 
 **No build step.** `npm start` runs the source as written. **Dependencies stay minimal**: `express`, `js-yaml`,
-`nooblyjs-core` and sibling projects as `file:` links; anything else needs a reason in the PR.
+`nooblyjs-core` and the harness as `file:` links, all in the **one root `package.json`**; anything else needs a reason in the PR.
 
 ## 2. The repository
 
 ```
 <workspace>/
-├── nooblyjs-core/              separate repo: services, UI kit and frame, FsStore, the AI module
-└── nooblyjs-ai/                this monorepo
-    ├── .claude/steering/       this file, product.md, design.md, roadmap.md (the whole factory)
-    ├── scripts/each.js         runs install / test / coverage / build / clean in every project, in order
-    ├── nooblyjs-ai-host/       the host: frame, Home, lifecycle engine, Platform, chat, Teams, devtools, apps/{electron,edge,msteams}
-    ├── nooblyjs-ai-product/    Product                    (/product; a Factory section 2026-10-19 to CHG-009)
-    ├── nooblyjs-ai-design/     Design                     (/design; a Factory section from Phase 16c to CHG-009)
-    ├── nooblyjs-ai-factory/    Software Factory           (/factory, and the `factory` CLI), one package with:
-    │   └── quality/            its Test section           (/factory/quality)
-    ├── nooblyjs-ai-infrastructure/  Infrastructure        (/infrastructure, or standalone on :11008)
-    ├── nooblyjs-ai-security/   Security                   (/security, or standalone on :11009)
-    ├── nooblyjs-ai-operations/ Operations                 (/operations, or standalone on :11010)
-    ├── nooblyjs-ai-teammate/   Digital Teammates          (/teammates, or standalone)
-    ├── nooblyjs-ai-knowledge/  Knowledge (the wiki)       (/wiki)
-    ├── nooblyjs-ai-harness/    the agent runtime and `noobly` CLI (library)
-    └── nooblyjs-ai-desktop/    projects and chat for any LLM (standalone)
+├── nooblyjs-core/                  separate repo: services, UI kit and frame, FsStore, the AI module
+└── nooblyjs-apps/                  the git repo
+    ├── nooblyjs-apps-ai-harness/   the agent runtime and `noobly` CLI (library; beside the solution)
+    ├── nooblyjs-apps-ai-desktop/   projects and chat for any LLM (not hosted; beside the solution)
+    ├── nooblyjs-apps-blog/, -cms/, -wiki/   other apps
+    └── nooblyjs-apps-ai-factory/   NooblyJS: ONE solution, one package.json and one node_modules
+        ├── package.json            every dependency of the host and its apps
+        ├── app.js, src/, public/, test/, scripts/, workflows/   the host: frame, Home, lifecycle engine, Platform, chat, Teams, devtools
+        ├── apps/                   the Electron window, the Edge extension, the Teams app (separate deployables)
+        ├── .claude/steering/       this file, factory-product.md, design.md, roadmap.md (the whole factory),
+        │                           product.md, tech.md, structure.md (the host and the hosted-app contract)
+        └── src/apps/
+            ├── product/            Product                    (/product; a Factory section 2026-10-19 to CHG-009)
+            ├── design/             Design                     (/design; a Factory section from Phase 16c to CHG-009)
+            ├── factory/            Software Factory           (/factory, and the `factory` CLI: npm run factory), with:
+            │   └── quality/        its Test section           (/factory/quality)
+            ├── infrastructure/     Infrastructure             (/infrastructure)
+            ├── security/           Security                   (/security)
+            ├── operations/         Operations                 (/operations)
+            ├── teammate/           Digital Teammates          (/teammates)
+            └── knowledge/          Knowledge (the wiki)       (/wiki; CommonJS .cjs files, Express 4 as `express4`)
 ```
 
-The apps are built from the same template as `nooblyjs-ai-infrastructure` (the smallest clean one): `index.js` →
-`register()`, `src/{routes,services,repos,seed,util}`, `public/js/module.js` and pages on the kit, `test/`, and
-`server.js` for standalone mode. Security and Operations were built this way in Phases 19 and 22–23. The Test section
-uses the same template inside the Factory (`nooblyjs-ai-factory/<section>/`, its pages in `public/<section>/`, added to
-`src/services/sections.js` and `public/js/sections.js`); it has no `server.js`.
+The git repository is `nooblyjs-apps/`, one level above the solution, so one history covers it and the other apps (this
+folder has no `.git` of its own). The root `package.json` links `nooblyjs-core` as `file:../../nooblyjs-core` and the
+harness as `file:../nooblyjs-apps-ai-harness`. The host finds each app through `LOCAL_APPS` in `src/hosted-apps.js`. There
+is no standalone mode: every app runs inside the host, and its tests run from the root (`npm run test:apps`).
+
+The apps are built from the same template as `src/apps/infrastructure` (the smallest clean one): `index.js` →
+`register()`, `src/{routes,services,repos,seed,util}`, `public/js/module.js` and pages on the kit, and `test/` with a
+stand-in host (`test/fixtures/host.js`). Security and Operations were built this way in Phases 19 and 22–23. The Test
+section uses the same template inside the Factory (`src/apps/factory/<section>/`, its pages in `public/<section>/`, added
+to `src/services/sections.js` and `public/js/sections.js`).
 
 ## 3. Each project today
 
@@ -71,16 +81,16 @@ Test counts are test files (`*.test.js`, `*.test.mjs`, `*.test.cjs`, `*.test.jsx
 
 | Project | Modules | Runtime dependencies | Tests | Notes |
 | --- | --- | --- | --- | --- |
-| `nooblyjs-ai-host` | ESM | express 5, js-yaml, helmet, compression, express-rate-limit, express-session, passport, nooblyjs-core, AI module, the hosted apps | 70 + Playwright e2e | `nodemon` is a dev dependency (Phase 24) |
-| `nooblyjs-ai-product` | ESM | nooblyjs-core (express a dev dependency) | 24 | A hosted app at `/product`, no standalone server. Its Architecture pages show in Design |
-| `nooblyjs-ai-design` | ESM | nooblyjs-core (express a dev dependency) | 3 | A hosted app at `/design`, no standalone server |
-| `nooblyjs-ai-factory` | ESM | express 5 (dev), nooblyjs-ai-harness, AI module, nooblyjs-core, js-yaml | 118, for the line and the Test section | Needs Node 24; event log is daily YAML streams. The Test section is `quality/` (its pages in `public/quality/`); no standalone server for it |
-| `nooblyjs-ai-infrastructure` | ESM | nooblyjs-core (express a dev dependency) | 12 | A hosted app with a standalone `server.js` (:11008); mock provisioner only. Part of the Factory from 2026-10-19 to 2026-10-20 (CHG-005, CHG-007) |
-| `nooblyjs-ai-security` | ESM | nooblyjs-core (express a dev dependency) | 4 | A hosted app at `/security`, with a standalone `server.js` (:11009); mock scanner only |
-| `nooblyjs-ai-operations` | ESM | nooblyjs-core (express a dev dependency) | 4 | A hosted app at `/operations`, with a standalone `server.js` (:11010); mock deployer and monitor only |
-| `nooblyjs-ai-teammate` | ESM | express 5, js-yaml, nooblyjs-core, AI module | 46 | Stores through `host.store` when hosted (Phase 24); standalone `server.js` |
+| the host (the root) | ESM | express 5, js-yaml, helmet, compression, express-rate-limit, express-session, passport, nooblyjs-core, AI module | 70 + Playwright e2e | `nodemon` is a dev dependency (Phase 24) |
+| `src/apps/product` | ESM | nooblyjs-core | 24 | A hosted app at `/product`. Its Architecture pages show in Design |
+| `src/apps/design` | ESM | nooblyjs-core | 3 | A hosted app at `/design` |
+| `src/apps/factory` | ESM | express 5 (dev), nooblyjs-ai-harness, AI module, nooblyjs-core, js-yaml | 118, for the line and the Test section | Needs Node 24; event log is daily YAML streams. The Test section is `quality/` (its pages in `public/quality/`) |
+| `src/apps/infrastructure` | ESM | nooblyjs-core | 12 | A hosted app at `/infrastructure`; mock provisioner only. Part of the Factory from 2026-10-19 to 2026-10-20 (CHG-005, CHG-007) |
+| `src/apps/security` | ESM | nooblyjs-core | 4 | A hosted app at `/security`; mock scanner only |
+| `src/apps/operations` | ESM | nooblyjs-core | 4 | A hosted app at `/operations`; mock deployer and monitor only |
+| `src/apps/teammate` | ESM | express 5, js-yaml, nooblyjs-core, AI module | 46 | Stores through `host.store` (Phase 24) |
 | `nooblyjs-ai-harness` | ESM, `.jsx` via `tsx` | Ink, React, marked, tsx, AI module | 78 | React is for the **terminal** UI only; no browser code |
-| `nooblyjs-ai-knowledge` | **CommonJS** | ~35, including Socket.IO, multer, document converters, `@anthropic-ai/sdk`, `openai`, `@anthropic-ai/claude-agent-sdk` | 96 (Jest and `node:test`) | Express 4 behind an Express 5 adapter; generated browser UI |
+| `src/apps/knowledge` | **CommonJS** | ~35, including Socket.IO, multer, document converters, `@anthropic-ai/sdk`, `openai`, `@anthropic-ai/claude-agent-sdk` | 96 (Jest and `node:test`) | `.cjs` files; Express 4 (`express4`) behind an Express 5 adapter; generated browser UI; Jest suite is `npm run test:knowledge:jest` |
 | `nooblyjs-ai-desktop` | CommonJS | express 5, ejs, bootstrap, marked, dompurify, dotenv, nooblyjs-core, AI module | 13 | Standalone, single user, any provider by design |
 
 ### Known variances from the rules
@@ -93,7 +103,7 @@ Test counts are test files (`*.test.js`, `*.test.mjs`, `*.test.cjs`, `*.test.jsx
 | Desktop is CommonJS, uses EJS and Bootstrap, calls any provider | A standalone personal tool, outside governance | Keep it out of the hosted set, or bring it under the rules before hosting it `[CONFIRM]` |
 | Harness uses React (Ink) and `tsx` | Terminal UI | Allowed: the "no React" rule is for the browser |
 | Node version floors differed: the root `engines` said 24, most projects 22.12, Knowledge 20 | Each project was set up at a different time | **Resolved 2026-11-17 (D12, FIX-019):** `engines` is `>=24` in every project |
-| Five unused CommonJS files in `nooblyjs-ai-host/src/utils/` (`fileNaming.js`, `filePolicy.js`, `pathSafety.js`, `fileTypeUtils.js`, `validationMiddleware.js`) | Left behind when the host went ESM | **Resolved 2026-11-17 (D13, FIX-010):** deleted |
+| Five unused CommonJS files in `src/utils/` (`fileNaming.js`, `filePolicy.js`, `pathSafety.js`, `fileTypeUtils.js`, `validationMiddleware.js`) | Left behind when the host went ESM | **Resolved 2026-11-17 (D13, FIX-010):** deleted |
 | Teammates has its own FsStore | It predated the shared one | **Resolved in Phase 24:** Teammates stores through `host.store` when hosted |
 | `nodemon` was a runtime dependency of the host | Oversight | **Resolved in Phase 24:** a dev dependency |
 
@@ -109,10 +119,11 @@ Test counts are test files (`*.test.js`, `*.test.mjs`, `*.test.cjs`, `*.test.jsx
 - **Adapters** (`design.md` §9): Security's scanner (`SECURITY_SCANNER`), Operations' deployer and monitor
   (`OPERATIONS_DEPLOYER`, `OPERATIONS_MONITOR`) and the Test section's runner (`TEST_RUNNER`) accept only `mock` today.
   Any other name is refused at start, never silently replaced.
-- **Backups**: in `nooblyjs-ai-host`, `npm run backup` writes a dated, verified copy of `data/` outside it;
+- **Backups**: at the root, `npm run backup` writes a dated, verified copy of `data/` outside it;
   `npm run restore` puts one back.
-- **Tests**: `npm test` at the root runs every project's suite offline (`scripts/each.js`). `npm run test:e2e` runs
-  the host's Playwright and axe walk.
+- **Tests**: `npm test` at the root runs the host's tests and then every app's (`npm run test:host`, `npm run test:apps`),
+  offline; the wiki's legacy Jest suite is `npm run test:knowledge:jest`. `npm run test:e2e` runs the host's Playwright and
+  axe walk.
 
 ## 5. Platform decisions (taken 2026-11-17)
 
@@ -142,7 +153,7 @@ the eight of lifecycle version 3 (`product.md` §3.2).
 
 | Need | Stage | Chosen (2026-11-17) | Already in the factory |
 | --- | --- | --- | --- |
-| Secret scanning | Build | **Chosen: Gitleaks** | `nooblyjs-ai-factory/src/services/security/secret-scan.js`; the Security mock's `secrets` |
+| Secret scanning | Build | **Chosen: Gitleaks** | `src/apps/factory/src/services/security/secret-scan.js`; the Security mock's `secrets` |
 | Static analysis (SAST) | Build | **Chosen: Semgrep CE** | The Security mock's `sast` (no real tool) |
 | Dependency and licence scan (SCA) | Build | **Chosen: Trivy** (filesystem mode) | The Security mock's `sca` and `licence`; `npm audit` used by hand in the Phase 13 review |
 | SBOM | Build, Release | **Chosen: Trivy** (CycloneDX) | The Security mock's `sbom` |
@@ -164,12 +175,11 @@ the eight of lifecycle version 3 (`product.md` §3.2).
 - **Events**: `<thing>.<what happened>` in lowercase, dot-separated, with `_` inside a multi-word name
   (`approval.decided`, `finding.opened`, `outcome_review.closed`, `test_run.recorded`), with `{ actor, itemId, system, at }`
   and, for agent work, `{ teammateId, modelRoute, costUsd }`.
-- **Time** from `host.clock`. `Date.now()` appears only as the fallback when no host clock is passed (standalone
-  runs and tests) and to time how long something took (`durationMs`). Lifecycle decisions and events never use it on
+- **Time** from `host.clock`. `Date.now()` appears only as the fallback when no host clock is passed (tests) and to time how long something took (`durationMs`). Lifecycle decisions and events never use it on
   their own.
 - **Unknowns**: `[PLACEHOLDER]` for company facts, `[CONFIRM]` for decisions. Never invent them.
 - **Words, not colour**: every status has a word. WCAG 2.2 AA, checked by axe.
-- **One bug and change log** for every project: `nooblyjs-ai-host/.claude/specs/bugs-and-changes/tasks.md`.
+- **One bug and change log** for every project: `.claude/specs/bugs-and-changes/tasks.md`.
 - **Documents follow the Open Knowledge Format (OKF) v0.2** (Google Cloud's spec,
   `github.com/GoogleCloudPlatform/open-knowledge-format`): every document under a `.claude/`, `docs/` or `.docs/` folder,
   and each project's README, CLAUDE and SECURITY file, starts with YAML frontmatter with a `type` (Steering,
@@ -177,11 +187,10 @@ the eight of lifecycle version 3 (`product.md` §3.2).
   Tutorial, Reference…), a `title`, a one-sentence `description` and `tags`. Each folder is a bundle with a generated
   `index.md` that declares `okf_version: "0.2"`; `index.md` and `log.md` are reserved names. `npm run docs:okf` adds what
   is missing (it never overwrites a key or touches a body) and rewrites the indexes; `-- --check` fails on anything out
-  of step (`nooblyjs-ai-host/test/okf.test.js`). Seed and data Markdown under `src/` and `data/` is content, not
+  of step (`test/okf.test.js`). Seed and data Markdown under `src/` and `data/` is content, not
   documentation, and is not touched.
 - **Diagrams in steering and spec documents are Mermaid** (a ```` ```mermaid ```` block: `flowchart`, `sequenceDiagram`,
   `stateDiagram-v2`, `erDiagram`…), never box-and-arrow text drawn with characters. A folder or file layout may stay
   a plain text tree. Keep the words that explain a diagram; a diagram adds to the text, it does not hide a rule.
-- **Steering copies**: `npm run steering:sync` (in `nooblyjs-ai-host`) copies the shared rules into each sibling
-  project's `.claude/steering/nooblyjs-ai.md`; `-- --check` fails when one is out of date. All nine copies matched on
-  2026-11-17.
+- **Steering copies**: `npm run steering:sync` (at the root) copies the shared rules into each app's
+  `.claude/steering/nooblyjs-ai.md` (and the harness's); `-- --check` fails when one is out of date.

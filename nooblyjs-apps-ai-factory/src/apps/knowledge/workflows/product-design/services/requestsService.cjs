@@ -17,9 +17,9 @@
 
 'use strict';
 
-const ProductBase = require('../base/productBase.js');
-const TargetProcess = require('../utilities/targetProcess.js');
-const md = require('../utilities/markdown.js');
+const ProductBase = require('../base/productBase.cjs');
+const TargetProcess = require('../utilities/targetProcess.cjs');
+const md = require('../utilities/markdown.cjs');
 
 const REQUEST_INCLUDE = [
     'Id', 'Name', 'Description', 'EntityState[Name]', 'Project[Id,Name]',

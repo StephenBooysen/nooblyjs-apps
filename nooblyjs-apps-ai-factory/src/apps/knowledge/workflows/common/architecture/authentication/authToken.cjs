@@ -40,7 +40,7 @@ async function run(data) {
     console.log(__dirname);
     console.log("=====================");
 
-    const AuthenticateClass = require('./Authenticate');
+    const AuthenticateClass = require('./Authenticate.cjs');
     const authenticate = new AuthenticateClass(data.settings);
     let response = await authenticate.authenticate();
     const result = {

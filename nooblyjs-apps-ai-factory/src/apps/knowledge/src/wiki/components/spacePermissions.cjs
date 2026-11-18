@@ -29,7 +29,7 @@
 
 'use strict';
 
-const userStore = require('./userStore');
+const userStore = require('./userStore.cjs');
 
 /** Normalise a user's roles to a lowercased string array. */
 function rolesOf(user) {

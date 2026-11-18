@@ -11,10 +11,10 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const userStore = require('../components/userStore');
-const { isSpaceAdmin } = require('../components/spacePermissions');
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
-const { templateDirsFor, pickClosest } = require('../../shared/utils/filePolicy');
+const userStore = require('../components/userStore.cjs');
+const { isSpaceAdmin } = require('../components/spacePermissions.cjs');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
+const { templateDirsFor, pickClosest } = require('../../shared/utils/filePolicy.cjs');
 
 /**
  * Read every `.md` file in a template directory into list entries. Missing

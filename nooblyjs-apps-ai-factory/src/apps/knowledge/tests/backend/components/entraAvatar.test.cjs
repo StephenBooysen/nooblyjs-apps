@@ -10,8 +10,8 @@ const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs').promises;
 
-const avatarStore = require('../../../src/shared/auth/avatarStore');
-const { syncEntraAvatar, _resetTokenCache } = require('../../../src/shared/auth/entraAvatar');
+const avatarStore = require('../../../src/shared/auth/avatarStore.cjs');
+const { syncEntraAvatar, _resetTokenCache } = require('../../../src/shared/auth/entraAvatar.cjs');
 
 const EMAIL = 'Jane.Doe@Company.com';
 const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]); // PNG magic

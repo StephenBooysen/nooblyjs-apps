@@ -30,8 +30,8 @@
 
 'use strict';
 
-const internalApi = require('./internalApi');
-const { createKnowledgeServer, loadSdk, TOOLS, SERVER_INFO } = require('./server');
+const internalApi = require('./internalApi.cjs');
+const { createKnowledgeServer, loadSdk, TOOLS, SERVER_INFO } = require('./server.cjs');
 
 const MCP_PATH = '/applications/wiki/api/mcp';
 

@@ -5,7 +5,7 @@
 
 'use strict';
 
-const WorkflowManager = require('../../../src/datasources/components/workflowManager');
+const WorkflowManager = require('../../../src/datasources/components/workflowManager.cjs');
 const path = require('node:path');
 const fs = require('node:fs').promises;
 const fsSync = require('node:fs');

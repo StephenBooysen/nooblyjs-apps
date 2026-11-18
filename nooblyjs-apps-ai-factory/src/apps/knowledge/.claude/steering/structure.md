@@ -20,10 +20,15 @@ tags: [nooblyjs-ai-knowledge, steering]
 
 > `tech.md` has the platform rules, the `register()` contract and the migration from the legacy
 > Wiki Platform. This file covers the layout of the **hosted** Knowledge app at **`/knowledge`**.
-> For what the screens show, see `../nooblyjs-ai-host/.claude/steering/product.md` §5.6 and the mockups in
-> `../nooblyjs-ai-host/.claude/steering/brief/`. The legacy app's layout is described in `CLAUDE.md` and `.docs/`.
+> For what the screens show, see `../../../.claude/steering/product.md` §5.6 and the mockups in
+> the design brief (not in this repo). The legacy app's layout is described in `CLAUDE.md` and `.docs/`.
 
 ## 1. Layout
+
+> **As built (2026-11-18).** The app is `src/apps/knowledge/` in the one NooblyJS solution: no `package.json`, no
+> `app.js` and no standalone server (port 9101) any more. The host loads `index.mjs` through `LOCAL_APPS`. The legacy
+> CommonJS code is `.cjs` (the solution is ES modules), it `require`s Express 4 as `express4`, and its Jest suite runs as
+> `npm run test:knowledge:jest` from the solution root. The tree below is the Phase 8 plan; `CLAUDE.md` ("This app in the solution") has the layout as it is.
 
 ```
 nooblyjs-ai-knowledge/

@@ -29,7 +29,7 @@
 'use strict';
 
 const path = require('node:path');
-const { createAccess } = require('../knowledge/access');
+const { createAccess } = require('../knowledge/access.cjs');
 
 const ITEM_ID = /^[A-Z][A-Z0-9]{1,9}-\d{1,6}$/;
 const IMPORT_NAME = /^[A-Za-z0-9][A-Za-z0-9 ._-]{0,79}$/;

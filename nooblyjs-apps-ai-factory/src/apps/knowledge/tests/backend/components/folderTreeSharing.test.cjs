@@ -26,7 +26,7 @@
 
 const path = require('node:path');
 
-const ROUTES = path.resolve(__dirname, '../../../src/wiki/routes/filingRoutes');
+const ROUTES = path.resolve(__dirname, '../../../src/wiki/routes/filingRoutes.cjs');
 
 /** Collects the registered handlers so a request can be driven through them. */
 function makeApp() {

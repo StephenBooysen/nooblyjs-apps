@@ -11,9 +11,9 @@
 
 'use strict';
 const fs = require('node:fs').promises;
-const DocumentChunker = require('./documentChunker');
-const wikiBlocks = require('../../common/content/wikiBlocks.js');
-const { prompts } = require('../../common/prompts/prompts');
+const DocumentChunker = require('./documentChunker.cjs');
+const wikiBlocks = require('../../common/content/wikiBlocks.cjs');
+const { prompts } = require('../../common/prompts/prompts.cjs');
 
 /**
  * Document Cleaner Class

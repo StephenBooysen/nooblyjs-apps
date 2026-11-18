@@ -8,7 +8,7 @@
 
 'use strict';
 
-const { summarizeFromSearch } = require('../../../src/wiki/components/searchSummarizer');
+const { summarizeFromSearch } = require('../../../src/wiki/components/searchSummarizer.cjs');
 
 const SNIPPET = 'Technology Executive <mark>Debbie</mark> <mark>Cunningham</mark> DR Level Hot';
 const SNIPPET_CLEAN = 'Technology Executive Debbie Cunningham DR Level Hot';

@@ -10,7 +10,7 @@
 
 'use strict';
 
-const ModelBase = require('../models/modelBase');
+const ModelBase = require('../models/modelBase.cjs');
 
 /**
  * This class is used for authentication methods

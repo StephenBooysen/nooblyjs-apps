@@ -7,8 +7,8 @@
 
 'use strict';
 
-const { productSettings } = require('../utilities/settings');
-const RequestFeaturesService = require('../services/requestFeaturesService');
+const { productSettings } = require('../utilities/settings.cjs');
+const RequestFeaturesService = require('../services/requestFeaturesService.cjs');
 
 /**
  * @param {object} [data] - Workflow context (unused).

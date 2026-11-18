@@ -41,7 +41,7 @@ So hosting changes the edges and nothing in the middle. The event log is still t
 | `public/js/pages/*.js` | one page each, ported from `public/dashboard/app.js` |
 | `public/css/factory.css` | the dashboard's CSS, every selector under `[data-module="factory"] .fx-root`, its tokens pointed at NooblyJS's |
 | `test/register.test.js`, `test/module.test.js`, `test/fixtures/host.js` | the hosted-app contract, on a stand-in host |
-| `../nooblyjs-ai-host`: `package.json`, `src/seed/data/config/hosted-apps.yaml`, `test/factory.test.js` | NooblyJS depends on the factory, enables it, and tests it through the real host |
+| `../../..`: `package.json`, `src/seed/data/config/hosted-apps.yaml`, `test/factory.test.js` | NooblyJS depends on the factory, enables it, and tests it through the real host |
 
 ## Details that mattered
 
@@ -59,11 +59,11 @@ The rest of NooblyJS's Phase 7 (`.claude/steering/tech.md` §9): the log is stil
 ## Try it
 
 ```bash
-cd ../nooblyjs-ai-host && npm install && npm start          # then open /factory
+cd ../../.. && npm install && npm start          # then open /factory
 # give it something to show: point the CLI at the folder NooblyJS gave the factory
 export FACTORY_HOME=$PWD/data/factory
-node ../nooblyjs-ai-factory/bin/factory.js submit ../nooblyjs-ai-factory/examples/issues/add-subtract.md --repo /tmp/calc
-node ../nooblyjs-ai-factory/bin/factory.js serve    # works the queue; the pages follow along
+node ../factory/bin/factory.js submit ../factory/examples/issues/add-subtract.md --repo /tmp/calc
+node ../factory/bin/factory.js serve    # works the queue; the pages follow along
 ```
 
 ## What we learned

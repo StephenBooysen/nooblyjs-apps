@@ -58,11 +58,11 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
 
 const fs = require('node:fs');
 const serviceRegistry = require('nooblyjs-core');
-const { resolveAppBaseDir, resolveSpace } = require('../utilities/spaces');
-const DiskFileSource = require('../services/diskFileSource');
-const FolderExpert = require('../services/folderExpert');
-const ContextProcessor = require('../services/contextProcessor');
-const { libraryFor } = require('../../common/prompts/prompts');
+const { resolveAppBaseDir, resolveSpace } = require('../utilities/spaces.cjs');
+const DiskFileSource = require('../services/diskFileSource.cjs');
+const FolderExpert = require('../services/folderExpert.cjs');
+const ContextProcessor = require('../services/contextProcessor.cjs');
+const { libraryFor } = require('../../common/prompts/prompts.cjs');
 
 /**
  * Resolve the step's settings from its input and the environment.

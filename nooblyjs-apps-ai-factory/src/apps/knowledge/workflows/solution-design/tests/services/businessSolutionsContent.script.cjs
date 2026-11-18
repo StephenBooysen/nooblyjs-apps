@@ -16,10 +16,10 @@ const path = require('node:path');
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
 // Import some libraries
-const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate');
+const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate.cjs');
 
 // Import the Business Solution Object
-const BusinessSolutionsClass = require('../../services/businessSolutions');
+const BusinessSolutionsClass = require('../../services/businessSolutions.cjs');
 
 // Load settings data
 const settings = {

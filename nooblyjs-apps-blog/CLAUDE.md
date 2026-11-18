@@ -27,7 +27,7 @@ npm run kill
 ### Environment
 
 - Default port: `3003` (override with `PORT` environment variable)
-- `nooblyjs-core` is a relative dependency (`../nooblyjs-core`); run `npm install` in that sibling folder too, or the app fails with `Cannot find module 'express'`
+- `nooblyjs-core` is a relative dependency (`../../nooblyjs-core`); run `npm install` in that sibling folder too, or the app fails with `Cannot find module 'express'`
 - Service data (users, sessions): `./.app-blog/data` (set via `options.dataDir` in `app.js`)
 - Site settings: `./.data/blog-settings.json`
 - Posts storage: `./posts/published` and `./posts/drafts` (scheduled posts live in `drafts`)

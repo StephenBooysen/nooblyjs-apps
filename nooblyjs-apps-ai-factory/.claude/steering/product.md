@@ -9,7 +9,7 @@ tags: [nooblyjs-ai-host, steering]
 # NooblyJS — Product
 
 > Source of truth for what NooblyJS is and does. Derived from the design team's brief in
-> `.claude/steering/brief/` (`noobly-build-brief.md` plus 22 screen mockups; last synced with
+> the design brief, not in this repo (`noobly-build-brief.md` plus 22 screen mockups; last synced with
 > the brief on 2026-10-08 15:00, and the `noobly-platform-*` screens re-checked in detail on 2026-10-08). Delivery order lives in `roadmap.md`. The child
 > projects listed in [§10](#10-child-projects) build against this document.
 > All numbers quoted from mockups are **sample data** that tells one story
@@ -85,7 +85,7 @@ These are company governance rules, so they are not optional:
 
 Every piece of work is an **Item** (e.g. `IDEA-018`, `PRD-031`, or a PR such as
 `slots-api #482`) that moves through eight stages (lifecycle v3, since Phase 16b, 2026-10-20; the whole-SDLC view is
-the monorepo root's `.claude/steering/product.md` §3):
+`.claude/steering/factory-product.md` §3):
 
 ```
 1 Discover → 2 Product → 3 Design → 4 Engineer → 5 Build → 6 Test → 7 Release → 8 Operate
@@ -173,7 +173,7 @@ to the Owners one working day after the target `[CONFIRM]`.
   section of the Factory, not a rail item: its sidebar is grouped **Product · Design · Engineering · Build · Test** (§10;
   lifecycle v3, Phase 16b). Infra was a section too
   from 2026-10-19 to 2026-10-20 and is its own rail item again (CHG-007).
-- **Module sidebar** (260px): the module name in lowercase (`nooblyjs-ai-host`, `product factory`,
+- **Module sidebar** (260px): the module name in lowercase (`noobly`, `product factory`,
   `factory`, `teammates`, `knowledge`, `platform`), nav rows with badges, and a **status
   card** at the bottom (e.g. "All systems healthy · 9 agents · 14 items in flight · Spent
   today $142 of $400", or the module's own spend against budget), plus the signed-in person
@@ -186,7 +186,7 @@ to the Owners one working day after the target `[CONFIRM]`.
   (`tech.md` §2.1, ADR-001).
 - Design tokens, type, components and accessibility rules: see brief §7 and `.claude/style/`.
 
-### 5.2 Home (`nooblyjs-ai-host`)
+### 5.2 Home (the host)
 
 Nav: For you, Overview, Lifecycle, Approvals (badge), Activity, Metrics, Teams & roles.
 
@@ -271,7 +271,7 @@ Nav: For you, Overview, Lifecycle, Approvals (badge), Activity, Metrics, Teams &
 Nav: Overview · *Strategy*: Portfolios · *Stages*: Product, Specs, Architecture, UX Design, UI Design · *Flow*:
 Reviews (badge), Handoffs · *Setup*: Settings. Status card: agents on duty, monthly spend against budget.
 
-Where work sits (2026-10-12; the detail is the Product app's `product.md` §4, `nooblyjs-ai-product/.claude/steering/`): **strategic themes** ("Solve the
+Where work sits (2026-10-12; the detail is the Product app's `product.md` §4, `src/apps/product/.claude/steering/`): **strategic themes** ("Solve the
 every day", "Leverage AI") sit above **portfolios** (Digital, Buying, Banking), and a portfolio works towards any
 number of them. A portfolio has none or many **value streams** (Digital Commerce, Media and Advertising, Rewards,
 Data Monetisation). Each portfolio and value stream has a Markdown document made from a template that an Approver
@@ -805,17 +805,17 @@ through events and APIs. Don't copy code from another slice.
 
 | Project | Owns | Screens / capabilities |
 | --- | --- | --- |
-| **`nooblyjs-ai-host`** (this repo) | The NooblyJS shell and the new UI modules: suite rail, module sidebar, design system, routing, SSO, role checks, onboarding and profiles, team chat, the Teams bot endpoint | Onboarding, Home (For you, Overview, Lifecycle, Approvals, Activity, Metrics, Teams & roles), Product Factory screens, Platform screens, chat panel; hosts the restyled Factory, Teammates and Knowledge UIs |
+| **the host** (the solution root) | The NooblyJS shell and the new UI modules: suite rail, module sidebar, design system, routing, SSO, role checks, onboarding and profiles, team chat, the Teams bot endpoint | Onboarding, Home (For you, Overview, Lifecycle, Approvals, Activity, Metrics, Teams & roles), Product Factory screens, Platform screens, chat panel; hosts the restyled Factory, Teammates and Knowledge UIs |
 | **`nooblyjs-core`** | Shared backend services: auth, logging, caching, queueing, data, notifying, scheduling, measuring, searching, workflow | Event bus for lifecycle events, **AuditEvent** store, notifications to Teams/Outlook, metrics aggregation, service dashboards |
 | **`nooblyjs-ai-common`** | Shared AI building blocks: provider adapters, model catalogue, tokens, **cost**, retry, SSE | The **model gateway** behind Model routing: work type → model → fallback → provider (Bedrock / Vertex / Azure); cost per call tagged with item, teammate and system |
 | **`nooblyjs-ai-harness`** | The agent runtime: agent loop, tools, permissions, sandboxing, hooks, MCP, skills, memory | What every agent runs in: factory stations, teammate tasks, Product Factory drafting agents. Enforces guardrails, no outbound internet, staging-only secrets |
-| **`nooblyjs-ai-product`** (`/product`; a section of the Software Factory from 2026-10-19 to CHG-009) | The **Product Factory** (with its own screens): signals, ideas, specs, architecture artefacts (diagram as code, ADRs, standards check, quality attributes), UX and UI artefacts, the roadmap, and the per-stage **drafting agents** | Owns the Product board, Spec, Architecture, UX Design and UI Design screens (a UI module in the frame), the handoff preview, and "ask the agent to draft" |
-| **`nooblyjs-ai-design`** (`/design`; Phase 16c, a section of the Software Factory until CHG-009) | **Design**: business requirements, solution architecture, functional analysis and stories (§5.3a), and Design's readiness checks | Owns the five Design screens; keeps each story a lifecycle item through `host.service('workflows')` (`syncStories`, `handoffStory`); answers `host.service('design')` |
-| **`nooblyjs-ai-infrastructure`** (`/infrastructure`; a section of the Software Factory from 2026-10-19 to 2026-10-20) | **Infrastructure**: designs, environments, provisioning runs, drift, cloud cost | Environments, Design, Designs, Provisioning runs (and a run's page), Environment, Testing in environments, Blueprints, Cost, Policies. Asks the lifecycle engine for design approvals and Platform for the cloud budget; tells Platform its environments and previews |
-| **`nooblyjs-ai-factory`** · the line | **Software Factory**: queue, scheduler, line of stations, gates, PR delivery; one app at `/factory` with its Test section (`/factory/quality`, `host.service('quality')`) | Line, Runs, Inbox, Campaigns, **Metrics**. Accepts handoff work items; applies quality attributes as gates; reports runs, PRs and gate results back to the Item |
-| **`nooblyjs-ai-teammate`** | **Digital Teammates**: hire, configure, budget and bill named agents | **Team roster**, Profiles, Work timeline, Billing & timesheets, Hire, Team memory. The source of agents across NooblyJS, including agents answering in chat and Teams meetings; every agent action bills to a timesheet and to the right team |
-| **`nooblyjs-ai-knowledge`** | **Knowledge Repository** (new): spaces, collections, source connectors, ingest with PII redaction, embeddings, cited answers, freshness, process models | **Ask & search**, **Spaces / process model** (L0 → L1 → L2), Sources, Needs review, Graph, backlinks into Items. Context provider for every agent |
-| **`nooblyjs-ai-host`** (`src/lifecycle/`) | The **lifecycle engine**, part of NooblyJS itself since 2026-10-10 (it was the hosted app `nooblyjs-ai-workflows`): Items, stages, readiness checks, approvals with target times and escalation, handoffs, send-back, and stage orchestration (which tells the Product app when an item enters a stage) | Backs Lifecycle, Approvals, the stage and approval parts of every Product Factory screen, and the UI → Factory handoff (generating Jira work items) |
+| **`src/apps/product`** (`/product`; a section of the Software Factory from 2026-10-19 to CHG-009) | The **Product Factory** (with its own screens): signals, ideas, specs, architecture artefacts (diagram as code, ADRs, standards check, quality attributes), UX and UI artefacts, the roadmap, and the per-stage **drafting agents** | Owns the Product board, Spec, Architecture, UX Design and UI Design screens (a UI module in the frame), the handoff preview, and "ask the agent to draft" |
+| **`src/apps/design`** (`/design`; Phase 16c, a section of the Software Factory until CHG-009) | **Design**: business requirements, solution architecture, functional analysis and stories (§5.3a), and Design's readiness checks | Owns the five Design screens; keeps each story a lifecycle item through `host.service('workflows')` (`syncStories`, `handoffStory`); answers `host.service('design')` |
+| **`src/apps/infrastructure`** (`/infrastructure`; a section of the Software Factory from 2026-10-19 to 2026-10-20) | **Infrastructure**: designs, environments, provisioning runs, drift, cloud cost | Environments, Design, Designs, Provisioning runs (and a run's page), Environment, Testing in environments, Blueprints, Cost, Policies. Asks the lifecycle engine for design approvals and Platform for the cloud budget; tells Platform its environments and previews |
+| **`src/apps/factory`** · the line | **Software Factory**: queue, scheduler, line of stations, gates, PR delivery; one app at `/factory` with its Test section (`/factory/quality`, `host.service('quality')`) | Line, Runs, Inbox, Campaigns, **Metrics**. Accepts handoff work items; applies quality attributes as gates; reports runs, PRs and gate results back to the Item |
+| **`src/apps/teammate`** | **Digital Teammates**: hire, configure, budget and bill named agents | **Team roster**, Profiles, Work timeline, Billing & timesheets, Hire, Team memory. The source of agents across NooblyJS, including agents answering in chat and Teams meetings; every agent action bills to a timesheet and to the right team |
+| **`src/apps/knowledge`** | **Knowledge Repository** (new): spaces, collections, source connectors, ingest with PII redaction, embeddings, cited answers, freshness, process models | **Ask & search**, **Spaces / process model** (L0 → L1 → L2), Sources, Needs review, Graph, backlinks into Items. Context provider for every agent |
+| **the host** (`src/lifecycle/`) | The **lifecycle engine**, part of NooblyJS itself since 2026-10-10 (it was the hosted app `nooblyjs-ai-workflows`): Items, stages, readiness checks, approvals with target times and escalation, handoffs, send-back, and stage orchestration (which tells the Product app when an item enters a stage) | Backs Lifecycle, Approvals, the stage and approval parts of every Product Factory screen, and the UI → Factory handoff (generating Jira work items) |
 
 > The `nooblyjs-ai-knowledge` responsibilities above are proposed. The lifecycle engine (Phase 2) and
 > the Product app are built as described.
@@ -852,7 +852,8 @@ Resolve these before building the affected slice:
 
 ## 12. Open questions
 
-1. ~~Monorepo or separate deployables~~: decided. These are separate repos, mounted as modules in one `nooblyjs-ai-host` process (see `tech.md` §2).
+1. ~~Monorepo or separate deployables~~: decided. They are modules mounted in one host process (see `tech.md` §2). Since
+   2026-11-18 they are also one solution: the apps are folders under `src/apps/`, with one `package.json` at the root.
 2. ~~Restyle or embed~~: decided. Restyle into the NooblyJS shell.
 3. Hosting target (AKS / EKS / GKE) and data region. (Phase 9 built Containers over a simulated runtime behind an
    interface, so this can be decided later.)
@@ -885,7 +886,7 @@ Resolve these before building the affected slice:
 
 - Delivery phases, with how to test each one: `.claude/steering/roadmap.md`
 - How it's built: `tech.md`. Where things live: `structure.md`.
-- Full build brief and design tokens: `.claude/steering/brief/noobly-build-brief.md`
-- Screen mockups: `.claude/steering/brief/<screen>/*.dc.html` (serve the folder over HTTP to
-  view); the full canvas is `.claude/steering/brief/noobly-platform.html`
+- Full build brief and design tokens: the design brief, not in this repo (`noobly-build-brief.md`)
+- Screen mockups: the design brief's `<screen>/*.dc.html`, not in this repo (serve the folder over HTTP to
+  view); the full canvas is `noobly-platform.html` in the same brief
 - Brand assets: `.claude/style/`

@@ -16,8 +16,8 @@
 
 'use strict';
 
-const ProductBase = require('../base/productBase.js');
-const TargetProcess = require('../utilities/targetProcess.js');
+const ProductBase = require('../base/productBase.cjs');
+const TargetProcess = require('../utilities/targetProcess.cjs');
 
 const ART_VALUE_STREAM_INCLUDE = ['Id', 'AgileReleaseTrain[Id,Name]', 'ValueStream[Id,Name]'];
 

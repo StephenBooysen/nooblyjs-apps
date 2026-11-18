@@ -62,7 +62,7 @@ const path = require('node:path');
 const fsp = require('node:fs').promises;
 const { execFile } = require('node:child_process');
 
-const { startup } = require('../startup/startupRunner');
+const { startup } = require('../startup/startupRunner.cjs');
 
 /**
  * `git clone --depth`, run directly rather than through the filing provider.

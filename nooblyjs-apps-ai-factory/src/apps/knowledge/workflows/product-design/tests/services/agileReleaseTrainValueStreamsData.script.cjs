@@ -20,7 +20,7 @@ const path = require('node:path');
 
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
-const AgileReleaseTrainValueStreamsService = require('../../services/agileReleaseTrainValueStreamsService');
+const AgileReleaseTrainValueStreamsService = require('../../services/agileReleaseTrainValueStreamsService.cjs');
 
 const settings = {
     server: process.env.product_design_server,

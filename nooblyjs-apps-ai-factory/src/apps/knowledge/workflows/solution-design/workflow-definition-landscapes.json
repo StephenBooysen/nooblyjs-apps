@@ -3,8 +3,8 @@
     "name": "Design Solution: Retrieve Application Architecture",
     "description": "Retrieve the Application Landscapes inventory and publish the Application Architecture content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessLandscapes.js"
+      "steps/authToken.cjs",
+      "steps/businessLandscapes.cjs"
     ],
     "tags": [
       "Architecture"
@@ -27,8 +27,8 @@
     "name": "Design Solution: Retrieve Reference Architecture",
     "description": "Retrieve the Reference Landscapes inventory and publish the Reference Architecture content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessLandscapes.js"
+      "steps/authToken.cjs",
+      "steps/businessLandscapes.cjs"
     ],
     "tags": [
       "Architecture"

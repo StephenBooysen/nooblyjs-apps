@@ -9,7 +9,7 @@
 
 'use strict';
 
-const BearerTokenMiddleware = require('../../../src/wiki/auth/bearerTokenMiddleware');
+const BearerTokenMiddleware = require('../../../src/wiki/auth/bearerTokenMiddleware.cjs');
 
 function makeLogger() {
   return { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() };

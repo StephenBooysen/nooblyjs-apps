@@ -9,11 +9,11 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const agentTasks = require('../src/shared/ai/agentTasks');
+const agentTasks = require('../src/shared/ai/agentTasks.cjs');
 const { teammateRunner, workTypeOf } = require('../src/hosted/platform.cjs');
-const AIPrompt = require('../src/shared/ai/aiPrompt');
-const { AIInstanceRegistry } = require('../src/datasources/lib/aiInstances');
-const WorkflowBridgeServer = require('../src/datasources/lib/workflowBridgeServer');
+const AIPrompt = require('../src/shared/ai/aiPrompt.cjs');
+const { AIInstanceRegistry } = require('../src/datasources/lib/aiInstances.cjs');
+const WorkflowBridgeServer = require('../src/datasources/lib/workflowBridgeServer.cjs');
 
 const LERATO = { id: 'lerato-m', name: 'Lerato M.', accessRole: 'Approver' };
 const quiet = { debug() {}, info() {}, warn() {}, error() {} };
@@ -179,7 +179,7 @@ test('standalone, the main process clears a marker a hosted run left behind', as
   agentTasks.useTeammates(() => {}, { appBaseDir });
   delete global.nooblyAgentTasks;
   assert.equal(agentTasks.routed(appBaseDir), 'bridge');
-  const { initializeAIInstances } = require('../src/datasources/lib/aiInstances');
+  const { initializeAIInstances } = require('../src/datasources/lib/aiInstances.cjs');
   const settings = new Map();
   try {
     await initializeAIInstances({ serviceRegistry: providerRegistry(), app: { set: (k, v) => settings.set(k, v) }, log: quiet, appBaseDir });

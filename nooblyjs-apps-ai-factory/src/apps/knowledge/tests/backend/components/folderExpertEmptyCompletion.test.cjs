@@ -31,8 +31,7 @@
 // — it must stay above the require below.)
 jest.mock('nooblyjs-core', () => ({}));
 
-const FolderExpert = require(
-  '../../../workflows/system-context/services/folderExpert.js');
+const FolderExpert = require('../../../workflows/system-context/services/folderExpert.cjs');
 
 /** Silent logger — retry() logs a warning per failed attempt. */
 const quietLogger = { info() {}, warn() {}, error() {}, debug() {} };

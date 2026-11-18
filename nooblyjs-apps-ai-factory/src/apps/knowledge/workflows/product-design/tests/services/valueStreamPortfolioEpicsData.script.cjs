@@ -20,7 +20,7 @@ const path = require('node:path');
 
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
-const ValueStreamPortfolioEpicsService = require('../../services/valueStreamPortfolioEpicsService');
+const ValueStreamPortfolioEpicsService = require('../../services/valueStreamPortfolioEpicsService.cjs');
 
 const settings = {
     server: process.env.product_design_server,

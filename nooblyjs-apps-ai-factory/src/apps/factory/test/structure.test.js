@@ -33,10 +33,9 @@ test('every folder in src/ has tests', () => {
   }
 });
 
-test('the library entry is the root index.js, and package.json points at it', () => {
-  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  assert.equal(pkg.main, 'index.js');
+test('the library entry is the app folder\'s index.js, and the app has no package.json of its own', () => {
   assert.ok(fs.existsSync(path.join(ROOT, 'index.js')));
+  assert.equal(fs.existsSync(path.join(ROOT, 'package.json')), false, 'the solution has one package.json, at its root');
 });
 
 test('every relative import in src/ resolves to a file', () => {

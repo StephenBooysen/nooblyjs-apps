@@ -27,9 +27,9 @@ const {
   isTemplateRelPath,
   pickClosest,
   isSpaceScopedSystemPath,
-} = require('../../../src/shared/utils/filePolicy');
+} = require('../../../src/shared/utils/filePolicy.cjs');
 
-const { templateWriteCheck } = require('../../../src/wiki/components/spacePermissions');
+const { templateWriteCheck } = require('../../../src/wiki/components/spacePermissions.cjs');
 
 describe('filePolicy — template cascade', () => {
   test('templates live in the same folder-local .system namespace as artifacts', () => {

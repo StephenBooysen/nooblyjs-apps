@@ -26,8 +26,8 @@ const fsp = require('node:fs').promises;
 const os = require('node:os');
 const path = require('node:path');
 
-const visitTally = require('../../../src/wiki/components/visitTally');
-const userStore = require('../../../src/wiki/components/userStore');
+const visitTally = require('../../../src/wiki/components/visitTally.cjs');
+const userStore = require('../../../src/wiki/components/userStore.cjs');
 
 /** A content root in a temp dir; the tally lives under `.system/useractivity/`. */
 let root;

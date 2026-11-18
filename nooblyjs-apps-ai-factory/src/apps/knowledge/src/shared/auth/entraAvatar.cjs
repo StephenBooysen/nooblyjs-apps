@@ -25,7 +25,7 @@
 
 'use strict';
 
-const avatarStore = require('./avatarStore');
+const avatarStore = require('./avatarStore.cjs');
 
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 

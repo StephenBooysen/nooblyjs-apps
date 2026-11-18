@@ -11,7 +11,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { promises: fsPromises } = require('node:fs');
-const { containedPath, handlePathError } = require('../../shared/utils/pathSafety');
+const { containedPath, handlePathError } = require('../../shared/utils/pathSafety.cjs');
 
 /**
  * Content Routes Module

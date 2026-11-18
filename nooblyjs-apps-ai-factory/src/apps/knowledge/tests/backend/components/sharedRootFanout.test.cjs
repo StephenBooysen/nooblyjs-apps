@@ -27,8 +27,8 @@
 const {
   templateDirsFor,
   pickClosest
-} = require('../../../src/shared/utils/filePolicy');
-const { isPathVisible } = require('../../../src/shared/spaces/spacePaths');
+} = require('../../../src/shared/utils/filePolicy.cjs');
+const { isPathVisible } = require('../../../src/shared/spaces/spacePaths.cjs');
 
 const ROOT = '/content/engineering';
 

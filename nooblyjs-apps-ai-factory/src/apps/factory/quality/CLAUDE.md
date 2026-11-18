@@ -36,7 +36,7 @@ an environment test run (`TRN-test-slots-1`, each failing test with its case and
 
 The pages for test runs, coverage and defects are the Factory's Test group (`../public/js/pages/testing.js`, over
 `/factory/api/v1/test/…`), with CHG-008's sample after the recorded rows. The shared rules are the Factory's copy:
-`../.claude/steering/nooblyjs-ai.md`. The specs are `../../nooblyjs-ai-host/.claude/specs/phase-16d-engineering/` and
+`../.claude/steering/nooblyjs-ai.md`. The specs are `../../../.claude/specs/phase-16d-engineering/` and
 `phase-20-quality/`.
 
 ```bash

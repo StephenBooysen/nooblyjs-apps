@@ -16,11 +16,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Shared architecture layer
-const Inventory = require('../../common/architecture/models/inventory.js');
-const fileUtils = require('../../common/architecture/filesystem/filesystem.js');
+const Inventory = require('../../common/architecture/models/inventory.cjs');
+const fileUtils = require('../../common/architecture/filesystem/filesystem.cjs');
 
 // The per-model infrastructure service
-const InfrastructureClass = require('./infrastructure.js');
+const InfrastructureClass = require('./infrastructure.cjs');
 
 // The ARIS model id of the infrastructure inventory: "Acme Technology
 // Classification" (Type 21), whose objects assign out to the individual

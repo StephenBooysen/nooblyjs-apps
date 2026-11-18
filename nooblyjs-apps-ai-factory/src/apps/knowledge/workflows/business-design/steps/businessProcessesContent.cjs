@@ -12,10 +12,10 @@
 require('dotenv').config({path:'../../../.env'});
 
 // Shared step helpers (ARIS credentials + authentication)
-const authenticateStep = require('../../common/architecture/authentication/authenticateStep');
+const authenticateStep = require('../../common/architecture/authentication/authenticateStep.cjs');
 
 // The business processes class is used to retrieve and publish a Business Processes
-const BusinessProcessesClass = require('../services/businessProcesses')
+const BusinessProcessesClass = require('../services/businessProcesses.cjs')
 
 /**
  * Build the Business Processes content from the ARIS system.

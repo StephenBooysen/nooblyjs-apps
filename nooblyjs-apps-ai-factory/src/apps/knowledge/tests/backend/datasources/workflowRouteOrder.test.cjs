@@ -12,7 +12,7 @@
 
 'use strict';
 
-const registerWorkflowRoutes = require('../../../src/datasources/routes/workflowdashboard');
+const registerWorkflowRoutes = require('../../../src/datasources/routes/workflowdashboard.cjs');
 
 /**
  * A fake Express app that records the path of every route registered against

@@ -10,7 +10,7 @@
 
 // Dependancies
 const path = require('node:path');
-const express = require('express');
+const express = require('express4');
 
 // Load our settings
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
@@ -40,7 +40,7 @@ const worker = serviceRegistry.working('default', {
 
 // Start the worker
 worker.start(
-    'authToken.js',
+    'authToken.cjs',
      {settings: settings},
     function (status, result) {
         console.log('Worker completed with status:', status);

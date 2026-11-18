@@ -26,7 +26,7 @@
 
 // Dependancies
 const path = require('node:path');
-const express = require('express');
+const express = require('express4');
 
 // Load the knowledge platform .env (APP_BASE_DIR + AI provider settings).
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env'), quiet: true });
@@ -61,7 +61,7 @@ logger.info('Build Context test: starting worker', settings);
 
 // Start the worker — `settings` is delivered verbatim as the step's `run(data)`.
 worker.start(
-  'build-context.js',
+  'build-context.cjs',
   settings,
   function (status, result) {
     // status is 'completed' (result = run summary) or 'error' (result = message).

@@ -36,9 +36,9 @@ const {
   readObjectStore,
   isShallow,
   assertCompactable,
-} = require('../../../src/shared/repositories/repositoryCompact');
+} = require('../../../src/shared/repositories/repositoryCompact.cjs');
 
-const { isBusy, runExclusive } = require('../../../src/shared/repositories/repositorySync');
+const { isBusy, runExclusive } = require('../../../src/shared/repositories/repositorySync.cjs');
 
 jest.setTimeout(60000);
 

@@ -47,22 +47,22 @@ const path = require('node:path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
 
 const serviceRegistry = require('nooblyjs-core');
-const WorkflowBridgeClient = require('../../common/bridge/workflowBridgeClient.js');
+const WorkflowBridgeClient = require('../../common/bridge/workflowBridgeClient.cjs');
 const {
    parseRepositoriesTable,
    serializeRepositoriesTable,
    setStatus,
    findConfigurationDocuments,
-} = require('../utilities/codeRepositoriesDocument.js');
+} = require('../utilities/codeRepositoriesDocument.cjs');
 const {
    latestExecutionByRepo,
    statusFor,
-} = require('../utilities/workflowExecutions.js');
+} = require('../utilities/workflowExecutions.cjs');
 const {
    findOrphanedClones,
    removeOrphan,
    formatBytes,
-} = require('../utilities/orphanedClones.js');
+} = require('../utilities/orphanedClones.cjs');
 
 const DEFAULTS = {
    buildWorkflowName: 'Build: Code Processor (Bitbucket)',

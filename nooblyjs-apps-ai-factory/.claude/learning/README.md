@@ -41,5 +41,5 @@ Ideas the overview mentions that have no lesson of their own yet, for the next r
 - nooblyjs-ai-infrastructure: designs, approvals by environment kind, drift.
 - The apps in `noobly/apps/`: the Teams app, the Edge extension, the desktop window.
 
-The harness and Teammates repositories also keep older notes of their own (`nooblyjs-ai-harness/.claude/learning/`,
-`nooblyjs-ai-teammate/.claude/learning/`); those are about how each was first built, not about NooblyJS.
+The harness and Teammates projects also keep older notes of their own (`../../../nooblyjs-apps-ai-harness/.claude/learning/`,
+`src/apps/teammate/.claude/learning/`); those are about how each was first built, not about NooblyJS. The harness is outside this monorepo, in `nooblyjs-apps/`.

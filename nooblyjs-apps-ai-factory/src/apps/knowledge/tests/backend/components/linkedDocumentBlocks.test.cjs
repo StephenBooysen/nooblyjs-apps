@@ -5,7 +5,7 @@
  *
  * There are THREE implementations of one grammar and they must not drift:
  *
- *   1. `src/wiki/components/linkedDocumentBlocks.js` — the server, which
+ *   1. `src/wiki/components/linkedDocumentBlocks.cjs` — the server, which
  *      is what the "Link documents" dialog reads and writes.
  *   2. `MarkdownParser.parseLinkedDocuments` — the browser parser, which decides
  *      what a reader sees.
@@ -23,7 +23,7 @@ const path = require('path');
 const vm = require('vm');
 const { marked } = require('marked');
 
-const L = require('../../../src/wiki/components/linkedDocumentBlocks');
+const L = require('../../../src/wiki/components/linkedDocumentBlocks.cjs');
 
 const REPO = path.resolve(__dirname, '../../..');
 const PARSER = path.join(REPO, 'public/js/markdown/markdown-parser.js');

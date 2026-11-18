@@ -18,8 +18,8 @@
 const fs = require('fs');
 const path = require('path');
 const serviceRegistry = require('nooblyjs-core');
-const { sanitizeDirectoryName } = require('../../datasources/utils/pathSanitizer');
-const { definitionFilesIn } = require('../../datasources/utils/workflowDefinitionFiles');
+const { sanitizeDirectoryName } = require('../../datasources/utils/pathSanitizer.cjs');
+const { definitionFilesIn } = require('../../datasources/utils/workflowDefinitionFiles.cjs');
 
 // Base path for workflow definitions. Must match WorkflowBridge/WorkflowManager:
 // definitions live in this repo's workflows/ folder.
@@ -31,10 +31,13 @@ const WORKFLOWS_BASE = process.env.WORKFLOWS_PATH
  * Resolve a step path: if absolute return as-is, otherwise resolve relative to workflowDir
  */
 function resolveStepPath(workflowDir, stepPath) {
-  if (path.isAbsolute(stepPath)) {
-    return stepPath;
+  const full = path.isAbsolute(stepPath) ? stepPath : path.resolve(workflowDir, stepPath);
+  // Steps are .cjs since the knowledge app joined the one ES-module solution; a definition saved
+  // before that still names steps/x.js, so fall back to the .cjs file of the same name.
+  if (full.endsWith('.js') && !fs.existsSync(full) && fs.existsSync(full.slice(0, -3) + '.cjs')) {
+    return full.slice(0, -3) + '.cjs';
   }
-  return path.resolve(workflowDir, stepPath);
+  return full;
 }
 
 /**
@@ -155,7 +158,7 @@ async function run(data) {
   for (let i = 0; i < steps.length; i++) {
     const stepRelPath = steps[i];
     const stepAbsPath = resolveStepPath(workflowDir, stepRelPath);
-    const stepName = path.basename(stepRelPath, '.js');
+    const stepName = path.basename(stepRelPath).replace(/\.c?js$/, '');
 
     logger.info(`run-workflow activity: running step ${i + 1}/${steps.length}`, {
       stepName,

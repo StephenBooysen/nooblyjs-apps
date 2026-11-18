@@ -19,7 +19,7 @@ NooblyJS Blog is a Medium-inspired publishing experience built on top of the Noo
 - Additional accelerator usage notes are under `docs/nooblyjs-core-usage-guide-concise.md`.
 
 ## Getting Started
-1. Clone `nooblyjs-core` next to this repository (it is referenced as `../nooblyjs-core`) and run `npm install` in both folders.
+1. Clone `nooblyjs-core` next to this repository (it is referenced as `../../nooblyjs-core`) and run `npm install` in both folders.
 2. Run `npm run dev:web` and open `http://localhost:3003/applications/blog`.
 3. Sign in to the author dashboard at `/applications/blog/author` as `admin@localhost`. The first run writes the password to `.app-blog/data/INITIAL_ADMIN_PASSWORD.txt` (or set `DEFAULT_ADMIN_PASSWORD` beforehand). Delete that file once you have signed in.
 4. In production, set `NODE_ENV=production` and `SESSION_SECRET`.

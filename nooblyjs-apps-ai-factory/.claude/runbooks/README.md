@@ -8,7 +8,7 @@ tags: [nooblyjs-ai-host, runbooks]
 # NooblyJS runbooks
 
 What to do, step by step, when NooblyJS is running for a team. Each one says what you will see, what to do, and how to
-check it worked. Commands run from the `nooblyjs-ai-host` folder. Settings are in `.env` (see `.env.example`).
+check it worked. Commands run from the solution root (`nooblyjs-apps-ai-factory/`). Settings are in `.env` (see `.env.example`).
 
 | Runbook | When |
 | --- | --- |

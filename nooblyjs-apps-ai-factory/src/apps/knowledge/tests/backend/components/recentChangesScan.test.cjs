@@ -27,8 +27,8 @@ const {
   normaliseRecentQuery,
   planPinnedScan,
   mergeRecentEntries
-} = require('../../../src/wiki/utils/recentChanges');
-const { compileVisibility } = require('../../../src/shared/spaces/spaceVisibility');
+} = require('../../../src/wiki/utils/recentChanges.cjs');
+const { compileVisibility } = require('../../../src/shared/spaces/spaceVisibility.cjs');
 
 const NOW = Date.UTC(2026, 7, 26, 12, 0, 0);
 const daysAgo = (n) => new Date(NOW - n * 86400000).toISOString();

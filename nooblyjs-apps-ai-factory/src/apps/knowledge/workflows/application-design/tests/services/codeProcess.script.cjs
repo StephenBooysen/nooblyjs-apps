@@ -13,16 +13,16 @@
 'use strict';
 
 const path = require('node:path');
-const express = require('express');
+const express = require('express4');
 
 // Load environment variables from the repository-root .env file.
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
 // Core service registry + the datasources AI-instance bootstrap.
 const serviceRegistry = require('nooblyjs-core');
-const { initializeAIInstances } = require('../../../../src/datasources/lib/aiInstances');
-const CodeProcessorClass = require('../../services/codeProcessor');
-const { resolveExpert } = require('../../../../src/shared/ai/expertResolver');
+const { initializeAIInstances } = require('../../../../src/datasources/lib/aiInstances.cjs');
+const CodeProcessorClass = require('../../services/codeProcessor.cjs');
+const { resolveExpert } = require('../../../../src/shared/ai/expertResolver.cjs');
 
 // Base data directory — defaults to <repo-root>/.application (matches app.js).
 const APP_BASE_DIR = process.env.APP_BASE_DIR

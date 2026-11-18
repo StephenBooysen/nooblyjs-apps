@@ -9,7 +9,7 @@
 'use strict';
 
 const request = require('supertest');
-const express = require('express');
+const express = require('express4');
 const { EventEmitter } = require('events');
 
 describe('Search Performance', () => {
@@ -85,7 +85,7 @@ describe('Search Performance', () => {
 
     app.set('spaceManager', { initialize: async () => true });
 
-    const searchRoutes = require('../../../src/wiki/routes/searchRoutes');
+    const searchRoutes = require('../../../src/wiki/routes/searchRoutes.cjs');
     searchRoutes(
       { 'express-app': app },
       new EventEmitter(),

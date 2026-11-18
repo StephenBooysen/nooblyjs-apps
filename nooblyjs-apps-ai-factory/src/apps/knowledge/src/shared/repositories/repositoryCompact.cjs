@@ -54,8 +54,8 @@
 
 'use strict';
 
-const { runExclusive, pauseAutoSync, gitHandleFor, isBusy } = require('./repositorySync');
-const { withLockRecovery } = require('./gitLock');
+const { runExclusive, pauseAutoSync, gitHandleFor, isBusy } = require('./repositorySync.cjs');
+const { withLockRecovery } = require('./gitLock.cjs');
 
 /** Default commits to retain above the shallow horizon. */
 const DEFAULT_DEPTH = Number(process.env.REPO_COMPACT_DEPTH) > 0

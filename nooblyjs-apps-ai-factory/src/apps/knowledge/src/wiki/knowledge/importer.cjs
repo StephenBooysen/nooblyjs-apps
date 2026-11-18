@@ -25,7 +25,7 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const { redact, isTextFile } = require('./redact');
+const { redact, isTextFile } = require('./redact.cjs');
 
 const SAMPLE_EXPORT = path.join(__dirname, 'sample-export');
 const MAX_FILE_BYTES = 10 * 1024 * 1024;

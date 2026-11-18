@@ -25,7 +25,7 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const userStore = require('./userStore');
+const userStore = require('./userStore.cjs');
 
 /** Space used when a request carries no space (older callers / fallback). */
 const DEFAULT_SPACE_ID = 1;

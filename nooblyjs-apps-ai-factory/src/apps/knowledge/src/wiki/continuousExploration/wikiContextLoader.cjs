@@ -41,7 +41,7 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const { toDerivedRelPath, needsMarkdownSidecar } = require('../../shared/utils/filePolicy');
+const { toDerivedRelPath, needsMarkdownSidecar } = require('../../shared/utils/filePolicy.cjs');
 
 const TEXT_EXTS = new Set(['.md', '.markdown', '.txt']);
 const DEFAULT_LIMITS = {

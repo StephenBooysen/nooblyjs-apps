@@ -11,9 +11,9 @@
 const path = require('node:path');
 
 // Internal Libraries
-const ArchitectureModel = require('../../common/architecture/models/architectureModel.js');
-const GraphicClass = require('../../common/architecture/models/graphic.js');
-const fileUtils = require('../../common/architecture/filesystem/filesystem.js');
+const ArchitectureModel = require('../../common/architecture/models/architectureModel.cjs');
+const GraphicClass = require('../../common/architecture/models/graphic.cjs');
+const fileUtils = require('../../common/architecture/filesystem/filesystem.cjs');
 
 /**
  * Curated profile rows for an application object in a landscape inventory.

@@ -137,13 +137,13 @@ Then check the data:
 
 ```bash
 # See Ada's profile
-cat ../nooblyjs-ai-host/data/teammates/ada-quill/TEAMMATE.md
+cat data/teammates/ada-quill/TEAMMATE.md
 
 # See her knowledge documents
-ls ../nooblyjs-ai-host/data/teammates/ada-quill/knowledge/
+ls data/teammates/ada-quill/knowledge/
 
 # See her monthly timesheet
-cat ../nooblyjs-ai-host/data/teammates/ada-quill/timesheets/2026-10.md
+cat data/teammates/ada-quill/timesheets/2026-10.md
 ```
 
 ## Words to know

@@ -44,8 +44,8 @@
 
 'use strict';
 
-const visitTally = require('./visitTally');
-const spaceUserStore = require('./spaceUserStore');
+const visitTally = require('./visitTally.cjs');
+const spaceUserStore = require('./spaceUserStore.cjs');
 
 /** Request header a bulk/automation caller sets to stay out of the tally. */
 const OPT_OUT_HEADER = 'x-dtk-no-visit';

@@ -27,8 +27,8 @@ const path = require('node:path');
 
 const REPO = path.resolve(__dirname, '../../..');
 const SCREEN = path.join(REPO, 'src/web/datasources/public/js/screens/spaces.js');
-const ROUTES = path.join(REPO, 'src/datasources/routes/spacesRoutes.js');
-const MANAGER = path.join(REPO, 'src/datasources/components/SpaceManager.js');
+const ROUTES = path.join(REPO, 'src/datasources/routes/spacesRoutes.cjs');
+const MANAGER = path.join(REPO, 'src/datasources/components/SpaceManager.cjs');
 const CSS = path.join(REPO, 'src/web/datasources/public/css/datasources.css');
 
 const screen = fs.readFileSync(SCREEN, 'utf8');

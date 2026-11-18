@@ -26,7 +26,7 @@ tags: [nooblyjs-ai-teammate, steering]
 > `DATA_DIR` / `TEAMMATES_BASE_PATH`, a `server.js` that listens), §0 and `tech.md` win. Standalone,
 > `server.js` runs the same `register()` on `src/services/standalone-host.js` (nooblyjs-core's sign-in, the shell's
 > frame, the host's CSRF check); hosted, NooblyJS AI runs it. The source of truth for
-> the contract is `../nooblyjs-ai-host/.claude/steering/structure.md` §2a.
+> the contract is `../../../.claude/steering/structure.md` §2a.
 
 ---
 

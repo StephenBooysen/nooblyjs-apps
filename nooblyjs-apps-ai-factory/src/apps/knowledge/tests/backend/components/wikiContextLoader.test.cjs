@@ -25,7 +25,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const WikiContextLoader = require('../../../src/wiki/continuousExploration/wikiContextLoader');
+const WikiContextLoader = require('../../../src/wiki/continuousExploration/wikiContextLoader.cjs');
 
 const noopLog = { info() {}, warn() {}, error() {}, debug() {} };
 

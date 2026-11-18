@@ -7,7 +7,7 @@
 
 'use strict';
 
-const WorkflowBridge = require('../../../src/datasources/lib/workflowBridge');
+const WorkflowBridge = require('../../../src/datasources/lib/workflowBridge.cjs');
 const path = require('node:path');
 const fs = require('node:fs').promises;
 const fsSync = require('node:fs');

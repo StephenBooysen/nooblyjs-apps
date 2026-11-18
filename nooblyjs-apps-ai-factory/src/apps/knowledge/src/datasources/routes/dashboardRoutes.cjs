@@ -11,7 +11,7 @@
 const fs = require('node:fs');
 const { promises: fsPromises } = require('node:fs');
 const path = require('node:path');
-const { reloadAIInstances } = require('../lib/aiInstances');
+const { reloadAIInstances } = require('../lib/aiInstances.cjs');
 
 /**
  * noobly Wiki Datasources

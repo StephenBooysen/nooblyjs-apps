@@ -37,7 +37,7 @@ const fs = require('node:fs');
 const fsp = require('node:fs').promises;
 const path = require('node:path');
 
-const spaceUserStore = require('../src/wiki/components/spaceUserStore');
+const spaceUserStore = require('../src/wiki/components/spaceUserStore.cjs');
 
 const DRY_RUN = process.argv.includes('--dry-run');
 

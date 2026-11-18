@@ -14,10 +14,10 @@
 require('dotenv').config({path:'../../../.env'});
 
 // Shared step helpers (ARIS credentials + authentication)
-const authenticateStep = require('../../common/architecture/authentication/authenticateStep');
+const authenticateStep = require('../../common/architecture/authentication/authenticateStep.cjs');
 
 // The business landscapes class is used to retrieve and publish a Business Landscape (Application / Reference Architecture)
-const BusinessLandscapesClass = require('../services/businessLandscapes');
+const BusinessLandscapesClass = require('../services/businessLandscapes.cjs');
 
 /**
  * Retrieve a landscape inventory and publish its content pages.

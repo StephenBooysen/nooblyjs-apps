@@ -19,8 +19,8 @@
 
 const path = require('node:path');
 
-const spaceUserStore = require('../components/spaceUserStore');
-const userArtifacts = require('../components/userArtifacts');
+const spaceUserStore = require('../components/spaceUserStore.cjs');
+const userArtifacts = require('../components/userArtifacts.cjs');
 
 const VALID_TYPES = new Set(['folder', 'document']);
 

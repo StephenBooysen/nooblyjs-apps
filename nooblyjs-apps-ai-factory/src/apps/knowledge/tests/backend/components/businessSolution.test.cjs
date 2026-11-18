@@ -15,15 +15,14 @@ const path = require('node:path');
 // Mock the graphic utility so create*Content methods never hit the network.
 // The path must be the one businessSolution.js itself resolves — the shared
 // common/architecture copy, not a per-group one.
-jest.mock(
-    '../../../workflows/common/architecture/models/graphic.js',
+jest.mock('../../../workflows/common/architecture/models/graphic.cjs',
     () =>
         jest.fn().mockImplementation(() => ({
             retrievePNGDataCached: jest.fn().mockResolvedValue('BASE64PNG'),
         }))
 );
 
-const BusinessSolutionClass = require('../../../workflows/solution-design/services/businessSolution.js');
+const BusinessSolutionClass = require('../../../workflows/solution-design/services/businessSolution.cjs');
 
 // A temporary datafolder is required by ModelBase's constructor.
 const datafolder = path.join(os.tmpdir(), 'bs-characterization-test');

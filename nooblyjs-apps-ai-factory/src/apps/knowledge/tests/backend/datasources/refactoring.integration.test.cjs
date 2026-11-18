@@ -34,7 +34,7 @@ describe('Phase 1 Refactoring - Integration Tests', () => {
 
   describe('Path sanitizer utility should be accessible', () => {
     test('pathSanitizer module should exist and export correct functions', () => {
-      const pathSanitizer = require('../../../src/datasources/utils/pathSanitizer');
+      const pathSanitizer = require('../../../src/datasources/utils/pathSanitizer.cjs');
       expect(pathSanitizer).toBeDefined();
       expect(typeof pathSanitizer.sanitizeDirectoryName).toBe('function');
       expect(typeof pathSanitizer.validateWorkflowPath).toBe('function');
@@ -43,7 +43,7 @@ describe('Phase 1 Refactoring - Integration Tests', () => {
 
   describe('WorkflowManager should use pathSanitizer utility', () => {
     test('should not have duplicate sanitization methods', () => {
-      const WorkflowManager = require('../../../src/datasources/components/workflowManager');
+      const WorkflowManager = require('../../../src/datasources/components/workflowManager.cjs');
       const instance = new WorkflowManager();
 
       // These methods should not exist on the instance
@@ -53,7 +53,7 @@ describe('Phase 1 Refactoring - Integration Tests', () => {
 
     test('should have proper imports', () => {
       const workflowManagerSource = require('fs').readFileSync(
-        require('path').join(__dirname, '../../../src/datasources/components/workflowManager.js'),
+        require('path').join(__dirname, '../../../src/datasources/components/workflowManager.cjs'),
         'utf8'
       );
 
@@ -64,7 +64,7 @@ describe('Phase 1 Refactoring - Integration Tests', () => {
 
   describe('WorkflowBridge should use pathSanitizer utility', () => {
     test('should not have duplicate sanitization methods', () => {
-      const WorkflowBridge = require('../../../src/datasources/lib/workflowBridge');
+      const WorkflowBridge = require('../../../src/datasources/lib/workflowBridge.cjs');
       const instance = new WorkflowBridge();
 
       // These methods should not exist on the instance
@@ -73,7 +73,7 @@ describe('Phase 1 Refactoring - Integration Tests', () => {
 
     test('should have proper imports', () => {
       const workflowBridgeSource = require('fs').readFileSync(
-        require('path').join(__dirname, '../../../src/datasources/lib/workflowBridge.js'),
+        require('path').join(__dirname, '../../../src/datasources/lib/workflowBridge.cjs'),
         'utf8'
       );
 
@@ -84,7 +84,7 @@ describe('Phase 1 Refactoring - Integration Tests', () => {
 
   describe('Core modules should still initialize', () => {
     test('WorkflowManager should initialize without errors', async () => {
-      const WorkflowManager = require('../../../src/datasources/components/workflowManager');
+      const WorkflowManager = require('../../../src/datasources/components/workflowManager.cjs');
       const manager = new WorkflowManager({
         logger: {
           info: jest.fn(),
@@ -98,7 +98,7 @@ describe('Phase 1 Refactoring - Integration Tests', () => {
     });
 
     test('WorkflowBridge should initialize without errors', async () => {
-      const WorkflowBridge = require('../../../src/datasources/lib/workflowBridge');
+      const WorkflowBridge = require('../../../src/datasources/lib/workflowBridge.cjs');
       const bridge = new WorkflowBridge({
         logger: {
           info: jest.fn(),
@@ -114,17 +114,17 @@ describe('Phase 1 Refactoring - Integration Tests', () => {
 
   describe('API routes should still be importable', () => {
     test('workflowdashboard routes should be importable', () => {
-      const routes = require('../../../src/datasources/routes/workflowdashboard');
+      const routes = require('../../../src/datasources/routes/workflowdashboard.cjs');
       expect(routes).toBeDefined();
       expect(typeof routes).toBe('function');
     });
 
     test('all datasources routes should be importable', () => {
-      const contentRoutes = require('../../../src/datasources/routes/contentRoutes');
-      const dashboardRoutes = require('../../../src/datasources/routes/dashboardRoutes');
-      const workflowRoutes = require('../../../src/datasources/routes/workflowdashboard');
-      const spacesRoutes = require('../../../src/datasources/routes/spacesRoutes');
-      const securityRoutes = require('../../../src/datasources/routes/securityRoutes');
+      const contentRoutes = require('../../../src/datasources/routes/contentRoutes.cjs');
+      const dashboardRoutes = require('../../../src/datasources/routes/dashboardRoutes.cjs');
+      const workflowRoutes = require('../../../src/datasources/routes/workflowdashboard.cjs');
+      const spacesRoutes = require('../../../src/datasources/routes/spacesRoutes.cjs');
+      const securityRoutes = require('../../../src/datasources/routes/securityRoutes.cjs');
 
       expect(contentRoutes).toBeDefined();
       expect(dashboardRoutes).toBeDefined();
@@ -147,7 +147,7 @@ describe('Phase 1 Refactoring - Integration Tests', () => {
       expect(fs.existsSync(serviceFactoryPath)).toBe(false);
 
       // Check that utility was created
-      const pathSanitizerPath = path.join(__dirname, '../../../src/datasources/utils/pathSanitizer.js');
+      const pathSanitizerPath = path.join(__dirname, '../../../src/datasources/utils/pathSanitizer.cjs');
       expect(fs.existsSync(pathSanitizerPath)).toBe(true);
     });
   });

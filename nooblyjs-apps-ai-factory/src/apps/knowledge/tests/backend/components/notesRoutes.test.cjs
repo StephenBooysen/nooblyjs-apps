@@ -148,7 +148,7 @@ describe('notes routes', () => {
         );
 
         const app = makeApp();
-        require('../../../src/wiki/routes/notesRoutes')(
+        require('../../../src/wiki/routes/notesRoutes.cjs')(
             { app }, null, { log: noopLog, appBaseDir }
         );
         routes = app.routes;
@@ -273,7 +273,7 @@ describe('notes routes', () => {
     });
 
     test('an over-long body is refused rather than silently truncated', async () => {
-        const noteStore = require('../../../src/wiki/components/noteStore');
+        const noteStore = require('../../../src/wiki/components/noteStore.cjs');
         const res = await call(routes, POST, makeReq({
             body: {
                 spaceName: 'Engineering', type: 'document', path: 'Readme.md',
@@ -324,7 +324,7 @@ describe('notes routes — voice notes', () => {
         );
 
         const app = makeApp();
-        require('../../../src/wiki/routes/notesRoutes')(
+        require('../../../src/wiki/routes/notesRoutes.cjs')(
             { app }, null, { log: noopLog, appBaseDir }
         );
         routes = app.routes;
@@ -601,7 +601,7 @@ describe('notes routes — pictures', () => {
         );
 
         const app = makeApp();
-        require('../../../src/wiki/routes/notesRoutes')(
+        require('../../../src/wiki/routes/notesRoutes.cjs')(
             { app }, null, { log: noopLog, appBaseDir }
         );
         routes = app.routes;
@@ -814,5 +814,5 @@ describe('notes routes — pictures', () => {
 
 /** The store's own cap, so the 409 test cannot drift away from it. */
 function noteStoreMaxImages() {
-    return require('../../../src/wiki/components/noteStore').MAX_IMAGES_PER_NOTE;
+    return require('../../../src/wiki/components/noteStore.cjs').MAX_IMAGES_PER_NOTE;
 }

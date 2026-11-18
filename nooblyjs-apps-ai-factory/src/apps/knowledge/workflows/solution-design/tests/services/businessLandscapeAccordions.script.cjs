@@ -29,20 +29,20 @@ const DATA = path.resolve(__dirname, '../../../', process.env.design_solution_da
     || '../.application/spaces/working/design-solution');
 
 // ─── Stubs: no network, no writes ────────────────────────────────────────────
-const graphicPath = require.resolve('../../../common/architecture/models/graphic.js');
+const graphicPath = require.resolve('../../../common/architecture/models/graphic.cjs');
 require.cache[graphicPath] = {
     id: graphicPath, filename: graphicPath, loaded: true,
     exports: class GraphicStub { async retrievePNGDataCached() { return 'STUBPNG'; } },
 };
 
-const fsUtilPath = require.resolve('../../../common/architecture/filesystem/filesystem.js');
+const fsUtilPath = require.resolve('../../../common/architecture/filesystem/filesystem.cjs');
 const realFsUtil = require(fsUtilPath);
 const written = new Map();
 require.cache[fsUtilPath].exports = Object.assign({}, realFsUtil, {
     writeFile: (file, content) => written.set(file, content),
 });
 
-const BusinessLandscapeClass = require('../../services/businessLandscape');
+const BusinessLandscapeClass = require('../../services/businessLandscape.cjs');
 
 /** Serves the cached model JSON instead of calling ARIS. */
 class CachedLandscape extends BusinessLandscapeClass {

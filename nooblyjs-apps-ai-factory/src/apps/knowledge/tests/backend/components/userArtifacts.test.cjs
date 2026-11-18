@@ -19,7 +19,7 @@
  * duplicates collapse, and exclusions are genuinely enforced.
  */
 
-const userArtifacts = require('../../../src/wiki/components/userArtifacts');
+const userArtifacts = require('../../../src/wiki/components/userArtifacts.cjs');
 
 /** The real shape, including the dead space name that caused the incident. */
 const LEGACY_PINS = [

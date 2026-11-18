@@ -17,8 +17,8 @@
 
 'use strict';
 
-const searchKnowledge = require('./tools/searchKnowledge');
-const readDocument = require('./tools/readDocument');
+const searchKnowledge = require('./tools/searchKnowledge.cjs');
+const readDocument = require('./tools/readDocument.cjs');
 
 const TOOLS = [searchKnowledge, readDocument];
 

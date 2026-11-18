@@ -15,10 +15,10 @@
 
 'use strict';
 
-const ModelBase = require('./modelBase');
-const ModelClass = require('./model');
-const GraphicClass = require('./graphic');
-const markdown = require('../content-generation/markdown');
+const ModelBase = require('./modelBase.cjs');
+const ModelClass = require('./model.cjs');
+const GraphicClass = require('./graphic.cjs');
+const markdown = require('../content-generation/markdown.cjs');
 
 /**
  * Housekeeping attribute keys hidden when listing an object's own attributes in

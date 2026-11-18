@@ -31,8 +31,8 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 
-const { needsMarkdownSidecar, toDerivedRelPath } = require('../../shared/utils/filePolicy');
-const { convertToMarkdown, canConvert } = require('../../shared/processors/documentConverter');
+const { needsMarkdownSidecar, toDerivedRelPath } = require('../../shared/utils/filePolicy.cjs');
+const { convertToMarkdown, canConvert } = require('../../shared/processors/documentConverter.cjs');
 
 /**
  * Slack allowed between a source's mtime and its sidecar's before the sidecar is

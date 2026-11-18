@@ -40,7 +40,7 @@
 
 'use strict';
 
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
 
 /** Recent entries kept per user, per content root. */
 const RECENT_LIMIT = 50;

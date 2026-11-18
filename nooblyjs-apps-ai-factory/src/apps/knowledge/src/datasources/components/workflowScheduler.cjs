@@ -204,7 +204,7 @@ class WorkflowScheduler {
       if (this.activeSchedules.has(scheduleId)) return; // Already active
 
       const schedule = this.getSchedule(scheduleId);
-      const activityPath = path.resolve(__dirname, '../../configuration/activities/run-workflow.js');
+      const activityPath = path.resolve(__dirname, '../../configuration/activities/run-workflow.cjs');
 
       const onExecutionComplete = (status, result) => {
         try {

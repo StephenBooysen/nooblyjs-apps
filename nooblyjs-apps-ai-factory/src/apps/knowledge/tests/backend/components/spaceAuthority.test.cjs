@@ -22,7 +22,7 @@
  * These tests are written against the shapes actually on disk in this install.
  */
 
-const auth = require('../../../src/shared/spaces/spaceAuthority');
+const auth = require('../../../src/shared/spaces/spaceAuthority.cjs');
 
 /** The real admin record from <APP_BASE_DIR>/data/auth/users.json. */
 const ADMIN_USER = {
@@ -179,7 +179,7 @@ describe('the routes use the shared rule, not their own copy', () => {
   const fs = require('node:fs');
   const path = require('node:path');
   const routes = fs.readFileSync(
-    path.resolve(__dirname, '../../../src/datasources/routes/spacesRoutes.js'), 'utf8');
+    path.resolve(__dirname, '../../../src/datasources/routes/spacesRoutes.cjs'), 'utf8');
 
   test('no route re-derives admin status inline', () => {
     // Three separate inline copies is how this drifted from the wiki's model.

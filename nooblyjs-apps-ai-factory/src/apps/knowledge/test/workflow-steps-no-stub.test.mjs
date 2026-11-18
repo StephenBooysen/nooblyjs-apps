@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url);
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
 test('initializeAIInstances runs with no app, and the registry is still published', async () => {
-  const { initializeAIInstances } = require('../src/datasources/lib/aiInstances');
+  const { initializeAIInstances } = require('../src/datasources/lib/aiInstances.cjs');
   const appBaseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kn-ai-'));
   fs.mkdirSync(path.join(appBaseDir, 'configuration', 'settings'), { recursive: true });
   fs.writeFileSync(path.join(appBaseDir, 'configuration', 'settings', 'settings-agents.json'), '[]');
@@ -23,7 +23,7 @@ test('initializeAIInstances runs with no app, and the registry is still publishe
 });
 
 test('the worker steps carry no stub app', () => {
-  for (const rel of ['workflows/application-design/steps/process.js', 'workflows/document-processing/steps/clean-document.js']) {
+  for (const rel of ['workflows/application-design/steps/process.cjs', 'workflows/document-processing/steps/clean-document.cjs']) {
     const src = fs.readFileSync(path.join(root, rel), 'utf8');
     assert.doesNotMatch(src, /appStub|new Proxy|const noop/, rel);
     assert.match(src, /app: null/, rel);

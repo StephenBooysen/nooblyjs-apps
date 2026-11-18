@@ -10,30 +10,30 @@
 'use strict';
 
 const path = require('node:path');
-const express = require('express');
+const express = require('express4');
 const { Server } = require('socket.io');
 
-const { createKnowledge } = require('./knowledge');
-const DataManager = require('./components/dataManager');
-const AIService = require('./components/aiService');
-const WikiEventBus = require('./components/eventBus');
-const NotificationManager = require('./components/notificationManager');
-const TreeCache = require('./components/treeCache');
-const SearchIndexer = require('./activities/searchIndexer');
-const { run: initializeWikiDataRun } = require('./initialisation/initialiseWikiData');
-const { startFileWatcher } = require('./activities/fileWatcher');
-const { processTask } = require('./activities/taskProcessor');
-const BearerTokenMiddleware = require('./auth/bearerTokenMiddleware');
+const { createKnowledge } = require('./knowledge/index.cjs');
+const DataManager = require('./components/dataManager.cjs');
+const AIService = require('./components/aiService.cjs');
+const WikiEventBus = require('./components/eventBus.cjs');
+const NotificationManager = require('./components/notificationManager.cjs');
+const TreeCache = require('./components/treeCache.cjs');
+const SearchIndexer = require('./activities/searchIndexer.cjs');
+const { run: initializeWikiDataRun } = require('./initialisation/initialiseWikiData.cjs');
+const { startFileWatcher } = require('./activities/fileWatcher.cjs');
+const { processTask } = require('./activities/taskProcessor.cjs');
+const BearerTokenMiddleware = require('./auth/bearerTokenMiddleware.cjs');
 
 // Routes (routes/index.js) is the aggregate registrar for every wiki route
 // module EXCEPT these two — see the registration block below.
-const Routes = require('./routes');
-const FilingRoutes = require('./routes/filingRoutes');
-const NotificationRoutes = require('./routes/notificationRoutes');
-const FilingServiceWrapper = require('./utils/filingServiceWrapper');
-const { ensureSidecar, spaceRootOf } = require('./utils/derivedSidecar');
-const DocumentService = require('./components/documentService');
-const { startup } = require('../shared/startup/startupRunner');
+const Routes = require('./routes/index.cjs');
+const FilingRoutes = require('./routes/filingRoutes.cjs');
+const NotificationRoutes = require('./routes/notificationRoutes.cjs');
+const FilingServiceWrapper = require('./utils/filingServiceWrapper.cjs');
+const { ensureSidecar, spaceRootOf } = require('./utils/derivedSidecar.cjs');
+const DocumentService = require('./components/documentService.cjs');
+const { startup } = require('../shared/startup/startupRunner.cjs');
 
 /**
  * Initialize the Wiki module

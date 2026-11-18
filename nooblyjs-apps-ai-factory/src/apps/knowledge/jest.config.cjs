@@ -8,6 +8,8 @@ module.exports = {
   roots: ['<rootDir>/tests/backend'],
   modulePaths: [path.join(__dirname, '..', '..', '..', 'node_modules')],
   moduleFileExtensions: ['cjs', 'js', 'mjs', 'json', 'node'],
+  // The suite is .cjs: babel-jest must still run on it, or jest.mock() calls are not hoisted above the requires.
+  transform: { '\\.[cm]?jsx?$': 'babel-jest' },
   testPathIgnorePatterns: ['/node_modules/'],
   testMatch: ['<rootDir>/tests/backend/**/*.test.cjs'],
   setupFilesAfterEnv: ['<rootDir>/tests/backend/setup.cjs'],

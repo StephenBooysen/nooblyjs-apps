@@ -15,14 +15,14 @@ const os = require('node:os');
 const path = require('node:path');
 const http = require('node:http');
 
-const express = require('express');
+const express = require('express4');
 
 const {
   registerProxies,
   readProxyConfigs,
   configPath,
   normaliseEntry
-} = require('../../../src/shared/proxies/proxyManager');
+} = require('../../../src/shared/proxies/proxyManager.cjs');
 
 /** Write a proxies.json into a throwaway APP_BASE_DIR and return that dir. */
 function writeConfig(contents) {

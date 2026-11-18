@@ -147,7 +147,7 @@ In the child repo (`node --test`):
 - no page calls `history.pushState`, listens for `popstate` or touches `<body>`
 - page URLs answer with `host.frame`, a missing file answers 404, and there's no CSP of the app's own
 
-In `nooblyjs-ai-host` (`test/<app>.test.js` plus `test/e2e/shell.spec.js`):
+In the host, at the solution root (`test/<app>.test.js` plus `test/e2e/shell.spec.js`):
 
 - the shell lists the app as `ready` with its `ui`, kit icons and permission-filtered nav
 - page URLs return the frame

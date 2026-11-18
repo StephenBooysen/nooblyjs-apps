@@ -42,7 +42,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { prompts } = require('../../common/prompts/prompts');
+const { prompts } = require('../../common/prompts/prompts.cjs');
 
 /** File extensions considered summarisable by default. */
 const DEFAULT_EXTENSIONS = ['.md'];

@@ -20,7 +20,7 @@
 'use strict';
 
 const { body, param, query, validationResult } = require('express-validator');
-const spaceAuthority = require('../../shared/spaces/spaceAuthority');
+const spaceAuthority = require('../../shared/spaces/spaceAuthority.cjs');
 
 /**
  * Register spaces routes

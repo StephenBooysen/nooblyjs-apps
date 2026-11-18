@@ -1,6 +1,6 @@
 'use strict';
 
-const A = require('../../../src/wiki/components/annotationBlocks');
+const A = require('../../../src/wiki/components/annotationBlocks.cjs');
 
 const DOC = `# Pricing Doc
 

@@ -11,7 +11,7 @@
 
 const path = require('node:path');
 
-const featureFlags = require('../config/featureFlags');
+const featureFlags = require('../config/featureFlags.cjs');
 
 /**
  * Configures and registers wiki routes with the Express application.
@@ -74,7 +74,7 @@ module.exports = (options, eventEmitter, services) => {
   // cached navigation trees on its next page load (see clientCache.js on the
   // frontend). Read is admin-gated too: it exists to drive the admin screen, and
   // the value itself is already public on /api/config.
-  const { rolesOf } = require('../components/spacePermissions');
+  const { rolesOf } = require('../components/spacePermissions.cjs');
   const isAdmin = (req) =>
     req.isAuthenticated && req.isAuthenticated() && rolesOf(req.user).includes('admin');
 
@@ -102,39 +102,39 @@ module.exports = (options, eventEmitter, services) => {
   });
 
   // Load and register route modules
-  const authRoutes = require('./authRoutes');
+  const authRoutes = require('./authRoutes.cjs');
   // Browser-assisted Entra sign-in for editor extensions (VS Code, Kiro). An
   // extension has no browser and cannot read one's cookie, so SSO is completed
   // in the user's real browser and handed back over a custom-scheme redirect.
-  const editorAuthRoutes = require('./editorAuthRoutes');
-  const documentRoutes = require('./documentRoutes');
-  const spacesRoutes = require('./spacesRoutes');
-  const searchRoutes = require('./searchRoutes');
-  const navigationRoutes = require('./navigationRoutes');
-  const userRoutes = require('./userRoutes');
-  const wizardRoutes = require('./wizardRoutes');
-  const settingsRoutes = require('./settingsRoutes');
-  const aiChatRoutes = require('./aiChatRoutes');
-  const documentationRoutes = require('./documentationRoutes');
-  const pinsRoutes = require('./pinsRoutes');
-  const notesRoutes = require('./notesRoutes');
-  const commentsRoutes = require('./commentsRoutes');
-  const annotationRoutes = require('./annotationRoutes');
-  const userContentRoutes = require('./userContentRoutes');
-  const linkedDocumentsRoutes = require('./linkedDocumentsRoutes');
-  const reviewsRoutes = require('./reviewsRoutes');
-  const likesRoutes = require('./likesRoutes');
-  const changesRoutes = require('./changesRoutes');
-  const continuousExplorationRoutes = require('./continuousExplorationRoutes');
-  const helpRoutes = require('./helpRoutes');
-  const headlineRoutes = require('./headlineRoutes');
-  const whatsNewRoutes = require('./whatsNewRoutes');
+  const editorAuthRoutes = require('./editorAuthRoutes.cjs');
+  const documentRoutes = require('./documentRoutes.cjs');
+  const spacesRoutes = require('./spacesRoutes.cjs');
+  const searchRoutes = require('./searchRoutes.cjs');
+  const navigationRoutes = require('./navigationRoutes.cjs');
+  const userRoutes = require('./userRoutes.cjs');
+  const wizardRoutes = require('./wizardRoutes.cjs');
+  const settingsRoutes = require('./settingsRoutes.cjs');
+  const aiChatRoutes = require('./aiChatRoutes.cjs');
+  const documentationRoutes = require('./documentationRoutes.cjs');
+  const pinsRoutes = require('./pinsRoutes.cjs');
+  const notesRoutes = require('./notesRoutes.cjs');
+  const commentsRoutes = require('./commentsRoutes.cjs');
+  const annotationRoutes = require('./annotationRoutes.cjs');
+  const userContentRoutes = require('./userContentRoutes.cjs');
+  const linkedDocumentsRoutes = require('./linkedDocumentsRoutes.cjs');
+  const reviewsRoutes = require('./reviewsRoutes.cjs');
+  const likesRoutes = require('./likesRoutes.cjs');
+  const changesRoutes = require('./changesRoutes.cjs');
+  const continuousExplorationRoutes = require('./continuousExplorationRoutes.cjs');
+  const helpRoutes = require('./helpRoutes.cjs');
+  const headlineRoutes = require('./headlineRoutes.cjs');
+  const whatsNewRoutes = require('./whatsNewRoutes.cjs');
   // NooblyJS Phase 8: sources and import, answer actions, needs review, the process model.
-  const knowledgeRoutes = require('./knowledgeRoutes');
+  const knowledgeRoutes = require('./knowledgeRoutes.cjs');
   // MCP endpoint — the runtime counterpart to the OpenAPI spec served above.
   // Its tools call the routes registered here over loopback HTTP, so it must be
   // registered last: the endpoints it consumes have to exist first.
-  const mcpRoutes = require('../mcp/mount');
+  const mcpRoutes = require('../mcp/mount.cjs');
 
   // Register all routes
   authRoutes(options, eventEmitter, services);

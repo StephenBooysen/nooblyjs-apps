@@ -33,7 +33,7 @@ const {
   fromContextRelPath,
   isContextRelPath,
   isSpaceScopedSystemPath,
-} = require('../../../src/shared/utils/filePolicy');
+} = require('../../../src/shared/utils/filePolicy.cjs');
 
 describe('filePolicy — folder-local artifact layout', () => {
   test('all artifact dirs hang off the folder-local .system namespace', () => {

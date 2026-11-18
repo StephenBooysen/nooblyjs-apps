@@ -12,7 +12,7 @@
 'use strict';
 
 const path = require('node:path');
-const express = require('express');
+const express = require('express4');
 
 /**
  * Wiki service views module for nnoobly framework.

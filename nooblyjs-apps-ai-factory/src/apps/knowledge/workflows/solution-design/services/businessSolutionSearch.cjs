@@ -14,12 +14,12 @@ const path = require('node:path');
 const { setTimeout, setInterval, setImmediate } = require('node:timers/promises');
 
 // Internal Libraries
-const ModelBase = require('../../common/architecture/models/modelBase.js');
-const GraphicClass = require('../../common/architecture/models/graphic.js');
-const fileUtils = require('../../common/architecture/filesystem/filesystem.js');
+const ModelBase = require('../../common/architecture/models/modelBase.cjs');
+const GraphicClass = require('../../common/architecture/models/graphic.cjs');
+const fileUtils = require('../../common/architecture/filesystem/filesystem.cjs');
 
 // Instantiate business classes
-const BusinessSolutionClass = require('./businessSolution.js');
+const BusinessSolutionClass = require('./businessSolution.cjs');
 
 /**
  * This class manages search functionality to find instances of objects

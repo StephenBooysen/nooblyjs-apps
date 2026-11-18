@@ -12,7 +12,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const wikiBlocks = require('../../common/content/wikiBlocks.js');
+const wikiBlocks = require('../../common/content/wikiBlocks.cjs');
 
 /**
  * Normalise a filesystem PATH (not a single name segment) so values that arrive

@@ -7,8 +7,8 @@
 
 'use strict';
 
-const { productSettings } = require('../utilities/settings');
-const ReleaseTrainsService = require('../services/releaseTrainsService');
+const { productSettings } = require('../utilities/settings.cjs');
+const ReleaseTrainsService = require('../services/releaseTrainsService.cjs');
 
 /**
  * Build the release-train Product tree. Two optional workflow inputs let a

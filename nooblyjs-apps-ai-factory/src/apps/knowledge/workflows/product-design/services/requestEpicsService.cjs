@@ -16,8 +16,8 @@
 
 'use strict';
 
-const ProductBase = require('../base/productBase.js');
-const TargetProcess = require('../utilities/targetProcess.js');
+const ProductBase = require('../base/productBase.cjs');
+const TargetProcess = require('../utilities/targetProcess.cjs');
 
 const REQUEST_EPIC_INCLUDE = ['Id', 'Request[Id,Name]', 'Epic[Id,Name]'];
 

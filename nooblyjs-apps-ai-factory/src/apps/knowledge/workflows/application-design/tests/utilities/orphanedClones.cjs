@@ -28,8 +28,8 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { findOrphanedClones, removeOrphan, formatBytes } =
-   require('../../utilities/orphanedClones.js');
-const { sweepOrphans } = require('../../steps/discover-repos.js');
+   require('../../utilities/orphanedClones.cjs');
+const { sweepOrphans } = require('../../steps/discover-repos.cjs');
 
 let passed = 0;
 let failed = 0;

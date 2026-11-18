@@ -23,8 +23,8 @@
 'use strict';
 
 const path = require('node:path');
-const { rolesOf } = require('../components/spacePermissions');
-const { readContent, writeContent } = require('../../shared/content/contentPaths');
+const { rolesOf } = require('../components/spacePermissions.cjs');
+const { readContent, writeContent } = require('../../shared/content/contentPaths.cjs');
 
 /** Collapse any whitespace (incl. stray newlines) to single spaces and trim. */
 function oneLine(value) {

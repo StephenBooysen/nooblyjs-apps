@@ -12,10 +12,10 @@
 require('dotenv').config({path:'../../../.env'});
 
 // The authentication class is used to retrieve the auth token required for accessing ARIS APIs. And store it for caching purposes.
-const AuthenticateClass = require('../../common/architecture/authentication/Authenticate');
+const AuthenticateClass = require('../../common/architecture/authentication/Authenticate.cjs');
 
 // The business solutions class is used to retrieve and publish a Business Solutions (Business Capabilities / Business Processes / Business Applications)
-const BusinessSolutionsClass = require('../services/businessSolutions')
+const BusinessSolutionsClass = require('../services/businessSolutions.cjs')
 
 /**
  * Retrieve authentication token from ARIS system.

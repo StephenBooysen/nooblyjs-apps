@@ -38,7 +38,7 @@
 
 const path = require('node:path');
 const fs = require('node:fs').promises;
-const { SYSTEM_DIR } = require('../../shared/utils/filePolicy');
+const { SYSTEM_DIR } = require('../../shared/utils/filePolicy.cjs');
 
 /** Where an order file is written. */
 const SETTINGS_DIR = SYSTEM_DIR;

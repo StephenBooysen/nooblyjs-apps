@@ -22,7 +22,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { glob } = require('glob');
 
-const { parseHomePage } = require('../utilities/markdownDocument.js');
+const { parseHomePage } = require('../utilities/markdownDocument.cjs');
 
 /**
  * The document-block keys the dashboards rely on, mapped to the record field

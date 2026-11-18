@@ -13,8 +13,8 @@
 'use strict';
 
 const path = require('node:path');
-const { toContextRelPath } = require('../../shared/utils/filePolicy');
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
+const { toContextRelPath } = require('../../shared/utils/filePolicy.cjs');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
 
 /**
  * Drop index hits whose owning space does not expose them

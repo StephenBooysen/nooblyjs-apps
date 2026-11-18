@@ -14,7 +14,7 @@ const os = require('node:os');
 const path = require('node:path');
 const XLSX = require('xlsx');
 
-const step = require('../../../workflows/document-processing/steps/convert-document.js');
+const step = require('../../../workflows/document-processing/steps/convert-document.cjs');
 
 let tmpDir;
 
@@ -23,7 +23,7 @@ beforeAll(() => {
     // way the worker thread does so logging is available.
     try {
         const serviceRegistry = require('nooblyjs-core');
-        const express = require('express');
+        const express = require('express4');
         serviceRegistry.initialize(express());
     } catch (err) {
         // Already initialised — fine.

@@ -66,7 +66,7 @@
 
 'use strict';
 
-const { withLockRecovery } = require('./gitLock');
+const { withLockRecovery } = require('./gitLock.cjs');
 
 /** instanceName → in-flight sync promise. */
 const inFlight = new Map();

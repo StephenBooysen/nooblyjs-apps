@@ -10,7 +10,7 @@
 'use strict';
 
 // Leverage our file utilites
-const { writeJSONFile, readJSONFile, writeFile, readFile, fileExists, fileModifiedTime } = require('../filesystem/filesystem');
+const { writeJSONFile, readJSONFile, writeFile, readFile, fileExists, fileModifiedTime } = require('../filesystem/filesystem.cjs');
 
 /**
  * Model Base class to be used by all Architecture classes

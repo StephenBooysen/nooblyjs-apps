@@ -15,10 +15,10 @@ const path = require('node:path');
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
 // Import some libraries
-const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate');
+const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate.cjs');
 
 // Import the model service
-const ModelClass = require('../../../common/architecture/models/model');
+const ModelClass = require('../../../common/architecture/models/model.cjs');
 
 // Load some sample data
 // Load settings data

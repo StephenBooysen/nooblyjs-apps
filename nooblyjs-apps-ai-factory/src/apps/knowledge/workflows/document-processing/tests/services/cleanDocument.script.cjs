@@ -18,20 +18,20 @@
 // Imports and setup
 const path = require('node:path');
 const fs = require('node:fs').promises;
-const express = require('express');
+const express = require('express4');
 
 // Load environment variables from the repository-root .env file.
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
 // Core service registry + the datasources AI-instance bootstrap.
 const serviceRegistry = require('nooblyjs-core');
-const { initializeAIInstances } = require('../../../../src/datasources/lib/aiInstances');
+const { initializeAIInstances } = require('../../../../src/datasources/lib/aiInstances.cjs');
 
 // The DOCX converters, the agent resolver, and the cleaner service.
-const docxToJson = require('../../services/docxToJson');
-const jsonToMarkdown = require('../../services/jsonToMarkdown');
-const DocumentCleaner = require('../../services/documentCleaner');
-const { resolveExpert } = require('../../../../src/shared/ai/expertResolver');
+const docxToJson = require('../../services/docxToJson.cjs');
+const jsonToMarkdown = require('../../services/jsonToMarkdown.cjs');
+const DocumentCleaner = require('../../services/documentCleaner.cjs');
+const { resolveExpert } = require('../../../../src/shared/ai/expertResolver.cjs');
 
 // Base data directory — defaults to <repo-root>/.application (matches app.js).
 const APP_BASE_DIR = process.env.APP_BASE_DIR

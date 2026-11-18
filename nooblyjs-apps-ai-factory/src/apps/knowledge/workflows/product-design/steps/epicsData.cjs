@@ -6,8 +6,8 @@
 
 'use strict';
 
-const { productSettings } = require('../utilities/settings');
-const EpicsService = require('../services/epicsService');
+const { productSettings } = require('../utilities/settings.cjs');
+const EpicsService = require('../services/epicsService.cjs');
 
 /**
  * @param {object} [data] - Workflow context (unused).

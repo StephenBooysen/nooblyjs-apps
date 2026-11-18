@@ -30,7 +30,7 @@ const {
   inspectIndexLock,
   removeStaleLock,
   withLockRecovery,
-} = require('../../../src/shared/repositories/gitLock');
+} = require('../../../src/shared/repositories/gitLock.cjs');
 
 /** The exact message git emits, as seen in production. */
 const GIT_LOCK_MESSAGE = (lockPath) =>

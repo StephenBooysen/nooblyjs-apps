@@ -13,12 +13,12 @@ const path = require('node:path');
 const { setTimeout, setInterval, setImmediate } = require('node:timers/promises');
 
 // Instantiate internal helper classes
-const Inventory = require('../../common/architecture/models/inventory.js');
-const GraphicClass = require('../../common/architecture/models/graphic.js');
-const fileUtils = require('../../common/architecture/filesystem/filesystem.js');
+const Inventory = require('../../common/architecture/models/inventory.cjs');
+const GraphicClass = require('../../common/architecture/models/graphic.cjs');
+const fileUtils = require('../../common/architecture/filesystem/filesystem.cjs');
 
 // Instantiate the business process calss
-const BusinessProcessClass = require('./businessProcess.js');
+const BusinessProcessClass = require('./businessProcess.cjs');
 
 /**
  * This class processes manages the inventory of business processes

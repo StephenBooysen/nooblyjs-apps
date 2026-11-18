@@ -74,7 +74,7 @@
 'use strict';
 
 const path = require('node:path');
-const { isTextFile } = require('./fileTypeUtils');
+const { isTextFile } = require('./fileTypeUtils.cjs');
 
 /** Office document extensions handled as "view markdown, download original". */
 const OFFICE_EXTENSIONS = ['.docx', '.doc', '.xlsx', '.xls', '.pptx', '.ppt'];
@@ -155,7 +155,7 @@ const SEEDED_HOME_FILE = '.home.md';
  * the file alone would.
  *
  * Keep the name and the hashing rule in lockstep with `contextProcessor.js` — see
- * the cross-repo note in CLAUDE.md. Covered by `tests/backend/components/homeSeedMarker.test.js`.
+ * the cross-repo note in CLAUDE.md. Covered by `tests/backend/components/homeSeedMarker.test.cjs`.
  */
 const HOME_SEED_FILE = 'home-seed.json';
 

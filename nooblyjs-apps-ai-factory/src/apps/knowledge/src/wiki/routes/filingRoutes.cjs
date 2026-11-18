@@ -19,26 +19,26 @@ const {
   toContextRelPath,
   fromContextRelPath,
   SYSTEM_DIR
-} = require('../../shared/utils/filePolicy');
-const { contentRootKey } = require('../../shared/spaces/contentRoot');
-const { isValidStatus } = require('../utils/folderTypes');
+} = require('../../shared/utils/filePolicy.cjs');
+const { contentRootKey } = require('../../shared/spaces/contentRoot.cjs');
+const { isValidStatus } = require('../utils/folderTypes.cjs');
 const {
   applyFileOrder,
   readOrderWith,
   resolveEffectiveOrder
-} = require('../utils/fileOrder');
-const { templateWriteCheck } = require('../components/spacePermissions');
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
+} = require('../utils/fileOrder.cjs');
+const { templateWriteCheck } = require('../components/spacePermissions.cjs');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
 const {
   collectRecentEntries,
   selectRecent,
   normaliseRecentQuery,
   planPinnedScan,
   mergeRecentEntries
-} = require('../utils/recentChanges');
-const spaceUserStore = require('../components/spaceUserStore');
-const userArtifacts = require('../components/userArtifacts');
-const readVisit = require('../components/readVisit');
+} = require('../utils/recentChanges.cjs');
+const spaceUserStore = require('../components/spaceUserStore.cjs');
+const userArtifacts = require('../components/userArtifacts.cjs');
+const readVisit = require('../components/readVisit.cjs');
 
 /** Pre-migration per-folder settings directory, still probed when reading. */
 const LEGACY_SETTINGS_DIR = '.settings';

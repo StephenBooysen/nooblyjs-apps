@@ -19,11 +19,11 @@ const {
   PATH_ESCAPE,
   isInside,
   containedPath
-} = require('../../../src/shared/utils/pathSafety');
+} = require('../../../src/shared/utils/pathSafety.cjs');
 
 // normalisePath is not exported directly; exercise it through folderFor/baseFor,
 // which is exactly the traversal sink the analyzer flagged.
-const noteStore = require('../../../src/wiki/components/noteStore');
+const noteStore = require('../../../src/wiki/components/noteStore.cjs');
 
 describe('pathSafety.containedPath', () => {
   const base = path.resolve('/srv/app/json');

@@ -25,7 +25,7 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 
-const userContentIndex = require('../src/wiki/components/userContentIndex');
+const userContentIndex = require('../src/wiki/components/userContentIndex.cjs');
 
 const COMMENTS_FENCE_RE = /```comments\s*\n([\s\S]*?)\n```/i;
 const LIKED_FENCE_RE = /```liked\s*\n([\s\S]*?)\n```/i;

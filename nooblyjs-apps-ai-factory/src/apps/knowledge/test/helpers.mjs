@@ -5,7 +5,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import express from 'express5';
+import express from 'express';
 import { register } from '../index.mjs';
 import { createHost, createTestServerManager, PERSON_HEADER } from './fixtures/host.mjs';
 

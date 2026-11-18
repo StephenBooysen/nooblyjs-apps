@@ -41,7 +41,7 @@ const WEB = path.resolve(__dirname, '../../../src/web/datasources/public/js');
 const UTIL = path.join(WEB, 'core/util.js');
 const WORKFLOWS = path.join(WEB, 'screens/workflows.js');
 const SCHEDULES = path.join(WEB, 'screens/schedules.js');
-const BRIDGE = path.resolve(__dirname, '../../../src/datasources/lib/workflowBridge.js');
+const BRIDGE = path.resolve(__dirname, '../../../src/datasources/lib/workflowBridge.cjs');
 
 /** util.js defines globals on `window`; give it just enough of one. */
 function loadUtil() {

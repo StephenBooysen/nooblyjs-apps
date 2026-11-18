@@ -5,7 +5,7 @@ const fsp = require('node:fs').promises;
 const os = require('node:os');
 const path = require('node:path');
 
-const spaceUserStore = require('../../../src/wiki/components/spaceUserStore');
+const spaceUserStore = require('../../../src/wiki/components/spaceUserStore.cjs');
 
 let base, spaceDir;
 

@@ -23,7 +23,7 @@ const fs = require('node:fs').promises;
 const fssync = require('node:fs');
 const path = require('node:path');
 
-const userStore = require('../src/wiki/components/userStore');
+const userStore = require('../src/wiki/components/userStore.cjs');
 
 /** Resolve the data directory: APP_BASE_DIR, else the first candidate that has a users/ folder. */
 function resolveAppBaseDir() {

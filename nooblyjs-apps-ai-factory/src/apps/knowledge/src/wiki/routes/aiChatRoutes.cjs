@@ -9,12 +9,12 @@
 
 'use strict';
 
-const { resolveExpert } = require('../../shared/ai/expertResolver');
-const { answersOffline } = require('../../shared/ai/agentTasks');
-const { summarizeFromSearch } = require('../components/searchSummarizer');
-const { extractSearchTerms } = require('../components/queryExtractor');
-const { answerOverDocument } = require('../components/documentChatProcessor');
-const spaceUserStore = require('../components/spaceUserStore');
+const { resolveExpert } = require('../../shared/ai/expertResolver.cjs');
+const { answersOffline } = require('../../shared/ai/agentTasks.cjs');
+const { summarizeFromSearch } = require('../components/searchSummarizer.cjs');
+const { extractSearchTerms } = require('../components/queryExtractor.cjs');
+const { answerOverDocument } = require('../components/documentChatProcessor.cjs');
+const spaceUserStore = require('../components/spaceUserStore.cjs');
 
 // The usage tag that marks an AI agent as the one to serve wiki chat. Pick
 // which agent handles chat by checking "Chat Processing" on it in the Agents screen.

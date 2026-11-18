@@ -5,7 +5,7 @@
 
 'use strict';
 
-const { sanitizeDirectoryName, validateWorkflowPath } = require('../../../src/datasources/utils/pathSanitizer');
+const { sanitizeDirectoryName, validateWorkflowPath } = require('../../../src/datasources/utils/pathSanitizer.cjs');
 
 describe('pathSanitizer', () => {
   describe('sanitizeDirectoryName', () => {

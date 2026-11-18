@@ -35,17 +35,17 @@ const {
   isSeededHomeRelPath,
   isSpaceScopedSystemPath,
   toContextRelPath,
-} = require('../../../src/shared/utils/filePolicy');
+} = require('../../../src/shared/utils/filePolicy.cjs');
 
 const {
   artifactRelPathsFor,
   removeDocumentArtifacts,
-} = require('../../../src/wiki/utils/documentArtifacts');
+} = require('../../../src/wiki/utils/documentArtifacts.cjs');
 
 const {
   isHiddenPath,
   isSeededHomeDelete,
-} = require('../../../src/wiki/activities/artifactCleanup');
+} = require('../../../src/wiki/activities/artifactCleanup.cjs');
 
 describe('filePolicy — home-seed marker layout', () => {
   test('the marker sits in the folder\'s own .system, beside file-order.json', () => {

@@ -41,7 +41,7 @@ const {
     parseTarget,
     buildTarget,
     resolveTarget
-} = require('./annotationBlocks');
+} = require('./annotationBlocks.cjs');
 
 /** Matches a single user-content block; capture group 1 is the body. */
 const USER_CONTENT_BLOCK_RE = /```user-content[ \t]*\n([\s\S]*?)\n```/g;

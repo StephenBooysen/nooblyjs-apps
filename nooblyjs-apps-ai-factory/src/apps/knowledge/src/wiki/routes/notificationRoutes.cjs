@@ -19,7 +19,7 @@
 
 'use strict';
 
-const spaceUserStore = require('../components/spaceUserStore');
+const spaceUserStore = require('../components/spaceUserStore.cjs');
 
 module.exports = (options, eventEmitter, services) => {
   const { app } = options;

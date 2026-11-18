@@ -40,8 +40,8 @@ flight keeps its last state in the Factory's log: open it in Factory · Runs aft
 ## Upgrade
 
 1. `npm run backup` and note the name it prints.
-2. Stop NooblyJS. Update the code in every repo (`nooblyjs-ai-host` and its siblings are released together). `npm install` in `nooblyjs-ai-host`
-   (its postinstall also installs every sibling, nooblyjs-core first; `NOOBLY_SKIP_SIBLINGS=1` installs nooblyjs-ai-host only).
+2. Stop NooblyJS. Update the code (the host and every app are one solution, released together; update `nooblyjs-core`
+   and the harness beside it too). Run `npm install` once, at the solution root.
 3. `npm test` (offline).
 4. Start NooblyJS and do the three checks above.
 5. To go back: stop, restore the backup into a new data folder, point `DATA_DIR` at it, and start the old version.

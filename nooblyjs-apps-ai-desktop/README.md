@@ -20,7 +20,7 @@ database, no account, no React.
 ## Quick start
 
 ```bash
-git clone https://github.com/nooblyjs/nooblyjs-core.git ../../nooblyjs-core   # nooblyjs-core, next to the monorepo: its src/aiservice/common is the AI module (nooblyjs-ai-common), linked as a file: dependency
+git clone https://github.com/nooblyjs/nooblyjs-core.git ../../nooblyjs-core   # nooblyjs-core, beside the nooblyjs-apps repo: its src/aiservice/common is the AI module (nooblyjs-ai-common), linked as a file: dependency
 npm install
 cp .env.example .env     # add at least one API key
 npm start                # http://127.0.0.1:3000

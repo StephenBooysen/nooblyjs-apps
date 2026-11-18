@@ -14,9 +14,9 @@ tags: [nooblyjs-ai-product, steering]
 > this app's architecture pages. See `CLAUDE.md`.
 
 > **Read `NOOBLY.md` first** (in this folder; generated from noobly). noobly owns everything shared, and this file does not
-> repeat it: the hosted-app contract is `../../nooblyjs-ai-host/.claude/steering/structure.md` §2a, the cross-app services are
-> `../../nooblyjs-ai-host/.claude/steering/tech.md` §8b, governance and the permissions matrix are `../../nooblyjs-ai-host/.claude/steering/product.md`,
-> and the one roadmap is `../../.claude/steering/roadmap.md` (with the hosted-app checklist this repo must pass).
+> repeat it: the hosted-app contract is `../../../.claude/steering/structure.md` §2a, the cross-app services are
+> `../../../.claude/steering/tech.md` §8b, governance and the permissions matrix are `../../../.claude/steering/product.md`,
+> and the one roadmap is `../../../.claude/steering/roadmap.md` (with the hosted-app checklist this repo must pass).
 > If this file and noobly disagree, **noobly wins**: follow it and fix this file in the same change.
 >
 > NooblyJS mounts this repo at **`/product`**. This file gives only this repo's values for the contract, where it
@@ -28,14 +28,14 @@ tags: [nooblyjs-ai-product, steering]
 | --- | --- |
 | Entry | `index.js` (`"main"`, `"exports"`) |
 | `register()` | default mount `/product`, name `product`, styles `css/product.css`, data under `data/product/`. It owns every URL under `/product` (`/product/specs/PRD-031`): the frame answers and this repo's UI module draws them |
-| Standalone | `npm start` runs `server.js` (nooblyjs-core's `createShell()` and kit); the `host` is the stand-in in `test/fixtures/host.js` (dev sign-in by the `X-Dev-Person` header or the `/login` picker) |
-| Dependencies | `js-yaml`, `nooblyjs-core`, `nooblyjs-ai-common`, `nooblyjs-ai-harness`; `express` for `server.js` only |
+| Standalone | **None** (removed 2026-11-18): the tests use the stand-in host in `test/fixtures/host.js` |
+| Dependencies | `js-yaml`, `nooblyjs-core`, `nooblyjs-ai-common`, `nooblyjs-ai-harness`, from the solution's root `package.json` |
 | `agent.action` | `system: 'product'`. Drafts are teammate tasks by work type; in production a draft without Teammates is refused (503), never mocked |
 | `services`, events | `host.service('product')` is in noobly `tech.md` §8b; events in `structure.md` |
 
 ## 2. Screens (this repo's UI module)
 
-The Product Factory screens are this repo's, like Teammates' (`../../nooblyjs-ai-host/.claude/guides/porting-an-app.md`).
+The Product Factory screens are this repo's, like Teammates' (`../../../.claude/guides/porting-an-app.md`).
 `public/js/module.js` exports the route table; each page in `public/js/pages/` takes
 `render(view, { params, query, ctx, route })` and talks to the API only through `ctx.api` (which sends the
 host's CSRF token). Rules:
@@ -57,4 +57,4 @@ system: 'product', workType, teammateId, itemId })`: at the budget it is refused
 
 Built in NooblyJS Phase 5 (the engine, its screens and the hosted-app contract) and wired to real teammate drafting,
 Knowledge context and Platform routes in Phases 6, 8 and 9. The phase history is `.claude/steering/roadmap-history.md`; what is
-still open is in `../../.claude/steering/roadmap.md`, "Hosted apps: open work".
+still open is in `../../../.claude/steering/roadmap.md`, "Hosted apps: open work".

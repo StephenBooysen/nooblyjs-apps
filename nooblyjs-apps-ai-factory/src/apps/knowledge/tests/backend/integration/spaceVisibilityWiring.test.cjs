@@ -15,9 +15,9 @@
 
 'use strict';
 
-const DocumentService = require('../../../src/wiki/components/documentService');
-const { compileVisibility } = require('../../../src/shared/spaces/spaceVisibility');
-const { summarizeFromSearch } = require('../../../src/wiki/components/searchSummarizer');
+const DocumentService = require('../../../src/wiki/components/documentService.cjs');
+const { compileVisibility } = require('../../../src/shared/spaces/spaceVisibility.cjs');
+const { summarizeFromSearch } = require('../../../src/wiki/components/searchSummarizer.cjs');
 
 const RETAIL = {
   id: 5,

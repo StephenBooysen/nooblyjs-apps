@@ -9,12 +9,12 @@
 'use strict';
 
 // Internal Libraries
-const ArchitectureModel = require('../../common/architecture/models/architectureModel.js');
-const GraphicClass = require('../../common/architecture/models/graphic.js');
-const fileUtils = require('../../common/architecture/filesystem/filesystem.js');
+const ArchitectureModel = require('../../common/architecture/models/architectureModel.cjs');
+const GraphicClass = require('../../common/architecture/models/graphic.cjs');
+const fileUtils = require('../../common/architecture/filesystem/filesystem.cjs');
 
 // Seatch Class
-const BusinessSolutionsSearchClass = require('./businessSolutionSearch.js');
+const BusinessSolutionsSearchClass = require('./businessSolutionSearch.cjs');
 
 /**
  * Maps the "Responsible Technology Executive" attribute to a portfolio name.

@@ -21,12 +21,12 @@
 'use strict';
 
 const path = require('node:path');
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
-const { isSpaceMember } = require('../components/spacePermissions');
-const { createKnowledgeStore } = require('./store');
-const { createImporter } = require('./importer');
-const { passageAnswer, bestPassage, titleOf, kindOf, linkFor, MAX_SOURCES } = require('./answers');
-const { modelFor, parseBlock } = require('./processModel');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
+const { isSpaceMember } = require('../components/spacePermissions.cjs');
+const { createKnowledgeStore } = require('./store.cjs');
+const { createImporter } = require('./importer.cjs');
+const { passageAnswer, bestPassage, titleOf, kindOf, linkFor, MAX_SOURCES } = require('./answers.cjs');
+const { modelFor, parseBlock } = require('./processModel.cjs');
 
 const MODEL_SCAN_LIMIT = 2000;
 const FOLDER_SCAN = 500;

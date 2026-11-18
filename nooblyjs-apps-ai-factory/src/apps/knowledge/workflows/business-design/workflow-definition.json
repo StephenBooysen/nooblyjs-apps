@@ -3,9 +3,9 @@
     "name": "Design Processes: Retrieve Business Processes",
     "description": "Retrieve the Data for the Business Processes and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessProcessesData.js",
-      "steps/businessProcessesContent.js"
+      "steps/authToken.cjs",
+      "steps/businessProcessesData.cjs",
+      "steps/businessProcessesContent.cjs"
     ],
     "tags": [
       "Business Processes"
@@ -19,9 +19,9 @@
     "name": "Design Processes: Retrieve Team Business Processes",
     "description": "Retrieve the Data for the Team Business Processes and create content",
     "steps": [
-      "steps/authToken.js",
-      "steps/businessProcessesData.js",
-      "steps/businessProcessesContent.js"
+      "steps/authToken.cjs",
+      "steps/businessProcessesData.cjs",
+      "steps/businessProcessesContent.cjs"
     ],
     "tags": [
       "Business Processes"

@@ -46,7 +46,7 @@ const {
   toHomeSeedRelPath,
   isSeededHomeRelPath,
   originalCandidatesForMarkdown
-} = require('../../shared/utils/filePolicy');
+} = require('../../shared/utils/filePolicy.cjs');
 
 /**
  * Split a space-relative path into its owning folder and file name, POSIX-normalised.

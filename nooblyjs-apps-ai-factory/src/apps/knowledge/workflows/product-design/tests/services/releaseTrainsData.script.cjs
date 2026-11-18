@@ -29,7 +29,7 @@ const path = require('node:path');
 // __dirname-relative so it works regardless of the current working directory.
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
-const ReleaseTrainsService = require('../../services/releaseTrainsService');
+const ReleaseTrainsService = require('../../services/releaseTrainsService.cjs');
 
 const WRITE = process.argv.includes('--write');
 

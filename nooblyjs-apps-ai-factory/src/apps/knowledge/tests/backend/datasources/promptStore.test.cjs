@@ -12,7 +12,7 @@ const path = require('node:path');
 
 const {
   PromptStore, slugify, extractVariables, applyVariables, DEFAULT_PROMPTS
-} = require('../../../src/shared/prompts/promptStore');
+} = require('../../../src/shared/prompts/promptStore.cjs');
 
 /**
  * Prompt keys the workflow steps in the sibling

@@ -77,7 +77,7 @@ describe('context rebuild-file route', () => {
     started = [];
 
     const app = makeApp();
-    const registerRoutes = require('../../../src/wiki/routes/filingRoutes');
+    const registerRoutes = require('../../../src/wiki/routes/filingRoutes.cjs');
     registerRoutes({ app }, null, {
       spaceManager: {},
       spaceFilingManager: {

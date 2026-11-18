@@ -22,7 +22,7 @@ const fs = require('node:fs');
 // Load environment variables from the repository-root .env file.
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
-const GitService = require('../../services/gitService');
+const GitService = require('../../services/gitService.cjs');
 
 const REPO_URL = process.env.GIT_TEST_REPO_URL || 'https://github.com/octocat/Hello-World.git';
 const TMP = path.join(__dirname, '.tmp-gitservice-test');

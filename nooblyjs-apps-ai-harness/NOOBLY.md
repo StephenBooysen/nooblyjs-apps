@@ -1,4 +1,4 @@
-# noobly (nooblyjs-learn-harness)
+# noobly (nooblyjs-ai-harness)
 
 An AI coding CLI harness like Claude Code (`noobly`), built one concept ("phase") at a time so people can learn how it works. Plain JavaScript and Node, with an Ink (React) terminal UI.
 
@@ -40,8 +40,8 @@ An AI coding CLI harness like Claude Code (`noobly`), built one concept ("phase"
 - `.claude/docs/NN-*.md`: one learning note per phase (00–30; Phase 23 was skipped). `.claude/specs/`: PRD, Architecture and Roadmap.
 
 ## Gotchas
-- The git root is the parent monorepo `../` (nooblyjs-ai, CommonJS, Node >= 24). This package is the `nooblyjs-ai-harness/` subfolder. Run git commands with that in mind.
-- The README mentions `phase-NN` git tags, but there are none in this repo (they were not carried over into the monorepo).
+- The git root is `nooblyjs-apps/`, the folder above this one (CommonJS, Node >= 24). This package is `nooblyjs-apps-ai-harness/` inside it. Run git commands with that in mind.
+- The README mentions `phase-NN` git tags, but there are none in this repo (they were not carried over into nooblyjs-apps).
 - A change to a shared provider, error, SSE or mock module belongs in nooblyjs-core (`src/aiservice/common`), not here.
 - `temp - app/` (with spaces) holds sample apps noobly built (chess, tic-tac-toe). It is committed but is not part of noobly, even though the repo map lists it. Quote the path, and leave it out of changes.
 - Debug logging: set `NOOBLY_DEBUG=1` to write to `~/.noobly/debug.log`.

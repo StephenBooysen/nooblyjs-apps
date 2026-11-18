@@ -13,9 +13,9 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 const mime = require('mime-types');
-const { getPolicy, toDerivedRelPath, isDerivedRelPath } = require('../../shared/utils/filePolicy');
-const { contentRootKey } = require('../../shared/spaces/contentRoot');
-const { SidecarStatus } = require('../utils/derivedSidecar');
+const { getPolicy, toDerivedRelPath, isDerivedRelPath } = require('../../shared/utils/filePolicy.cjs');
+const { contentRootKey } = require('../../shared/spaces/contentRoot.cjs');
+const { SidecarStatus } = require('../utils/derivedSidecar.cjs');
 
 // Default: only index markdown files for content
 const DEFAULT_CONTENT_EXTENSIONS = new Set(['.md']);

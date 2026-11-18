@@ -19,8 +19,8 @@
 
 'use strict';
 
-const ProductBase = require('../base/productBase.js');
-const TargetProcess = require('../utilities/targetProcess.js');
+const ProductBase = require('../base/productBase.cjs');
+const TargetProcess = require('../utilities/targetProcess.cjs');
 
 const PORTFOLIO_EPIC_RELEASE_TRAIN_INCLUDE = ['Id', 'PortfolioEpic[Id,Name]', 'AgileReleaseTrain[Id,Name]'];
 

@@ -17,7 +17,7 @@
 
 'use strict';
 
-const CodeProcessorClass = require('../../services/codeProcessor.js');
+const CodeProcessorClass = require('../../services/codeProcessor.cjs');
 const strip = CodeProcessorClass.stripPromptEcho;
 
 let passed = 0;

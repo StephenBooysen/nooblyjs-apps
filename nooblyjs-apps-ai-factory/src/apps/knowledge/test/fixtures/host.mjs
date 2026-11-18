@@ -8,7 +8,7 @@
 import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
-import express from 'express5';
+import express from 'express';
 
 const require = createRequire(import.meta.url);
 const { FsStore } = require('nooblyjs-core/src/store/fs-store.js');

@@ -43,7 +43,7 @@ The three checks:
 | `src/services/platform/index.js` | `checkAgentWork()` and `repoRefusal()` |
 | `src/services/platform/routes.js` | Model routes by kind of work, and which providers are allowed |
 | `src/services/platform/budgets.js` | The budgets and the spend ledger |
-| `../nooblyjs-ai-teammate/src/services/host-tasks.js` | `runTask()` calls the check before a task starts |
+| `src/apps/teammate/src/services/host-tasks.js` | `runTask()` calls the check before a task starts |
 | `data/platform/` | The settings it reads: `model-routes.yaml`, `budgets.yaml`, `repositories/` |
 
 ## A small piece of code

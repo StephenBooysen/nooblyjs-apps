@@ -44,14 +44,14 @@
 
 const path = require('node:path');
 
-const ProjectManager = require('../continuousExploration/projectManager');
-const TemplateManager = require('../continuousExploration/templateManager');
-const AIOrchestrator = require('../continuousExploration/aiOrchestrator');
-const WikiExporter = require('../continuousExploration/wikiExporter');
-const WikiContextLoader = require('../continuousExploration/wikiContextLoader');
-const DEFAULT_TEMPLATES = require('../continuousExploration/defaultTemplates');
-const { isSpaceAdmin, isSpaceMember, userDir: toUserDir } = require('../components/spacePermissions');
-const { isPathVisible } = require('../../shared/spaces/spacePaths');
+const ProjectManager = require('../continuousExploration/projectManager.cjs');
+const TemplateManager = require('../continuousExploration/templateManager.cjs');
+const AIOrchestrator = require('../continuousExploration/aiOrchestrator.cjs');
+const WikiExporter = require('../continuousExploration/wikiExporter.cjs');
+const WikiContextLoader = require('../continuousExploration/wikiContextLoader.cjs');
+const DEFAULT_TEMPLATES = require('../continuousExploration/defaultTemplates.cjs');
+const { isSpaceAdmin, isSpaceMember, userDir: toUserDir } = require('../components/spacePermissions.cjs');
+const { isPathVisible } = require('../../shared/spaces/spacePaths.cjs');
 
 const BASE = '/applications/wiki/api/continuous-explorations';
 

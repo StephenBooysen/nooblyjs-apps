@@ -11,7 +11,7 @@ require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 console.log(process.env.aris_server);
 
 // Instantiate our express server
-const express = require('express');
+const express = require('express4');
 const app = express();
 app.use(express.json());
 
@@ -53,7 +53,7 @@ const worker = serviceRegistry.working('default', {
 const workflow = serviceRegistry.workflow();
 
 workflow.defineWorkflow('workflow', [
-    'code-processor.js'
+    'code-processor.cjs'
 ]);
 
 // Run our workflow

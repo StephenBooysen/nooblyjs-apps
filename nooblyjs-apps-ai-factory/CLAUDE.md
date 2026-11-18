@@ -9,10 +9,15 @@ tags: [nooblyjs-ai-host]
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Migration status (2026-10-18)
+## One solution (2026-11-18)
 
-This host and its five hosted apps were brought into this monorepo together (`.claude/steering/migration-plan.md`
-in the monorepo root), all enabled in `src/seed/data/config/hosted-apps.yaml`. The sample organisation is the
+NooblyJS is **one solution**: this folder (`nooblyjs-apps-ai-factory/` in the `nooblyjs-apps` git repo) is the host, and
+the apps it hosts live in `src/apps/<app>/` (product, design, factory, infrastructure, security, operations, teammate,
+knowledge). There is **one `package.json` and one `node_modules`, at this root**: an app has no package.json of its own,
+no standalone server, and its tests run from here (`npm run test:apps`). The host finds each app through `LOCAL_APPS` in
+`src/hosted-apps.js` (package name → `src/apps/<app>/index.js`), so every `hosted-apps.yaml` keeps naming apps by
+package. Until 2026-11-18 these were separate packages in a monorepo (the host was `nooblyjs-ai-host/`); they came
+together on 2026-10-18 and are all enabled in `src/seed/data/config/hosted-apps.yaml`. The sample organisation is the
 fictional **Acme Retail** (repositories `acme/<repo>`, the wiki's `Acme Space`).
 
 ## Current state
@@ -27,13 +32,13 @@ Bitbucket and Jira, read-only) are done** (`.claude/phases/phase-0N-summary.md`;
 tech.md §8a). **Phase 16a (nine stages: Verify, Release and Operate replace Ship) is done (reviewed 2026-10-21)**
 (`.claude/specs/phase-16a-nine-stages/`), and so is **Phase 16b (lifecycle v3: eight stages, Discover · Product · Design ·
 Engineer · Build · Test · Release · Operate; approvals given on someone's behalf; the Factory's five sidebar groups)**
-(`.claude/specs/phase-16b-product-design-build/`; the root roadmap `../.claude/steering/roadmap.md` holds every phase). **Phase 16c (the
+(`.claude/specs/phase-16b-product-design-build/`; the root roadmap `.claude/steering/roadmap.md` holds every phase). **Phase 16c (the
 Design section, now the Design app: business requirements, solution architecture, functional analysis and stories, each story a lifecycle
 item of its own with its own Design handoff) is done (reviewed 2026-10-21)** (`.claude/specs/phase-16c-design-section/`;
-the app is `../nooblyjs-ai-design/` since CHG-009, `host.service('design')`; stories in `src/lifecycle/services/engine.js`). **Phase 16d (Engineering:
+the app is `src/apps/design/` since CHG-009, `host.service('design')`; stories in `src/lifecycle/services/engine.js`). **Phase 16d (Engineering:
 each story's application architecture drawn from the code, its test analysis in the Factory's new Test section, and the
 Engineering sign-off's checks) is done (reviewed 2026-10-21)** (`.claude/specs/phase-16d-engineering/`; the Factory's
-`src/services/engineering/` and `../nooblyjs-ai-factory/quality/`, `host.service('quality')`). **Phase 16e (Build and
+`src/services/engineering/` and `src/apps/factory/quality/`, `host.service('quality')`). **Phase 16e (Build and
 Test: each pull request the Factory delivers for a story is a lifecycle item with its Build and Test approvals, its
 evidence listing the required tests by test case id; changes asked for are repaired by the line; a new commit clears
 both approvals; a person merges after both; a story passes Test with its last merge and a feature goes to Release on its
@@ -137,9 +142,9 @@ Read the relevant one before changing anything:
 | --- | --- |
 | `.claude/steering/product.md` | What NooblyJS does: systems, the 8-stage lifecycle, every screen, roles, governance rules |
 | `.claude/steering/tech.md` | How it's built: stack, storage, API conventions, agents, Teams bot, config, commands |
-| `.claude/steering/structure.md` | Where things live: sibling repos, the hosted-app `register()` contract, `public/`, `data/` |
-| `../.claude/steering/roadmap.md` | **The one roadmap** (monorepo root): every phase, each with a manual test script, and a stop for review. The root's `product.md`, `design.md` and `stack.md` give the whole factory across the SDLC |
-| `.claude/steering/brief/` | Design input (build brief + mockups). **Not in this repo**: the original brief was company material and stayed out of the migration (the migration plan, since removed from the monorepo root). |
+| `.claude/steering/structure.md` | Where things live: the solution layout (`src/apps/`), the hosted-app `register()` contract, `public/`, `data/` |
+| `.claude/steering/roadmap.md` | **The one roadmap**: every phase, each with a manual test script, and a stop for review. `factory-product.md`, `design.md` and `stack.md` give the whole factory across the SDLC |
+| `.claude/steering/brief/` | Design input (build brief + mockups). **Not in this repo**: the original brief was company material and stayed out of the migration (the migration plan, since removed). |
 
 When you change scope or architecture, update the steering doc that owns it. Keep the four docs
 consistent with each other.
@@ -153,15 +158,15 @@ These override the brief's TypeScript/React/Postgres suggestions:
 - **Storage is files only:** Markdown with YAML front matter for entities, `.yaml` for config, and
   append-only daily YAML streams for events and audit, all under `data/` (gitignored). No SQLite,
   Mongo or Postgres. Use the FsStore pattern (atomic tmp+rename writes, per-path locks,
-  path-segment validation) from `nooblyjs-ai-teammate/src/store/fs-store.js`, which is moving to `nooblyjs-core`.
-- **Minimal dependencies:** `express`, `js-yaml`, plus sibling projects linked as `file:../<project>` (and `nooblyjs-core` as `file:../../nooblyjs-core`). The
+  path-segment validation) from `src/apps/teammate/src/store/fs-store.js`, which is moving to `nooblyjs-core`.
+- **Minimal dependencies:** `express`, `js-yaml`, all in the one root `package.json` (`nooblyjs-core` as `file:../../nooblyjs-core`, the harness as `file:../nooblyjs-apps-ai-harness`; the knowledge app also keeps Express 4 as `express4`). The
   composition root `app.js` also uses `helmet`, `compression`, `express-rate-limit`, `express-session`
   and `passport` (tech.md §1).
 - **Tests:** `node:test`, offline by default (mock AI provider). API tests use `createApp()` on port 0 and the built-in `fetch`.
 
 ## Architecture: one host, hosted apps
 
-The projects live side by side in the `nooblyjs-ai` monorepo, with `nooblyjs-core` as a separate repo next to it. `nooblyjs-ai-host` is the single host process. It
+The host (this folder) is the single host process, with `nooblyjs-core` as a separate repo beside `nooblyjs-apps`. It
 initialises nooblyjs-core's `ServiceRegistry` (the **`serverManager`**) once, then loads each child listed in
 `data/config/hosted-apps.yaml` by calling its `index.js` export `register(app, serverManager, options)`:
 
@@ -177,17 +182,17 @@ initialises nooblyjs-core's `ServiceRegistry` (the **`serverManager`**) once, th
   `data/factory/design` back out once and list them above the Factory. The Factory keeps one section, Test
   (`/factory/quality`, `host.service('quality')`). Infrastructure was a section from 2026-10-19 to 2026-10-20 and is an
   app of its own again (CHG-007), moved back the same way.
-- **The lifecycle engine is part of `nooblyjs-ai-host` itself** (`src/lifecycle/`: items, stages, approvals, handoffs). It was the
+- **The lifecycle engine is part of the host itself** (`src/lifecycle/`: items, stages, approvals, handoffs). It was the
   hosted app `nooblyjs-ai-workflows` until 2026-10-10. `src/noobly.js` mounts it before any hosted app; it still answers at
   `/workflows/api/v1`, keeps its files in `data/workflows/`, and is `host.service('workflows')` to the children.
   Its own tests are in `test/lifecycle/`. The `../nooblyjs-ai-workflows` repo is retired.
 - The Product Factory is the Product app (its own screens, its API at `/product/api/v1`: artefacts and drafting agents).
 - `nooblyjs-core` (with its AI module `src/aiservice/common`, imported as `nooblyjs-ai-common`: model providers, cost) and
   `nooblyjs-ai-harness` (agent runtime) are libraries.
-- `nooblyjs-ai-host` itself owns Home, the Product Factory screens, Platform, onboarding, team chat and the Teams bot endpoint.
-- **nooblyjs-ai-host owns everything shared** (`structure.md` §1a): the product, the lifecycle, governance, the hosted-app
-  contract (§2a), and the cross-app services (`tech.md` §8b). The one roadmap is in the monorepo root (`../.claude/steering/roadmap.md`). Child repos describe only themselves,
-  and load the shared rules from `.claude/steering/nooblyjs-ai.md`, generated from `.claude/steering/nooblyjs-ai-shared-rules.md`:
+- The host itself owns Home, the Product Factory screens, Platform, onboarding, team chat and the Teams bot endpoint.
+- **The solution root owns everything shared** (`structure.md` §1a): the product, the lifecycle, governance, the hosted-app
+  contract (§2a), the cross-app services (`tech.md` §8b) and the one roadmap (`.claude/steering/roadmap.md`). Each app's
+  `.claude/` describes only that app, and loads the shared rules from `.claude/steering/nooblyjs-ai.md`, generated from `.claude/steering/nooblyjs-ai-shared-rules.md`:
   after changing that file run `npm run steering:sync` (`test/steering.test.js` fails on a stale copy).
 
 Children must not call `serverManager.initialize()`, listen on a port when hosted, or write outside
@@ -198,7 +203,7 @@ under `[data-module="<name>"]`. See `structure.md` §2a and `.claude/adr/ADR-001
 
 Known pitfall: nooblyjs-core registers Express 4 route patterns that Express 5 rejects. So
 `nooblyjs-ai-teammate` runs core's routes on a separate core-owned Express app
-(`nooblyjs-ai-teammate/src/core/index.js`). The registry also binds to the first Express app it sees.
+(`src/apps/teammate/src/core/index.js`). The registry also binds to the first Express app it sees.
 
 ## Governance rules the code must enforce server-side
 
@@ -243,12 +248,17 @@ npm run backup                              # a dated, verified copy of data/ in
 npm run restore -- <backup>                 # into an EMPTY data folder (--into <dir>); verifies every hash and the audit log
 npm run perf                                # NooblyJS on 10x the seed volume: times the key pages' APIs (target 1 s)
 npm run test:edge                           # the Edge extension (apps/edge) in Playwright's Chromium: side panel, sign-in, Jira reader on a fake page
-npm test                                    # node --test --test-force-exit "test/**/*.test.js" (the hosted wiki's watchers have no stop); report in .temp/test-results/unit.txt
+npm test                                    # test:host then test:apps; reports in .temp/test-results/{unit,apps}.txt
+npm run test:host                           # node --test --test-force-exit "test/**/*.test.js" (the hosted wiki's watchers have no stop)
+npm run test:apps                           # every app's tests: src/apps/*/test, the Factory's quality/test, the wiki's *.test.mjs
+npm run test:knowledge:jest                 # the wiki's legacy Jest suite (src/apps/knowledge/tests/backend)
+npm run port:ui                             # regenerate the wiki's UI in the frame's shape (src/apps/knowledge/public/app)
+npm run factory -- --help                   # the Software Factory's CLI (hosted runs also start it as the stations' MCP server)
 node --test test/services/onboarding.test.js   # a single test file
 node --test --test-name-pattern="refuses" "test/**/*.test.js"   # tests matching a name
 npm run seed -- --reset                     # wipe data/ and rewrite the seed story
 npm run seed:blank -- --owner you@x.com     # start from scratch: system files only, no sample content (--reset moves data/ aside, never deletes)
-npm run seed:clear -- --owner you@x.com     # the same, but DELETES everything in data/ first (also from the monorepo root)
+npm run seed:clear -- --owner you@x.com     # the same, but DELETES everything in data/ first 
 npm run metrics:reconcile                   # recompute Metrics from the raw events; exit 1 on any difference
 npm run trace:rebuild                       # build the trace again from every app; diff with data/trace/index.yaml, exit 1 on a difference
 npm run test:e2e                            # Playwright + axe (specs, then five stories, each on its own NooblyJS; ~15 min); failures in .temp/test-results/e2e*

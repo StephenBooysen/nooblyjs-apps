@@ -23,9 +23,9 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 const mime = require('mime-types');
-const userContentIndex = require('../components/userContentIndex');
-const { writeContentCache } = require('../utils/documentContentCache');
-const { resolveSpacePath, PATH_HIDDEN } = require('../../shared/spaces/spacePaths');
+const userContentIndex = require('../components/userContentIndex.cjs');
+const { writeContentCache } = require('../utils/documentContentCache.cjs');
+const { resolveSpacePath, PATH_HIDDEN } = require('../../shared/spaces/spacePaths.cjs');
 
 const COMMENTS_FENCE_RE = /(```comments\s*\n)([\s\S]*?)(\n```)/i;
 

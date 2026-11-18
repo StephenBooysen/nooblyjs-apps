@@ -14,7 +14,7 @@
 
 'use strict';
 
-const { startup } = require('./shared/startup/startupRunner');
+const { startup } = require('./shared/startup/startupRunner.cjs');
 
 /**
  * Attach the backend API modules to the host Express app.
@@ -56,7 +56,7 @@ async function initialize(context) {
 
   // Datasources Module (Workflow Automation)
   try {
-    const initializeDatasources = require('./datasources/initialize');
+    const initializeDatasources = require('./datasources/initialize.cjs');
     startup.trackSync('datasources:module', () => {
       initializeDatasources(app, server, io, eventEmitter, serviceRegistry, {
         authservice, filing, cache, log, queue, scheduling, workflow, aiservice, measuring,
@@ -71,7 +71,7 @@ async function initialize(context) {
 
   // Wiki Module (Knowledge Management)
   try {
-    const initializeWiki = require('./wiki/initialize');
+    const initializeWiki = require('./wiki/initialize.cjs');
     startup.trackSync('wiki:module', () => {
       initializeWiki(app, server, io, eventEmitter, serviceRegistry, {
         authservice, filing, cache, log, queue, searching, aiservice, notifying,
@@ -91,7 +91,7 @@ async function initialize(context) {
   // background so a slow clone can't delay the server binding its port. Failures
   // are logged per-repository and never abort startup.
   try {
-    const { initializeRepositories } = require('./shared/repositories/repositoryManager');
+    const { initializeRepositories } = require('./shared/repositories/repositoryManager.cjs');
     // Only the registration is awaited here; each clone runs on in the
     // background and is timed separately as repositories:clone:<name>.
     await startup.track('repositories:register', () =>

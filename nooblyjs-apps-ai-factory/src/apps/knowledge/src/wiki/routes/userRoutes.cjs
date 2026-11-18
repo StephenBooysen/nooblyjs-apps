@@ -13,12 +13,12 @@ const multer = require('multer');
 const path = require('node:path');
 const fs = require('node:fs').promises;
 
-const userStore = require('../components/userStore');
-const spaceUserStore = require('../components/spaceUserStore');
-const userArtifacts = require('../components/userArtifacts');
-const visitTally = require('../components/visitTally');
-const avatarStore = require('../../shared/auth/avatarStore');
-const { containedPath, handlePathError } = require('../../shared/utils/pathSafety');
+const userStore = require('../components/userStore.cjs');
+const spaceUserStore = require('../components/spaceUserStore.cjs');
+const userArtifacts = require('../components/userArtifacts.cjs');
+const visitTally = require('../components/visitTally.cjs');
+const avatarStore = require('../../shared/auth/avatarStore.cjs');
+const { containedPath, handlePathError } = require('../../shared/utils/pathSafety.cjs');
 
 /**
  * Identity used to key a user's activity folder: their email when logged in,

@@ -14,16 +14,16 @@ tags: [nooblyjs-ai-product]
 
 The **Product Factory** of NooblyJS AI: signals → ideas → specs → architecture (C4 views, ADRs) → UX and UI, with
 RICE scoring, a roadmap, readiness checks and drafting agents. A hosted app: the NooblyJS AI host
-(`../nooblyjs-ai-host`) imports `index.js` and calls `register()`, which mounts its screens (a UI module in the
+(`../../..`) imports `index.js` and calls `register()`, which mounts its screens (a UI module in the
 host's frame) and its API at `/product/api/v1`. Drafting runs as teammate tasks (`host.service('teammates')`).
 
 ```bash
-npm install
-npm test        # offline, mock provider
+npm install                                        # once, at the solution root
+node --test "src/apps/product/test/**/*.test.js"   # this app's tests, offline (npm run test:apps: every app)
 ```
 
-To run it, run NooblyJS (`npm start` in `../nooblyjs-ai-host`): it is on the rail as Product, before Design and the
+To run it, run NooblyJS (`npm start` at the solution root): it is on the rail as Product, before Design and the
 Factory.
 
-Needs Node 24 and `nooblyjs-core` next to the monorepo (`../../nooblyjs-core`). How it is built: `CLAUDE.md` and
+Needs Node 24 and `nooblyjs-core` beside the `nooblyjs-apps` repo (the root `package.json` links it as `file:../../nooblyjs-core`). How it is built: `CLAUDE.md` and
 `.claude/steering/` (product, structure, tech). Its phase history is `.claude/steering/roadmap-history.md`.

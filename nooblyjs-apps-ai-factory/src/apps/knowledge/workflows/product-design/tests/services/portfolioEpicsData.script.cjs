@@ -23,7 +23,7 @@ const path = require('node:path');
 // __dirname-relative so it works regardless of the current working directory.
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
-const PortfolioEpicsService = require('../../services/portfolioEpicsService');
+const PortfolioEpicsService = require('../../services/portfolioEpicsService.cjs');
 
 const WRITE = process.argv.includes('--write');
 

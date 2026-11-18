@@ -29,8 +29,8 @@ const fs = require('node:fs');
 const fsp = require('node:fs').promises;
 const path = require('node:path');
 
-const userStore = require('../src/wiki/components/userStore');
-const spaceUserStore = require('../src/wiki/components/spaceUserStore');
+const userStore = require('../src/wiki/components/userStore.cjs');
+const spaceUserStore = require('../src/wiki/components/spaceUserStore.cjs');
 
 function resolveAppBaseDir() {
     if (process.env.APP_BASE_DIR) return process.env.APP_BASE_DIR;

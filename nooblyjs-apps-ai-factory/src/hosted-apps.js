@@ -117,10 +117,33 @@ function checkEntry(entry, { production }) {
   return { ...entry, name: entry.package ?? path.basename(entry.path) };
 }
 
+/**
+ * The suite's own apps live in this solution, under src/apps/ (one package.json for everything). hosted-apps.yaml, the
+ * seed and every install's own data/config/hosted-apps.yaml still name them by package (`package: nooblyjs-ai-product`),
+ * so those names map to the app's entry file here. Any other package name is imported as a package.
+ */
+export const LOCAL_APPS = {
+  'nooblyjs-ai-product': 'product/index.js',
+  'nooblyjs-ai-design': 'design/index.js',
+  'nooblyjs-ai-factory': 'factory/index.js',
+  'nooblyjs-ai-security': 'security/index.js',
+  'nooblyjs-ai-operations': 'operations/index.js',
+  'nooblyjs-ai-teammate': 'teammate/index.js',
+  'nooblyjs-ai-knowledge': 'knowledge/index.mjs',
+  'nooblyjs-ai-infrastructure': 'infrastructure/index.js',
+};
+export const APPS_DIR = path.join(REPO_ROOT, 'src', 'apps');
+
+/** The URL to import for a suite app by its package name, or null for any other package. */
+export function localAppUrl(packageName) {
+  const entry = LOCAL_APPS[packageName];
+  return entry ? pathToFileURL(path.join(APPS_DIR, entry)).href : null;
+}
+
 async function importApp(entry) {
-  if (entry.package) return import(entry.package);
+  if (entry.package) return import(localAppUrl(entry.package) ?? entry.package);
   const dir = path.resolve(REPO_ROOT, entry.path);
-  if (dir !== REPO_ROOT && !dir.startsWith(REPO_ROOT + path.sep)) throw new Error(`${entry.path} is outside the nooblyjs-ai-host folder`);
+  if (dir !== REPO_ROOT && !dir.startsWith(REPO_ROOT + path.sep)) throw new Error(`${entry.path} is outside the NooblyJS folder`);
   return import(pathToFileURL(path.join(dir, 'index.js')).href);
 }
 

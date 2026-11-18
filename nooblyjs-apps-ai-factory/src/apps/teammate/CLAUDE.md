@@ -9,39 +9,38 @@ tags: [nooblyjs-ai-teammate]
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-`nooblyjs-ai-teammate` is **Digital Teammates**: hire, configure, budget and bill named AI agents. It is the source of agents across NooblyJS. It runs **hosted** (NooblyJS AI imports `index.js` and calls `register()`) or **standalone** (`server.js`: the same `register()` on `src/services/standalone-host.js`, with nooblyjs-core's sign-in, the shell's frame and the host's CSRF check). The app's own architecture is in `.claude/steering/structure.md` (§1 onwards) and its scope in `.claude/steering/product.md`. Its phase history is `docs/roadmap-history.md`; what is open is in `../.claude/steering/roadmap.md` ("Hosted apps: open work"). Older specs and the UI design brief are in `.claude/specs/`.
+`nooblyjs-ai-teammate` is **Digital Teammates**: hire, configure, budget and bill named AI agents. It is the source of agents across NooblyJS. It runs **only hosted**: NooblyJS imports `index.js` and calls `register()`. There is no standalone mode; the tests run `register()` on `src/services/standalone-host.js`, a stand-in host. The app's own architecture is in `.claude/steering/structure.md` (§1 onwards) and its scope in `.claude/steering/product.md`. Its phase history is `docs/roadmap-history.md`; what is open is in `../../../.claude/steering/roadmap.md` ("Hosted apps: open work"). Older specs and the UI design brief are in `.claude/specs/`.
 
 ## Part of NooblyJS (read first)
 
-This repo is hosted by **NooblyJS** (`../nooblyjs-ai-host`) at `/teammates`. Before changing how it starts, serves
+This repo is hosted by **NooblyJS** (`../../..`) at `/teammates`. Before changing how it starts, serves
 pages, signs people in, stores data, emits events or calls models, read
-`.claude/steering/nooblyjs-ai.md` (the shared rules, imported below: nooblyjs-ai-host owns them, and the full contract is `../nooblyjs-ai-host/.claude/steering/structure.md` §2a), `.claude/steering/tech.md` (this repo's values and how it differs) and
+`.claude/steering/nooblyjs-ai.md` (the shared rules, imported below: the solution root owns them, and the full contract is `../../../.claude/steering/structure.md` §2a), `.claude/steering/tech.md` (this repo's values and how it differs) and
 `.claude/steering/structure.md` §0 (this repo's layout as a hosted app). The source of truth is
-`../nooblyjs-ai-host/.claude/steering/structure.md` §2a. Where anything below conflicts with those, they win.
+`../../../.claude/steering/structure.md` §2a. Where anything below conflicts with those, they win.
 
-This project lives in the `nooblyjs-ai` monorepo: `nooblyjs-core` is a separate repo next to the monorepo (`file:../../nooblyjs-core`), and the AI module `nooblyjs-ai-common` lives inside it (`file:../../nooblyjs-core/src/aiservice/common`).
+This app is part of NooblyJS, **one solution** (`nooblyjs-apps-ai-factory/`; the solution root is `../../..`), with no `package.json` of its own: `nooblyjs-core` is linked from the root `package.json` (`file:../../nooblyjs-core`), and the AI module `nooblyjs-ai-common` lives inside it (`file:../../nooblyjs-core/src/aiservice/common`).
 
 @.claude/steering/nooblyjs-ai.md
 
 ## Commands
 
 ```bash
-npm start                      # standalone on :11202 (sign in as admin@localhost; the log says where the password is)
-npm test                       # node --test test/*.test.js (offline, mock provider; .env is not loaded)
-node --test test/phase3.test.js                                   # one file
-node --test --test-name-pattern="API keys" test/*.test.js         # tests whose name matches
-npm run coverage
-npm run smoke:live                    # LIVE: real Claude calls (needs ANTHROPIC_API_KEY); its dry run on the mock is test/live-smoke.test.js
+node --test "src/apps/teammate/test/**/*.test.js"   # from the solution root (offline, mock provider; .env is not loaded); npm run test:apps runs every app
+node --test src/apps/teammate/test/phase3.test.js                 # one file (from the solution root)
+node --test --test-name-pattern="API keys" "src/apps/teammate/test/*.test.js"   # tests whose name matches
+npm run coverage                      # from the solution root (every suite)
+npm run test:live:teammate            # from the solution root. LIVE: real Claude calls (needs ANTHROPIC_API_KEY); its dry run on the mock is test/live-smoke.test.js
 ```
 
-To run the app, run NooblyJS: in `../nooblyjs-ai-host`, set `enabled: true` on the `nooblyjs-ai-teammate` entry in `data/config/hosted-apps.yaml`, then `npm start` (or `npm run dev`) there. It mounts at `/teammates` on NooblyJS's port (11001 by default) and keeps its data in `../nooblyjs-ai-host/data/teammates/`. NooblyJS's `.env` supplies the environment (`ANTHROPIC_API_KEY`, `AI_PROVIDER`, `LOG_LEVEL`, …). Hosted, the app uses the host's `express`; this repo's copy is only for standalone mode and the tests.
+To run the app, run NooblyJS: in `../../..`, set `enabled: true` on the `nooblyjs-ai-teammate` entry in `data/config/hosted-apps.yaml`, then `npm start` (or `npm run dev`) there. It mounts at `/teammates` on NooblyJS's port (11001 by default) and keeps its data in `../../../data/teammates/`. NooblyJS's `.env` supplies the environment (`ANTHROPIC_API_KEY`, `AI_PROVIDER`, `LOG_LEVEL`, …). The app uses the solution's `express` (the host's); the tests' stand-in host uses the same.
 
 There is no build step and no linter. On Windows, two assertions in `test/core.test.js` that check `0o600` file modes always fail. They fail on a clean checkout too.
 
 ## Where the code is against the contract
 
 Teammates **runs inside the NooblyJS frame**. It is the first hosted app, and the worked example in
-`../nooblyjs-ai-host/.claude/guides/porting-an-app.md`:
+`../../../.claude/guides/porting-an-app.md`:
 
 - **Server.** `register()` returns `ui: { entry: 'js/module.js', styles: ['css/teammates.css'] }`, kit icon
   names and a status card in the shell shape. The router answers every page URL with `host.frame`, sets no CSP
@@ -89,7 +88,7 @@ Teammates **runs inside the NooblyJS frame**. It is the first hosted app, and th
 
 **Layout.** `src/` has exactly seven folders: `config/`, `controllers/`, `middleware/`, `models/`, `routes/`, `services/` and `utils/` (`.claude/steering/structure.md` §4). Don't add files at the `src/` root or new top-level folders. A new endpoint is a handler in `controllers/<resource>.js` plus a line in `routes/`. Rules go in `services/`, and file access goes in `models/`.
 
-**Entry point.** `index.js` exports `register(app, serverManager, { mountPath, dataDir, host })` (and `NAV`). Its private `build()` is the composition root: it creates the nooblyjs-core instances, the `FsStore` and models, and the services, then mounts `createRouter()` (`src/routes/index.js`). If any step throws, it stops what it had started, so a failed start leaves nothing mounted. `register()` returns the `HostedApp` (`nav`, `status()`, `seed()`, `close()`) plus `internals`, which holds the built services (`repos`, `store`, `invocation`, `scheduler`, …) for the tests. Extra options (`providers`, `now`, `log`, `core`, `sessionSecret`, `scheduleIntervalMs`, …) are test overrides; NooblyJS passes only the three. Only `server.js` listens on a port; hosted, nothing does.
+**Entry point.** `index.js` exports `register(app, serverManager, { mountPath, dataDir, host })` (and `NAV`). Its private `build()` is the composition root: it creates the nooblyjs-core instances, the `FsStore` and models, and the services, then mounts `createRouter()` (`src/routes/index.js`). If any step throws, it stops what it had started, so a failed start leaves nothing mounted. `register()` returns the `HostedApp` (`nav`, `status()`, `seed()`, `close()`) plus `internals`, which holds the built services (`repos`, `store`, `invocation`, `scheduler`, …) for the tests. Extra options (`providers`, `now`, `log`, `core`, `sessionSecret`, `scheduleIntervalMs`, …) are test overrides; NooblyJS passes only the three. Nothing in this app listens on a port.
 
 **One router per app.** Mounted once with `app.use(mountPath, router)`. Inside it, paths are relative to the mount path:
 - `middleware/security.js` headers, then `middleware/static.js` (`public/`, `index: false`).
@@ -101,7 +100,7 @@ Teammates **runs inside the NooblyJS frame**. It is the first hosted app, and th
 
 **nooblyjs-core.** `src/services/core/index.js` `createCore()` takes the host's `serverManager` and creates this app's own named instances of logging (file), cache, queue, notifying, measuring and scheduling. `register()` names them after the mount path. Never call `serverManager.initialize()`. That belongs to the host, and the registry is a process-wide singleton bound to the first Express app. nooblyjs-core's `scheduling` is also one service per process and ignores instance names, so the schedule check's task name comes from `checkTaskName(instanceName)` (`src/services/scheduler.js`). nooblyjs-core's own Express-4-style routes (`*`, `:x?`, `:x(*)`) go through its `src/shared/utils/routePattern.js` so they work on Express 5 hosts.
 
-**Data.** Files are the database: Markdown with YAML front matter under `dataDir`, through `src/models/fs-store.js`. It does atomic tmp-then-rename writes, per-path locks and path-segment validation, and caches parsed documents on core caching, invalidated by mtime and size. Secret-bearing files (`system/*`, `config/webhooks.md`, `config/mcp-servers.md`) are never cached, because `/services/caching/` can read cache values. There is one model (repo) per entity in `src/models/`, and services in `src/services/` hold the rules. `ensureSeeded()` (`src/services/seed.js`, data in `src/config/seed-data.js`) writes the mockup seed on first start. Hosted, the store is `host.store` (NooblyJS Phase 24, `storeFor()` in `index.js`), with the document cache attached; `src/models/fs-store.js` only re-exports nooblyjs-core's `FsStore`, which standalone and the tests construct.
+**Data.** Files are the database: Markdown with YAML front matter under `dataDir`, through `src/models/fs-store.js`. It does atomic tmp-then-rename writes, per-path locks and path-segment validation, and caches parsed documents on core caching, invalidated by mtime and size. Secret-bearing files (`system/*`, `config/webhooks.md`, `config/mcp-servers.md`) are never cached, because `/services/caching/` can read cache values. There is one model (repo) per entity in `src/models/`, and services in `src/services/` hold the rules. `ensureSeeded()` (`src/services/seed.js`, data in `src/config/seed-data.js`) writes the mockup seed on first start. Hosted, the store is `host.store` (NooblyJS Phase 24, `storeFor()` in `index.js`), with the document cache attached; `src/models/fs-store.js` only re-exports nooblyjs-core's `FsStore`, which the tests construct.
 
 **Work.** `InvocationService` (`src/services/invocation.js`) runs a task. It covers the budget and approval-threshold gate (tasks over the threshold wait in `approvals`), the provider call (`src/services/providers/`: `anthropic` when credentials exist, a cloud host, or `mock` only when `AI_PROVIDER=mock`; none of them gives `get()` null and the task is refused with `no_model`; `mock` is refused in production), the timesheet entry (hours = tokens ÷ `billing.tokensPerHour`, plus the real API cost), and memory reflection. Webhook deliveries go through `JobQueue` (`src/services/core/job-queue.js`) on core queueing with retries. `WebhookService.emit()` also forwards each event to `host.events`. Live browser updates go over `/api/v1/events` (SSE), through `EventBus` on core notifying.
 

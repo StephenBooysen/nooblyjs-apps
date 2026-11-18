@@ -18,7 +18,7 @@ const path = require('node:path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
 
 const serviceRegistry = require('nooblyjs-core');
-const GitService = require('../services/gitService');
+const GitService = require('../services/gitService.cjs');
 
 /**
  * Expand ${VAR} placeholders in a string from process.env.

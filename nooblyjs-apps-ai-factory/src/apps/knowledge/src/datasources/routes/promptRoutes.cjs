@@ -26,8 +26,8 @@
 
 'use strict';
 
-const { configure, applyVariables } = require('../../shared/prompts/promptStore');
-const { resolveExpert } = require('../../shared/ai/expertResolver');
+const { configure, applyVariables } = require('../../shared/prompts/promptStore.cjs');
+const { resolveExpert } = require('../../shared/ai/expertResolver.cjs');
 
 /** Usage tag used to pick an agent when the tester does not name one. */
 const DEFAULT_TEST_USAGE = 'Chat Processing';

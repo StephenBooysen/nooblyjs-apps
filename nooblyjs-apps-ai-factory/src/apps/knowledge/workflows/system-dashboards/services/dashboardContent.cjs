@@ -32,7 +32,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { dashboardPrefixes, loadEmailMap, firstName } = require('../utilities/people.js');
+const { dashboardPrefixes, loadEmailMap, firstName } = require('../utilities/people.cjs');
 
 /**
  * The record fields that name a person related to a solution, with the role

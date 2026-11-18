@@ -2,7 +2,7 @@
 //
 // Phase 17: the same loop, a different front-end. The simplest way in:
 //
-//   import { query } from 'nooblyjs-learn-harness';
+//   import { query } from 'nooblyjs-ai-harness';
 //   for await (const event of query({ prompt: 'List the TODOs', options: { permissionMode: 'plan' } })) {
 //     if (event.type === 'text_delta') process.stdout.write(event.text);
 //   }

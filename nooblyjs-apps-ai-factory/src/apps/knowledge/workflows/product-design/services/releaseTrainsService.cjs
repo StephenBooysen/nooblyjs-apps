@@ -41,13 +41,13 @@
 
 const path = require('node:path');
 
-const ProductBase = require('../base/productBase.js');
-const TargetProcess = require('../utilities/targetProcess.js');
-const EpicsService = require('./epicsService.js');
-const FeaturesService = require('./featuresService.js');
-const RequestsService = require('./requestsService.js');
-const fileUtils = require('../utilities/filesystem.js');
-const md = require('../utilities/markdown.js');
+const ProductBase = require('../base/productBase.cjs');
+const TargetProcess = require('../utilities/targetProcess.cjs');
+const EpicsService = require('./epicsService.cjs');
+const FeaturesService = require('./featuresService.cjs');
+const RequestsService = require('./requestsService.cjs');
+const fileUtils = require('../utilities/filesystem.cjs');
+const md = require('../utilities/markdown.cjs');
 
 const RELEASE_TRAIN_INCLUDE = ['Id', 'Name', 'Description'];
 

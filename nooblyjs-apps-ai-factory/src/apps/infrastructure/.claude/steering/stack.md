@@ -9,9 +9,9 @@ tags: [nooblyjs-ai-infrastructure, steering]
 # Infrastructure: stack, and this repo in NooblyJS
 
 > **Read `NOOBLY.md` first** (in this folder; generated from noobly). noobly owns everything shared, and this file does not
-> repeat it: the hosted-app contract is `../nooblyjs-ai-host/.claude/steering/structure.md` §2a, the cross-app services are
-> `../nooblyjs-ai-host/.claude/steering/tech.md` §8b, governance and the permissions matrix are `../nooblyjs-ai-host/.claude/steering/product.md`,
-> and the one roadmap is `../.claude/steering/roadmap.md` (with the hosted-app checklist this repo must pass).
+> repeat it: the hosted-app contract is `../../../.claude/steering/structure.md` §2a, the cross-app services are
+> `../../../.claude/steering/tech.md` §8b, governance and the permissions matrix are `../../../.claude/steering/product.md`,
+> and the one roadmap is `../../../.claude/steering/roadmap.md` (with the hosted-app checklist this repo must pass).
 > If this file and noobly disagree, **noobly wins**: follow it and fix this file in the same change.
 >
 > NooblyJS mounts this repo at **`/infrastructure`**. This file gives only this repo's values for the contract, where it
@@ -23,7 +23,7 @@ tags: [nooblyjs-ai-infrastructure, steering]
 | --- | --- |
 | Entry | `index.js` (`"main"`, `"exports"`); nothing listens on import |
 | `register()` | default mount `/infrastructure`, name `infrastructure`, rail label **Infra**, sidebar title `infrastructure`, styles `css/infrastructure.css`, data under `data/infrastructure/` |
-| Standalone | `npm start` runs `server.js` (nooblyjs-core's shell and kit, a standalone `host`, data in `./data/infrastructure`) |
+| Standalone | **None** (removed 2026-11-18): the app runs inside NooblyJS; its tests use the stand-in host in `test/fixtures/host.js` |
 | Infrastructure as code | One **provisioner adapter** (§4) behind an interface; the **mock provisioner** is the default. Never a cloud SDK or IaC CLI from a route or service, and no cloud call in a test that is not live |
 | AI | Agent work is a teammate task (`host.service('teammates').runTask`) by work type |
 | `agent.action` | `system: 'infrastructure'`. Cloud spend is tracked apart from agent (model) cost |
@@ -105,13 +105,12 @@ has a test that proves it **refuses**.
 
 ## 5. Running it
 
-Clone the repos side by side (`<workspace>/noobly`, `…\nooblyjs-core`, …) so `file:../` links resolve.
+From the solution root (`../../..`; one `package.json` for the host and every app):
 
 ```bash
-npm install     # links the sibling repos
-npm start       # node --env-file-if-exists=.env server.js
-npm test        # node --test "test/**/*.test.js"   (offline, mock provisioner)
-npm run seed    # node --env-file-if-exists=.env server.js --seed   (-- --reset wipes first)
+npm install     # once, for everything
+npm start       # NooblyJS, with Infrastructure at /infrastructure
+node --test "src/apps/infrastructure/test/**/*.test.js"   # this app's tests (offline, mock provisioner); npm run test:apps runs every app
 ```
 
 ## 6. This repo today
@@ -119,8 +118,8 @@ npm run seed    # node --env-file-if-exists=.env server.js --seed   (-- --reset 
 Hosted in NooblyJS since Phase 9a: registered at `/infrastructure`, its `infra-design` approvals in the lifecycle
 engine (Home · Approvals), the cloud budget from Platform, and its environments on Platform · Environments. Not
 done: the agent does not draft, the Software Factory does not feed it, and there is no real provisioner. The phase
-history is `docs/roadmap-history.md`; what is open is in `../.claude/steering/roadmap.md`, "Hosted apps: open
+history is `docs/roadmap-history.md`; what is open is in `../../../.claude/steering/roadmap.md`, "Hosted apps: open
 work".
 
-Environment variables (standalone): `PORT` (11008), `DATA_DIR` (`./data`), `INFRA_PROVISIONER`
+Environment variables (in NooblyJS's `.env`): `INFRA_PROVISIONER`
 (`mock`), `INFRA_MOCK_STEP_MS` (how long the mock takes for each 10% of a run; default 1200).

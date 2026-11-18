@@ -39,7 +39,7 @@ const {
   writeFileOrder,
   renameInFileOrder,
   removeFromFileOrder,
-} = require('../../../src/wiki/utils/fileOrder');
+} = require('../../../src/wiki/utils/fileOrder.cjs');
 
 /** Shorthand for the {name, type} shape the tree builder produces. */
 const doc = (name) => ({ name, type: 'document' });

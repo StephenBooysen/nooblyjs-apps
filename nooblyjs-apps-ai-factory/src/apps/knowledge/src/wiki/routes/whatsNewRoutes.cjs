@@ -26,8 +26,8 @@
 
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { rolesOf } = require('../components/spacePermissions');
-const { readContent, writeContent } = require('../../shared/content/contentPaths');
+const { rolesOf } = require('../components/spacePermissions.cjs');
+const { readContent, writeContent } = require('../../shared/content/contentPaths.cjs');
 
 /** Content-derived version: a short sha1 of the trimmed content, or '' when
  *  there is no message to show. */

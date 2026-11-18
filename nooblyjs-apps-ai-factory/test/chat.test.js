@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { startApp, today, eventually, clockDay } from './helpers.js';
+import { localAppUrl } from '../src/hosted-apps.js';
 
 let env;
 let lerato;
@@ -189,7 +190,7 @@ test('governance: no agent action in chat can decide a card, apply a draft, or c
     const apply = await chat.applyCard(plan.id, agent).catch((err) => err);
     assert.equal(apply.code, 'people_only', `${agent.id} can't apply a draft`);
   }
-  const product = await import('nooblyjs-ai-factory').catch(() => null);
+  const product = await import(localAppUrl('nooblyjs-ai-factory')).catch(() => null);
   assert.ok(product, 'the Product Factory is installed');
   await eventually(async () => {
     const refusals = (await today(env.store, 'audit')).filter((r) => r.action === 'access.refused' && /agents propose, people decide/.test(r.reason ?? ''));

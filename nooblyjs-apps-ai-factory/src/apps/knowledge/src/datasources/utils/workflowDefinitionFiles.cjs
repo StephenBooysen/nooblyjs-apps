@@ -7,7 +7,7 @@
  *
  *   1. `datasources/lib/workflowBridge.js` — the in-process loader that backs
  *      the UI list, manual "Run now" and schedule creation.
- *   2. `src/configuration/activities/run-workflow.js` — the worker-thread
+ *   2. `src/configuration/activities/run-workflow.cjs` — the worker-thread
  *      activity a SCHEDULED run executes. Worker threads get an isolated
  *      service registry with no workflows in it, so the activity cannot ask the
  *      bridge anything and re-reads the definitions off disk itself.

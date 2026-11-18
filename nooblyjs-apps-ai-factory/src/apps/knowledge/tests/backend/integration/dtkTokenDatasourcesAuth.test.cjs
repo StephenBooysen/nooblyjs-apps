@@ -16,8 +16,8 @@
 
 'use strict';
 
-const BearerTokenMiddleware = require('../../../src/wiki/auth/bearerTokenMiddleware');
-const RoleValidationMiddleware = require('../../../src/datasources/middleware/roleValidationMiddleware');
+const BearerTokenMiddleware = require('../../../src/wiki/auth/bearerTokenMiddleware.cjs');
+const RoleValidationMiddleware = require('../../../src/datasources/middleware/roleValidationMiddleware.cjs');
 
 function makeLogger() {
   return { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() };

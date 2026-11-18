@@ -17,7 +17,7 @@
  * saving is asserted, not assumed.
  */
 
-const DocumentService = require('../../../src/wiki/components/documentService');
+const DocumentService = require('../../../src/wiki/components/documentService.cjs');
 
 /**
  * A filing wrapper over an in-memory tree, honouring `shouldDescend` exactly as
@@ -241,7 +241,7 @@ describe('curated spaces prune as they walk', () => {
  * the place it is actually implemented.
  */
 describe('FilingServiceWrapper.buildFileTree honours shouldDescend', () => {
-  const FilingServiceWrapper = require('../../../src/wiki/utils/filingServiceWrapper');
+  const FilingServiceWrapper = require('../../../src/wiki/utils/filingServiceWrapper.cjs');
 
   /** A filing service over a flat path→isDir map, recording every list(). */
   function makeFiling(entries) {

@@ -17,11 +17,11 @@ const path = require('node:path');
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
 // Import some libraries
-const fileUtils = require('../../../common/architecture/filesystem/filesystem')
-const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate');
+const fileUtils = require('../../../common/architecture/filesystem/filesystem.cjs')
+const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate.cjs');
 
 // Import the Business Solution Object
-const BusinessSolutionsSearchClass = require('../../services/businessSolutionSearch');
+const BusinessSolutionsSearchClass = require('../../services/businessSolutionSearch.cjs');
 
 // Load settings data
 const settings = {

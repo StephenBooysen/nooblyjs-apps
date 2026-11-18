@@ -41,18 +41,18 @@ feeds Design, and Design feeds the Software Factory.
 
 ## Part of NooblyJS (read first)
 
-This repo is hosted by **NooblyJS** (`../nooblyjs-ai-host`). Before changing how it starts, serves pages, signs people
+This repo is hosted by **NooblyJS** (`../../..`). Before changing how it starts, serves pages, signs people
 in, stores data, emits events or calls models, read `.claude/steering/nooblyjs-ai.md` (the shared rules, imported
-below; the full contract is `../nooblyjs-ai-host/.claude/steering/structure.md` §2a). The spec it was built from is
-`../nooblyjs-ai-host/.claude/specs/phase-16c-design-section/`.
+below; the full contract is `../../../.claude/steering/structure.md` §2a). The spec it was built from is
+`../../../.claude/specs/phase-16c-design-section/`.
 
 @.claude/steering/nooblyjs-ai.md
 
 ## Commands
 
 ```bash
-npm test       # node --test "test/**/*.test.js" (offline, the stand-in host in test/fixtures/host.js)
-npm start      # in ../nooblyjs-ai-host: NooblyJS, with Design at /design
+node --test "src/apps/design/test/**/*.test.js"   # from the solution root (offline, the stand-in host in test/fixtures/host.js); npm run test:apps runs every app
+npm start      # from the solution root: NooblyJS, with Design at /design
 ```
 
-This project lives in the `nooblyjs-ai` monorepo; `nooblyjs-core` is a separate repo next to it (`file:../../nooblyjs-core`).
+This app is part of NooblyJS, **one solution** (`nooblyjs-apps-ai-factory/`; the solution root is `../../..`): it has no `package.json` of its own and no standalone server. Its dependencies are in the root `package.json` (`nooblyjs-core` as `file:../../nooblyjs-core`), and its tests run from the root.

@@ -25,10 +25,10 @@ const path = require('node:path');
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
 // Import some libraries
-const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate');
+const AuthenticateClass = require('../../../common/architecture/authentication/Authenticate.cjs');
 
 // Import the Infrastructure inventory service
-const InfrastructuresClass = require('../../services/infrastructures');
+const InfrastructuresClass = require('../../services/infrastructures.cjs');
 
 // Load settings data. The folder paths are relative to the CWD you launch node
 // from; run this from infrastructure-design/tests/services so they resolve to

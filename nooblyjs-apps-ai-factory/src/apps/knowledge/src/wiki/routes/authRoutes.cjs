@@ -14,7 +14,7 @@
 
 'use strict';
 
-const { userDir: toUserDir } = require('../components/spacePermissions');
+const { userDir: toUserDir } = require('../components/spacePermissions.cjs');
 
 /**
  * Configures and registers wiki authentication routes with the Express application.

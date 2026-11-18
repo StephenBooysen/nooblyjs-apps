@@ -19,7 +19,7 @@ const {
     contentRootKey,
     spacesSharingRoot,
     equivalentSpaceNames
-} = require('../../../src/shared/spaces/contentRoot');
+} = require('../../../src/shared/spaces/contentRoot.cjs');
 
 /** The live arrangement that produced the outage. */
 const SPACES = [

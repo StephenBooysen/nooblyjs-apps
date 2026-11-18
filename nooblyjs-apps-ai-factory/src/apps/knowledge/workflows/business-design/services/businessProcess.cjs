@@ -13,9 +13,9 @@ const path = require('node:path');
 const { setTimeout, setInterval, setImmediate } = require('node:timers/promises');
 
 // Instantiate internal helper classes
-const ArchitectureModel = require('../../common/architecture/models/architectureModel.js');
-const GraphicClass = require('../../common/architecture/models/graphic.js');
-const fileUtils = require('../../common/architecture/filesystem/filesystem.js');
+const ArchitectureModel = require('../../common/architecture/models/architectureModel.cjs');
+const GraphicClass = require('../../common/architecture/models/graphic.cjs');
+const fileUtils = require('../../common/architecture/filesystem/filesystem.cjs');
 
 // ARIS model "Type" of a business-process model (the L1–L5 process
 // decomposition). The traversal only walks these; other types — e.g. Type 16

@@ -9,7 +9,7 @@
 
 'use strict';
 
-const ModelBase = require('./modelBase');
+const ModelBase = require('./modelBase.cjs');
 
 /**
  * This class manages all model functions

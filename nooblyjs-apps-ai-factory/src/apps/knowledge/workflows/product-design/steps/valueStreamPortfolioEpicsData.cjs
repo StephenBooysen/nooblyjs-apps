@@ -7,8 +7,8 @@
 
 'use strict';
 
-const { productSettings } = require('../utilities/settings');
-const ValueStreamPortfolioEpicsService = require('../services/valueStreamPortfolioEpicsService');
+const { productSettings } = require('../utilities/settings.cjs');
+const ValueStreamPortfolioEpicsService = require('../services/valueStreamPortfolioEpicsService.cjs');
 
 /**
  * @param {object} [data] - Workflow context (unused).

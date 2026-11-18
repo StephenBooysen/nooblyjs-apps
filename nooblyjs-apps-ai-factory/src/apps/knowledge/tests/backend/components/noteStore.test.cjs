@@ -35,7 +35,7 @@ const fs = require('node:fs').promises;
 const os = require('node:os');
 const path = require('node:path');
 
-const noteStore = require('../../../src/wiki/components/noteStore');
+const noteStore = require('../../../src/wiki/components/noteStore.cjs');
 
 const USER = 'srbooysen@example.com';
 

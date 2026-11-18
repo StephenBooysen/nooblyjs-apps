@@ -15,7 +15,7 @@ tags: [nooblyjs-ai-infrastructure, steering]
 >
 > **Source of truth:** the two mockups in `.claude/steering/ui/` (`noobly-infrastructure-environments`,
 > `noobly-infrastructure-design-from-architecture`) for what this module shows, and the NooblyJS product
-> definition (`../nooblyjs-ai-host/.claude/steering/product.md`) for governance, roles, the lifecycle and the shell.
+> definition (`../../../.claude/steering/product.md`) for governance, roles, the lifecycle and the shell.
 > If this file disagrees with the NooblyJS `product.md`, **NooblyJS wins**. `stack.md` has the platform rules,
 > `structure.md` the layout, API and data.
 >
@@ -224,7 +224,7 @@ agent is **Ines Tau**. Budget $6,000 a month, $2,140 spent in October. All sampl
 > owner is, automatic apply as a Platform guardrail, releases, cloud and region, the IaC tool, Ines Tau.
 
 - **Infrastructure is not in the NooblyJS steering files.** Adding it means updating
-  `../nooblyjs-ai-host/.claude/steering/product.md` (§1 systems, §5.1 rail, §10 child projects), `structure.md`
+  `../../../.claude/steering/product.md` (§1 systems, §5.1 rail, §10 child projects), `structure.md`
   §2a (mount table, `hosted-apps.yaml`) and `roadmap.md` (a phase). The mockups put **Infra** on the
   rail between Factory and Teammates.
 - **Overlap with Platform.** Platform's nav has **Environments** and **Secrets**, and Platform ·

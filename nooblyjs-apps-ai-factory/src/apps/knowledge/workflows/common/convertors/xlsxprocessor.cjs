@@ -15,4 +15,4 @@
 
 'use strict';
 
-module.exports = require('../../../src/shared/processors/xlsxprocessor');
+module.exports = require('../../../src/shared/processors/xlsxprocessor.cjs');

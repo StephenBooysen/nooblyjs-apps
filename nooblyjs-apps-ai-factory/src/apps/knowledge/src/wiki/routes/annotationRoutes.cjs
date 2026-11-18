@@ -22,11 +22,11 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const userContentIndex = require('../components/userContentIndex');
-const A = require('../components/annotationBlocks');
-const R = require('../components/reviewBlocks');
-const { writeContentCache } = require('../utils/documentContentCache');
-const { resolveSpacePath, PATH_HIDDEN } = require('../../shared/spaces/spacePaths');
+const userContentIndex = require('../components/userContentIndex.cjs');
+const A = require('../components/annotationBlocks.cjs');
+const R = require('../components/reviewBlocks.cjs');
+const { writeContentCache } = require('../utils/documentContentCache.cjs');
+const { resolveSpacePath, PATH_HIDDEN } = require('../../shared/spaces/spacePaths.cjs');
 
 /**
  * Resolve a document path within its space.

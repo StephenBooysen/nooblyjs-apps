@@ -38,7 +38,7 @@ function arisCredentials() {
  * @returns {Promise<object>} The authentication response ({ token, ... })
  */
 async function authenticate(settings) {
-    const AuthenticateClass = require('./Authenticate');
+    const AuthenticateClass = require('./Authenticate.cjs');
     const auth = new AuthenticateClass(settings);
     const response = await auth.authenticate();
     settings.token = response.token;

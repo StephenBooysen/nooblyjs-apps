@@ -12,9 +12,9 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 const { v4: uuidv4 } = require('uuid');
-const { sanitizeDirectoryName, validateWorkflowPath } = require('../utils/pathSanitizer');
-const { DEFINITION_FILE_RE, definitionFilesIn } = require('../utils/workflowDefinitionFiles');
-const { summarizeExecution, classifyExecution } = require('./executionSummary');
+const { sanitizeDirectoryName, validateWorkflowPath } = require('../utils/pathSanitizer.cjs');
+const { DEFINITION_FILE_RE, definitionFilesIn } = require('../utils/workflowDefinitionFiles.cjs');
+const { summarizeExecution, classifyExecution } = require('./executionSummary.cjs');
 
 /**
  * Resolve a step path relative to a base directory.
@@ -678,7 +678,7 @@ class WorkflowBridge {
       const stepPaths = [];
       for (let i = 0; i < workflowData.steps.length; i++) {
         const step = workflowData.steps[i];
-        const stepFileName = `${workflowId}-step-${i + 1}-${sanitizeDirectoryName(step.name || 'step')}.js`;
+        const stepFileName = `${workflowId}-step-${i + 1}-${sanitizeDirectoryName(step.name || 'step')}.cjs`;
         const stepFilePath = path.join(workflowDir, 'steps', stepFileName);
 
         // Generate step file content
@@ -917,7 +917,7 @@ class WorkflowBridge {
 
       // Extract step name from file path
       // e.g., "steps/step-1-example-task.js" -> "Step 1 Example Task"
-      const fileName = path.basename(stepPath, '.js');
+      const fileName = path.basename(stepPath).replace(/\.c?js$/, '');
       const stepName = fileName
         .replace(/^step-\d+-/, '')  // Remove "step-N-" prefix
         .replace(/-/g, ' ')          // Replace dashes with spaces
@@ -1032,7 +1032,7 @@ class WorkflowBridge {
         const stepPaths = [];
         for (let i = 0; i < updates.steps.length; i++) {
           const step = updates.steps[i];
-          const stepFileName = `step-${i + 1}-${sanitizeDirectoryName(step.name || 'step')}.js`;
+          const stepFileName = `step-${i + 1}-${sanitizeDirectoryName(step.name || 'step')}.cjs`;
           const stepFilePath = path.join(stepsDir, stepFileName);
 
           const stepContent = this.generateStepFile(step);
@@ -2351,7 +2351,7 @@ class WorkflowBridge {
       // Use core scheduling service with run-workflow.js activity
       if (this.schedulingService) {
         try {
-          const activityPath = path.resolve(__dirname, '../../configuration/activities/run-workflow.js');
+          const activityPath = path.resolve(__dirname, '../../configuration/activities/run-workflow.cjs');
           const taskData = {
             workflowId: schedule.workflowId,
             payload: schedule.input
@@ -2484,7 +2484,7 @@ class WorkflowBridge {
       const tempDir = path.join(this.appBaseDir, 'workflow', 'schedules');
       await fs.mkdir(tempDir, { recursive: true });
 
-      const wrapperPath = path.resolve(tempDir, `schedule-${scheduleId}.js`);
+      const wrapperPath = path.resolve(tempDir, `schedule-${scheduleId}.cjs`);
       const scheduleBridge = this;
 
       // Create wrapper script content

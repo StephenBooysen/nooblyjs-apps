@@ -66,7 +66,7 @@ async function answersOffline() {
 function bridgeAsk(appBaseDir) {
   return async (ask) => {
     // Required here, not at the top: only a worker thread needs it.
-    const WorkflowBridgeClient = require('../../../workflows/common/bridge/workflowBridgeClient');
+    const WorkflowBridgeClient = require('../../../workflows/common/bridge/workflowBridgeClient.cjs');
     const client = new WorkflowBridgeClient({ appBaseDir, timeoutMs: BRIDGE_TIMEOUT_MS });
     return client.call('agentPrompt', { ...ask, via: 'workflow' });
   };

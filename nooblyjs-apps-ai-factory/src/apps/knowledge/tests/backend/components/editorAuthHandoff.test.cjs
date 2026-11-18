@@ -35,7 +35,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 const ROUTE_MODULE = path.join(
-  __dirname, '../../../src/wiki/routes/editorAuthRoutes.js'
+  __dirname, '../../../src/wiki/routes/editorAuthRoutes.cjs'
 );
 
 /** Minimal Express stand-in that just records route handlers by method+path. */

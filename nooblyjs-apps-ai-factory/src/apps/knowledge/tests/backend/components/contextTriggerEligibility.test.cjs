@@ -25,7 +25,7 @@ const fs = require('node:fs');
  */
 function loadIsContextEligible() {
   const src = fs.readFileSync(
-    path.join(__dirname, '../../../src/wiki/activities/fileWatcher.js'), 'utf8');
+    path.join(__dirname, '../../../src/wiki/activities/fileWatcher.cjs'), 'utf8');
   const body = src.match(/function isContextEligible[\s\S]*?\n}/);
   if (!body) throw new Error('isContextEligible not found — did fileWatcher.js change shape?');
   const CONVERTIBLE_EXT = new Set(['.docx', '.pdf', '.xlsx', '.xls']);

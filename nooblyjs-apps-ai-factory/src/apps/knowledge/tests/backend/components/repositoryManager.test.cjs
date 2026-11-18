@@ -35,7 +35,7 @@ const {
   instanceNameFor,
   redactUrl,
   SetupStatus,
-} = require('../../../src/shared/repositories/repositoryManager');
+} = require('../../../src/shared/repositories/repositoryManager.cjs');
 
 /** A throwaway APP_BASE_DIR holding spaces/repositories.json. */
 function makeAppBase(repos) {
@@ -191,7 +191,7 @@ describe('Repositories screen — setup reporting contract', () => {
   const screen = fs.readFileSync(
     path.join(REPO, 'src/web/datasources/public/js/screens/repository.js'), 'utf8');
   const routes = fs.readFileSync(
-    path.join(REPO, 'src/datasources/routes/repositoriesRoutes.js'), 'utf8');
+    path.join(REPO, 'src/datasources/routes/repositoriesRoutes.cjs'), 'utf8');
   const css = fs.readFileSync(
     path.join(REPO, 'src/web/datasources/public/css/datasources.css'), 'utf8');
 

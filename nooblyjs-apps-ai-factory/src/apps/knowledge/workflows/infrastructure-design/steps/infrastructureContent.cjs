@@ -13,10 +13,10 @@
 require('dotenv').config({path:'../../../.env'});
 
 // Shared step helpers (ARIS credentials + authentication)
-const authenticateStep = require('../../common/architecture/authentication/authenticateStep');
+const authenticateStep = require('../../common/architecture/authentication/authenticateStep.cjs');
 
 // The infrastructures inventory service
-const InfrastructuresClass = require('../services/infrastructures');
+const InfrastructuresClass = require('../services/infrastructures.cjs');
 
 /**
  * Build the infrastructure content from the cached data.

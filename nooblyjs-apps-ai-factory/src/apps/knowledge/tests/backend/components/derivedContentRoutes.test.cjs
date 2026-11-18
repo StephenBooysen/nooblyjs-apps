@@ -21,13 +21,13 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { sidecarStatus, SidecarStatus } = require('../../../src/wiki/utils/derivedSidecar');
+const { sidecarStatus, SidecarStatus } = require('../../../src/wiki/utils/derivedSidecar.cjs');
 
 const GET_ROUTE = 'GET /applications/wiki/api/documents/derived';
 const PUT_ROUTE = 'PUT /applications/wiki/api/documents/derived';
 const REGEN_ROUTE = 'POST /applications/wiki/api/documents/derived/regenerate';
 
-jest.mock('../../../src/shared/processors/documentConverter', () => {
+jest.mock('../../../src/shared/processors/documentConverter.cjs', () => {
   const nodePath = require('node:path');
   const SUPPORTED_EXTENSIONS = new Set(['.docx', '.doc', '.pdf', '.xlsx', '.xls']);
   return {
@@ -83,7 +83,7 @@ describe('derived content routes', () => {
     cacheDeletes = [];
 
     const app = makeApp();
-    require('../../../src/wiki/routes/documentRoutes')({ app }, null, {
+    require('../../../src/wiki/routes/documentRoutes.cjs')({ app }, null, {
       dataManager: { read: async () => [] },
       cache: { delete: async (key) => { cacheDeletes.push(key); } },
       log: noopLog,

@@ -25,7 +25,7 @@ Design and the Factory on the rail; its API is at `/product/api/v1` and its page
 
 - **Architecture is shown in Design.** Since lifecycle v3 (Phase 16b) Architecture's sidebar row is the Design app's.
   The code, the API (`/product/api/v1/architecture…`, `/adrs…`) and the pages (`public/js/pages/architecture.js`,
-  `stage-list.js`) stay here; `../nooblyjs-ai-design/public/js/product-pages.js` draws them in this app's scope
+  `stage-list.js`) stay here; `../design/public/js/product-pages.js` draws them in this app's scope
   (`data-module="product"`, `css/product.css`, which Design lists among its styles). This app's own `/architecture`
   addresses move on to `/design/architecture` (`public/js/pages/moved.js`), and `adrFor()` links there.
 - Old `/factory/product/…` addresses land here (the Factory's `public/js/pages/moved-app.js`).
@@ -34,19 +34,19 @@ Design and the Factory on the rail; its API is at `/product/api/v1` and its page
 
 ## Part of NooblyJS (read first)
 
-This repo is hosted by **NooblyJS** (`../nooblyjs-ai-host`). Before changing how it starts, serves pages, signs people
+This repo is hosted by **NooblyJS** (`../../..`). Before changing how it starts, serves pages, signs people
 in, stores data, emits events or calls models, read `.claude/steering/nooblyjs-ai.md` (the shared rules, imported
-below: the host owns them, and the full contract is `../nooblyjs-ai-host/.claude/steering/structure.md` §2a). This
+below: the host owns them, and the full contract is `../../../.claude/steering/structure.md` §2a). This
 app's own scope is `.claude/steering/product.md`, its layout `.claude/steering/structure.md`, its values
-`.claude/steering/tech.md`. What is open is in the one roadmap, `../.claude/steering/roadmap.md`.
+`.claude/steering/tech.md`. What is open is in the one roadmap, `../../../.claude/steering/roadmap.md`.
 
 @.claude/steering/nooblyjs-ai.md
 
 ## Commands
 
 ```bash
-npm test       # node --test "test/**/*.test.js" (offline, mock provider, the stand-in host in test/fixtures/host.js)
-npm start      # in ../nooblyjs-ai-host: NooblyJS, with Product at /product
+node --test "src/apps/product/test/**/*.test.js"   # from the solution root (offline, mock provider, the stand-in host in test/fixtures/host.js); npm run test:apps runs every app
+npm start      # from the solution root: NooblyJS, with Product at /product
 ```
 
-This project lives in the `nooblyjs-ai` monorepo; `nooblyjs-core` is a separate repo next to it (`file:../../nooblyjs-core`).
+This app is part of NooblyJS, **one solution** (`nooblyjs-apps-ai-factory/`; the solution root is `../../..`): it has no `package.json` of its own and no standalone server. Its dependencies are in the root `package.json` (`nooblyjs-core` as `file:../../nooblyjs-core`), and its tests run from the root.

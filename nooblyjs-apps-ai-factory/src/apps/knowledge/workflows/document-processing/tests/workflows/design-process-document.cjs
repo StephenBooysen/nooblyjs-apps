@@ -16,7 +16,7 @@ const fs = require('node:fs').promises;
 require('dotenv').config({ path: path.join(__dirname, '../../../../.env') });
 
 // Instantiate our express server
-const express = require('express');
+const express = require('express4');
 const app = express();
 app.use(express.json());
 
@@ -25,8 +25,8 @@ const serviceRegistry = require('nooblyjs-core');
 serviceRegistry.initialize(app);
 
 // DOCX converters used to produce the markdown the workflow will clean
-const docxToJson = require('../../services/docxToJson');
-const jsonToMarkdown = require('../../services/jsonToMarkdown');
+const docxToJson = require('../../services/docxToJson.cjs');
+const jsonToMarkdown = require('../../services/jsonToMarkdown.cjs');
 
 // Data to pass to the workflow
 const exampleDir = path.join(__dirname, '../example');
@@ -57,7 +57,7 @@ const workflow = serviceRegistry.workflow();
 
 // Define the design-process-document workflow — runs the clean-document step
 workflow.defineWorkflow('design-process-document', [
-    'clean-document.js'
+    'clean-document.cjs'
 ]);
 
 // Convert the DOCX to markdown, then run the workflow

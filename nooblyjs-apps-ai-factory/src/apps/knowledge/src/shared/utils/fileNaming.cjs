@@ -35,7 +35,7 @@
 'use strict';
 
 const path = require('node:path');
-const { isTextFile } = require('./fileTypeUtils');
+const { isTextFile } = require('./fileTypeUtils.cjs');
 
 /** Default extension for an extension-less document name. */
 const DEFAULT_EXTENSION = '.md';

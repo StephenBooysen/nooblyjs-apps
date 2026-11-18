@@ -10,17 +10,17 @@
 'use strict';
 const path = require('node:path');
 const mime = require('mime-types');
-const annotationBlocks = require('../components/annotationBlocks');
-const userContentBlocks = require('../components/userContentBlocks');
-const { templateWriteCheck } = require('../components/spacePermissions');
-const reviewBlocks = require('../components/reviewBlocks');
-const linkedDocumentBlocks = require('../components/linkedDocumentBlocks');
-const sharedLinkVisitBlocks = require('../components/sharedLinkVisitBlocks');
-const { toOriginalsRelPath, toDerivedRelPath, needsMarkdownSidecar } = require('../../shared/utils/filePolicy');
-const { toDocumentFileName, titleFromFileName, sanitizeFileName } = require('../../shared/utils/fileNaming');
-const { ensureSidecar } = require('../utils/derivedSidecar');
-const { readContentCache, writeContentCache } = require('../utils/documentContentCache');
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
+const annotationBlocks = require('../components/annotationBlocks.cjs');
+const userContentBlocks = require('../components/userContentBlocks.cjs');
+const { templateWriteCheck } = require('../components/spacePermissions.cjs');
+const reviewBlocks = require('../components/reviewBlocks.cjs');
+const linkedDocumentBlocks = require('../components/linkedDocumentBlocks.cjs');
+const sharedLinkVisitBlocks = require('../components/sharedLinkVisitBlocks.cjs');
+const { toOriginalsRelPath, toDerivedRelPath, needsMarkdownSidecar } = require('../../shared/utils/filePolicy.cjs');
+const { toDocumentFileName, titleFromFileName, sanitizeFileName } = require('../../shared/utils/fileNaming.cjs');
+const { ensureSidecar } = require('../utils/derivedSidecar.cjs');
+const { readContentCache, writeContentCache } = require('../utils/documentContentCache.cjs');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
 
 /**
  * Configures and registers document routes with the Express application.

@@ -7,7 +7,7 @@ tags: [nooblyjs-ai-factory]
 
 # nooblyjs-learn-factory
 
-`factory`: an **agentic software factory**, built one concept at a time on top of the [`noobly`](../nooblyjs-ai-harness) harness. Issues go in; verified, reviewable pull requests come out.
+`factory`: an **agentic software factory**, built one concept at a time on top of the [`noobly`](../../nooblyjs-apps-ai-harness) harness. Issues go in; verified, reviewable pull requests come out.
 
 It's a learning project. Each of its 26 phases (F00–F25) adds one idea from the industry's agentic factories (Devin, GitHub's Copilot coding agent, Codex, Jules, Factory.ai, Kiro, Sourcegraph Batch Changes…) and explains it in a plain-language doc. It's also a working tool: 235 offline tests, no dependencies beyond the harness, no build step.
 
@@ -16,8 +16,8 @@ It's a learning project. Each of its 26 phases (F00–F25) adds one idea from th
 Every example has a scripted agent, so the whole line runs offline, for free:
 
 ```bash
-git clone https://github.com/nooblyjs/nooblyjs-core.git && git clone https://github.com/nooblyjs/nooblyjs-ai.git   # side by side: core next to the monorepo
-cd nooblyjs-ai/nooblyjs-ai-factory && npm install
+git clone https://github.com/nooblyjs/nooblyjs-core.git && git clone https://github.com/StephenBooysen/nooblyjs-apps.git   # side by side: core beside the nooblyjs-apps repo, which holds this monorepo
+cd nooblyjs-apps/nooblyjs-apps-ai-factory && npm install && cd src/apps/factory   # one install, at the solution root
 
 export FACTORY_HOME=/tmp/factory-demo
 examples/make-demo-repo.sh /tmp/calc                          # a tiny repo with tests
@@ -58,7 +58,7 @@ With a model: `export ANTHROPIC_API_KEY=…` and drop `--script`. On Linux, inst
 
 ## Status
 
-**All 26 phases (F00–F25) are built.** 235 tests pass offline (`npm test`), and `npm run check:examples` runs every example in the docs against a fresh repo.
+**All 26 phases (F00–F25) are built.** 235 tests pass offline (`npm run test:apps` from the solution root), and `npm run check:examples` runs every example in the docs against a fresh repo.
 
 Verified here: everything offline with scripted agents, a real Docker run, real `noobly` subprocesses, two remote worker processes sharing a queue, and a campaign across clones of the `NooblyJS-*` repos.
 
@@ -99,12 +99,13 @@ The docs give the exact commands. One known flaky test (F05's multi-process data
 | F23 | **Workers and containers**: `factory serve --workers` + `factory worker --server … --enroll …` run build and repair steps on other machines; `FACTORY_CONTAINER_IMAGE` runs setup and gates in Docker/Podman |
 | F24 | **Security**: nothing is pushed with a secret or risky change in any commit (held for a person); agents never see the factory's secrets; `factory audit export\|verify`; a red-team suite |
 | F25 | **Campaigns**: `factory campaign create --spec … --repos …` opens one PR per repo (rate-limited per repo per day) and tracks them together; `schedules` in config run recurring campaigns |
-| F26 | **Hosted in NooblyJS**: `register()` (root `index.js`) mounts the dashboard at `/factory` inside [NooblyJS](../nooblyjs-ai-host), behind its sign-in, permissions and audit log; the pages are a UI module in NooblyJS's frame |
+| F26 | **Hosted in NooblyJS**: `register()` (root `index.js`) mounts the dashboard at `/factory` inside [NooblyJS](../../..), behind its sign-in, permissions and audit log; the pages are a UI module in NooblyJS's frame |
 
 ## Working on it
 
 ```bash
-npm test                  # offline: no network, no API key
+# from the solution root (../../..)
+npm run test:apps         # every app's tests, this one's included: offline, no network, no API key
 npm run check:examples    # every documented example still works
 ```
 

@@ -10,7 +10,7 @@
 
 'use strict';
 
-const authenticateStep = require('../../common/architecture/authentication/authenticateStep');
+const authenticateStep = require('../../common/architecture/authentication/authenticateStep.cjs');
 
 /**
  * Retrieve an authentication token from ARIS (cached when still valid).

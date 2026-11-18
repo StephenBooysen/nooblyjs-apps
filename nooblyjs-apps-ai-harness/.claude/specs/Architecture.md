@@ -51,7 +51,7 @@ flowchart TB
 ## 3. Directory layout
 
 ```
-nooblyjs-learn-harness/
+nooblyjs-ai-harness/
 ├── bin/
 │   └── noobly.js                 # CLI entry: parse args, wire everything, start UI
 ├── src/

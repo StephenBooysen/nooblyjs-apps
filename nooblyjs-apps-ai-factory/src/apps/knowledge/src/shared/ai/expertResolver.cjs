@@ -13,7 +13,7 @@
  */
 'use strict';
 
-const AIPrompt = require('./aiPrompt');
+const AIPrompt = require('./aiPrompt.cjs');
 
 /**
  * Find a registered agent entry by agent name or slug.

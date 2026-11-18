@@ -17,4 +17,4 @@
 
 'use strict';
 
-module.exports = require('../../../src/shared/processors/pdfprocessor');
+module.exports = require('../../../src/shared/processors/pdfprocessor.cjs');

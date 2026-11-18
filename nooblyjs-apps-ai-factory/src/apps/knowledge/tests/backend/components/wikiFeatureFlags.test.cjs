@@ -15,7 +15,7 @@
 
 'use strict';
 
-const featureFlags = require('../../../src/wiki/config/featureFlags');
+const featureFlags = require('../../../src/wiki/config/featureFlags.cjs');
 
 const { GROUP, FLAGS, readFlags, ensureDefaults, toBoolean } = featureFlags;
 

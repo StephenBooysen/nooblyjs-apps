@@ -15,9 +15,9 @@
 
 require('dotenv').config({ path: '../../../.env' });
 
-const DashboardDataClass = require('../services/dashboardData.js');
-const DashboardContentClass = require('../services/dashboardContent.js');
-const { resolveSettings } = require('./dashboardDataStep.js');
+const DashboardDataClass = require('../services/dashboardData.cjs');
+const DashboardContentClass = require('../services/dashboardContent.cjs');
+const { resolveSettings } = require('./dashboardDataStep.cjs');
 
 /**
  * @async

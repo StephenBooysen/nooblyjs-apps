@@ -22,7 +22,7 @@ import { seed as seedSection } from './src/seed/index.js';
 
 const NAME = 'quality';
 const MOUNT = /^(\/[a-z0-9][a-z0-9-]{0,62})+$/;
-const { version: VERSION } = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const { version: VERSION } = JSON.parse(fs.readFileSync(new URL('../../../../package.json', import.meta.url), 'utf8'));
 const NEEDS = ['express', 'auth', 'requireRole', 'audit', 'events', 'store', 'people', 'service', 'frame'];
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public', 'quality');
 

@@ -49,8 +49,8 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { ancestorDirsFor, pickClosest } = require('../../shared/utils/filePolicy');
-const { compileVisibility } = require('../../shared/spaces/spaceVisibility');
+const { ancestorDirsFor, pickClosest } = require('../../shared/utils/filePolicy.cjs');
+const { compileVisibility } = require('../../shared/spaces/spaceVisibility.cjs');
 
 const EXPLORATIONS_DIR = '.system/continuous-explorations';
 const TEMPLATES_DIR = '.templates';

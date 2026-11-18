@@ -9,86 +9,98 @@ tags: [nooblyjs-ai-host, steering]
 # NooblyJS — Structure
 
 > Where things live. `product.md` says what to build, `tech.md` says how, and `roadmap.md`
-> says in what order. Follow these layouts in `nooblyjs-ai-host` and in every child project.
+> says in what order. Follow these layouts in the host (the solution root) and in every app under `src/apps/`.
 
 ---
 
-## 1. Workspace: the monorepo and nooblyjs-core
+## 1. Workspace: one solution, and nooblyjs-core
 
-The projects live side by side in the `nooblyjs-ai` monorepo, so `file:../<project>` dependencies resolve;
-`nooblyjs-core` is its own repo next to the monorepo (`file:../../nooblyjs-core`):
+NooblyJS is **one solution**: `nooblyjs-apps-ai-factory/`, a folder of the `nooblyjs-apps` git repo, with **one
+`package.json` and one `node_modules` at its root**. The host is the solution root; the apps it hosts are folders under
+`src/apps/`, with no `package.json` of their own. The host finds an app through `LOCAL_APPS` in `src/hosted-apps.js`,
+which maps the package name `hosted-apps.yaml` lists (`nooblyjs-ai-product`) to `src/apps/product/index.js`. The harness,
+the desktop app and the blog, CMS and wiki apps are sibling folders in `nooblyjs-apps/`. `nooblyjs-core` is its own repo
+beside `nooblyjs-apps`: the root `package.json` links it as `file:../../nooblyjs-core`, the AI module as
+`file:../../nooblyjs-core/src/aiservice/common`, and the harness as `file:../nooblyjs-apps-ai-harness`.
 
 ```
 nooblyjs-core/                 shared services + FsStore + event bus + UI kit and shell     (library, its own repo)
   src/aiservice/common/        the AI module (imported as nooblyjs-ai-common): providers (incl. Bedrock, Vertex, Azure), model catalogue, tokens, cost, SSE
-nooblyjs-ai/                   the monorepo
-  nooblyjs-ai-host/            the NooblyJS app: shell, Home, Product Factory screens, Platform, chat, Teams bot
-  nooblyjs-ai-harness/         agent runtime                                   (library + CLI)
-  nooblyjs-ai-product/          Product: screens, artefacts + drafting, at /product   (module; a Factory section 2026-10-19 to CHG-009)
-  nooblyjs-ai-design/           Design: requirements, solution, functional analysis, stories, at /design (Phase 16c; a Factory section to CHG-009)
-  nooblyjs-ai-factory/         Software Factory: one app at /factory           (module + workers + CLI)
-    quality/                   its Test section: test analysis (Phase 16d); runs, coverage, defects later (Phase 20).
+nooblyjs-apps/                 the git repo
+  nooblyjs-apps-ai-harness/    agent runtime                                   (library + CLI; beside the solution)
+  nooblyjs-apps-ai-desktop/    projects, documents and chat for any LLM         (not hosted; beside the solution)
+  nooblyjs-apps-blog/, nooblyjs-apps-cms/, nooblyjs-apps-wiki/   other apps
+  nooblyjs-apps-ai-factory/    NooblyJS, one solution
+    package.json               the only one: every dependency of the host and its apps
+    app.js                     the composition root (npm start)
+    src/                       the host: shell, Home, lifecycle engine, Platform, chat, Teams bot, hosted-app loader
+      apps/
+        product/               Product: screens, artefacts + drafting, at /product   (a Factory section 2026-10-19 to CHG-009)
+        design/                Design: requirements, solution, functional analysis, stories, at /design (Phase 16c)
+        factory/               Software Factory: one app at /factory, its workers and the `factory` CLI (npm run factory)
+          quality/             its Test section: test analysis (Phase 16d); runs, coverage, defects (Phase 20).
                                The Test approvals are the Factory's own pages (src/services/pull-requests/, Phase 16e)
-  nooblyjs-ai-infrastructure/  Infrastructure: designs, environments, runs, drift, cost   (module + standalone server)
-  nooblyjs-ai-teammate/        Digital Teammates                               (module + standalone server)
-  nooblyjs-ai-knowledge/       Knowledge Repository                            (module + workers)
-  nooblyjs-ai-desktop/         projects, documents and chat for any LLM        (standalone app, not hosted)
+        infrastructure/        Infrastructure: designs, environments, runs, drift, cost
+        security/              Security: threat models, scans, findings, risk acceptance
+        operations/            Operations: releases, deployments, SLOs, incidents
+        teammate/              Digital Teammates
+        knowledge/             Knowledge Repository (CommonJS: .cjs files; Express 4 as `express4`)
+    public/  test/  scripts/  workflows/   the host's browser files, tests, scripts and lifecycle workflows
+    apps/                      the Electron window, the Edge extension, the Teams app (separate deployables)
 ```
 
-Dependency direction (an arrow means "may import"). Nothing imports upwards, and child
-modules never import each other. They talk through events, through services the host hands
-out (`options.host.service(name)`, §2a), and, from the browser, through each other's HTTP APIs:
+Dependency direction (an arrow means "may import"). Nothing imports upwards, and the apps never import each other.
+They talk through events, through services the host hands out (`options.host.service(name)`, §2a), and, from the
+browser, through each other's HTTP APIs:
 
 ```mermaid
 flowchart TB
-  H["nooblyjs-ai-host"] --> F["nooblyjs-ai-factory<br/>(with its sections)"]
-  H --> K["nooblyjs-ai-knowledge"]
-  H --> T["nooblyjs-ai-teammate"]
+  H["host (the solution root)"] --> F["src/apps/factory<br/>(with its sections)"]
+  H --> K["src/apps/knowledge"]
+  H --> T["src/apps/teammate"]
   H & F & K & T --> C["nooblyjs-core"]
   H & F & K & T --> HA["nooblyjs-ai-harness"] --> CO["nooblyjs-ai-common"]
   ALL["(all may use)"] -.-> C
   ALL -.-> CO
 ```
 
-## 1a. Steering: nooblyjs-ai-host owns everything shared
+## 1a. Steering: the solution root owns everything shared
 
-**`nooblyjs-ai-host` owns everything shared: the product, the lifecycle, governance rules, the hosted-app contract and the
-cross-app services.** The single roadmap, and the whole-factory view across the SDLC, live in the monorepo root's
-`.claude/steering/` (decided 2026-10-19). Each other repo owns only what is true of itself. A rule is written
-once, in the repo that owns it; other repos link to it and never copy it, because copies drift.
+**The solution root owns everything shared: the product, the lifecycle, governance rules, the hosted-app contract, the
+cross-app services, the single roadmap and the whole-factory view across the SDLC**, all in the root's
+`.claude/steering/`. Each app (`src/apps/<app>/`) owns only what is true of itself, in its own `.claude/steering/`. A
+rule is written once, where it is owned; others link to it and never copy it, because copies drift.
 
 | Topic | Owner | Where |
 | --- | --- | --- |
-| The product: lifecycle stages, every screen, roles and the permissions matrix, governance | nooblyjs-ai-host | `product.md` |
-| Stack, storage, API conventions, agents and model routing, config, commands | nooblyjs-ai-host | `tech.md` |
-| The lifecycle engine (items, stages, approvals, handoffs) | nooblyjs-ai-host | `tech.md`, `src/lifecycle/` |
-| The hosted-app contract (`register()`, `options.host`, the UI module, standalone mode) | nooblyjs-ai-host | this file, §2a |
-| The cross-app services (`host.service(name)`: who provides what, who calls it) | nooblyjs-ai-host | `tech.md` §8b |
-| The roadmap: every phase for every repo, the hosted-app checklist, the hosted apps' open work | monorepo root | `../.claude/steering/roadmap.md` |
-| The whole factory across the SDLC: stages, systems, trace, checks, target stack | monorepo root | `../.claude/steering/{product,design,stack}.md` |
-| The shared rules in brief, loaded in every other repo | nooblyjs-ai-host | `.claude/steering/nooblyjs-ai-shared-rules.md`, copied as `.claude/steering/nooblyjs-ai.md` |
-| What an app does: its screens, capabilities, data and open points | that repo | its `product.md` |
-| Where its code and data live, the `services` it returns and the events it emits | that repo | its `structure.md` |
-| Its own values for the contract, its deviations from the defaults, and its state today | that repo | its `tech.md` |
+| The product: lifecycle stages, every screen, roles and the permissions matrix, governance | the root | `product.md` |
+| Stack, storage, API conventions, agents and model routing, config, commands | the root | `tech.md` |
+| The lifecycle engine (items, stages, approvals, handoffs) | the root | `tech.md`, `src/lifecycle/` |
+| The hosted-app contract (`register()`, `options.host`, the UI module) | the root | this file, §2a |
+| The cross-app services (`host.service(name)`: who provides what, who calls it) | the root | `tech.md` §8b |
+| The roadmap: every phase for every app, the hosted-app checklist, the hosted apps' open work | the root | `.claude/steering/roadmap.md` |
+| The whole factory across the SDLC: stages, systems, trace, checks, target stack | the root | `.claude/steering/{factory-product,design,stack}.md` |
+| The shared rules in brief, loaded in every app | the root | `.claude/steering/nooblyjs-ai-shared-rules.md`, copied as `.claude/steering/nooblyjs-ai.md` |
+| What an app does: its screens, capabilities, data and open points | that app | its `product.md` |
+| Where its code and data live, the `services` it returns and the events it emits | that app | its `structure.md` |
+| Its own values for the contract, its deviations from the defaults, and its state today | that app | its `tech.md` |
 
 How it works:
 
-- **Kiro and Claude Code only load the steering of the repo they are opened in**, and Kiro resolves file references
-  from that repo's root. So each repo gets **`.claude/steering/nooblyjs-ai.md`**: the shared rules in brief, with a table
-  of where each shared topic lives in `../nooblyjs-ai-host`. It is generated from `.claude/steering/nooblyjs-ai-shared-rules.md` by
-  `npm run steering:sync` (in nooblyjs-ai-host), and `test/steering.test.js` fails while any copy is out of date. Never
+- **Kiro and Claude Code load the steering of the folder they are opened in**, and Kiro resolves file references
+  from that folder. So each app gets **`.claude/steering/nooblyjs-ai.md`**: the shared rules in brief, with a table
+  of where each shared topic lives in the solution root. It is generated from `.claude/steering/nooblyjs-ai-shared-rules.md` by
+  `npm run steering:sync` (from the solution root), and `test/steering.test.js` fails while any copy is out of date. Never
   edit a copy.
-- **A repo's own `tech.md`** starts by pointing at `NOOBLY.md` and then gives only its values (mount path, entry,
-  name, which `host` members it relies on) and where it differs from §2a (Teammates has no standalone server,
-  the wiki mounts at `/wiki` from `index.mjs`). It does not restate the contract.
-- **One roadmap.** Work in any repo is a phase (or part of one) in the root `../.claude/steering/roadmap.md`, with
-  its spec in this repo's `.claude/specs/`. The hosted apps' old roadmaps are history in their
-  `docs/roadmap-history.md`; what was still open in them is in the root roadmap, "Hosted apps: open work". This repo's
-  `roadmap.md` is only a pointer (phases 0–15 moved to the root on 2026-10-19).
-- **Changing a shared rule** is one change in nooblyjs-ai-host: edit the owning doc (and `nooblyjs-ai-shared-rules.md` if the brief
-  changes), run `npm run steering:sync`, and commit the copies in each repo with it.
+- **An app's own `tech.md`** gives only its values (mount path, entry, name, which `host` members it relies on) and
+  where it differs from §2a (the wiki mounts at `/wiki` from `index.mjs` and is CommonJS). It does not restate the contract.
+- **One roadmap.** Work in any app is a phase (or part of one) in the root `.claude/steering/roadmap.md`, with
+  its spec in the root's `.claude/specs/`. The apps' old roadmaps are history in their `docs/roadmap-history.md`;
+  what was still open in them is in the root roadmap, "Hosted apps: open work".
+- **Changing a shared rule** is one change in the solution root: edit the owning doc (and `nooblyjs-ai-shared-rules.md` if
+  the brief changes), run `npm run steering:sync`, and commit the copies with it.
 
-## 2. The `nooblyjs-ai-host` repository
+## 2. The host (the solution root)
 
 ```
 noobly/
@@ -174,14 +186,14 @@ noobly/
     style/                  brand assets
 ```
 
-## 2a. Hosted applications: how child apps attach to `nooblyjs-ai-host`
+## 2a. Hosted applications: how the apps in `src/apps/` attach to the host
 
-`nooblyjs-ai-host` is the **one host process**. Child projects with a UI are **hosted applications**.
-`nooblyjs-ai-host` loads each one, passes it the **Express app** and the **`serverManager`** (the
-nooblyjs-core `ServiceRegistry` instance that `nooblyjs-ai-host` has already initialised), and the child
+The host (the solution root) is the **one host process**. The apps in `src/apps/` are **hosted applications**.
+The host loads each one, passes it the **Express app** and the **`serverManager`** (the
+nooblyjs-core `ServiceRegistry` instance the host has already initialised), and the app
 **attaches itself** under its own path.
 
-In the browser, `nooblyjs-ai-host` owns **one frame**: the suite rail, the module sidebar (nav, badges,
+In the browser, the host owns **one frame**: the suite rail, the module sidebar (nav, badges,
 status card, signed-in person), the content area and the docked chat panel. A hosted app
 doesn't draw any of that. It provides a **UI module**, an ES module that the frame loads into
 the content area. Moving between apps is client-side, so the frame (and an open chat thread)
@@ -211,11 +223,11 @@ hosted app `nooblyjs-ai-infrastructure` at `/infrastructure` again (CHG-007), mo
 `knowledge`) or an object (names with services of their own, like the Factory's `quality`). API-only apps have no rail item,
 and their router calls `next()` for anything that isn't theirs.
 
-**This section is the only copy of the contract** (§1a). A child repo's `tech.md` gives only its own values and
+**This section is the only copy of the contract** (§1a). An app's `tech.md` gives only its own values and
 how it differs, and its `.claude/steering/nooblyjs-ai.md` (generated) points here. When you change the contract, change the
 child code that depends on it in the same change; the child docs need no edit unless one of their values changes.
 
-The `nooblyjs-ai-host` host keeps `/` (Home), `/platform`, `/login`, `/onboarding`, `/api/v1/…`
+The host keeps `/` (Home), `/platform`, `/login`, `/onboarding`, `/api/v1/…`
 (including `/api/v1/shell`), `/api/teams/messages`, `/services/…` (nooblyjs-core dashboards) and
 `/ui/…` (the shared UI kit). Home, Product Factory and Platform are the host's **built-in apps**:
 they're described with the same fields as a hosted app and use the same module contract, so
@@ -224,10 +236,8 @@ all six rail items behave the same.
 ### Layout of a hosted application
 
 ```
-noobly-ai-<name>/
-  index.js                  the entry point nooblyjs-ai-host imports: exports register() (contract below)
-  server.js                 standalone dev server: builds its own Express app, serverManager and shell, then calls register()
-  package.json              "main": "index.js"; "exports": { ".": "./index.js" }
+src/apps/<name>/              no package.json: the solution has one, at its root
+  index.js                  the entry point the host imports (LOCAL_APPS in src/hosted-apps.js): exports register() (contract below)
   src/
     routes/                 API routers, mounted by register() under <mountPath>/api/v1
     services/ repos/ workers/ seed/ util/
@@ -244,10 +254,10 @@ noobly-ai-<name>/
 ### The `register()` contract
 
 ```js
-// nooblyjs-ai-factory/index.js
+// src/apps/factory/index.js
 /**
  * Attach the Software Factory to a host Express app.
- * @param {import('express').Express} app   the host's Express app (nooblyjs-ai-host, or server.js when standalone)
+ * @param {import('express').Express} app   the host's Express app
  * @param {object} serverManager            nooblyjs-core ServiceRegistry, already initialised by the host
  * @param {object} [options]
  * @param {string} [options.mountPath='/factory']
@@ -304,7 +314,7 @@ export async function register(app, serverManager, options = {}) { … }
  *                                           host.service('knowledge') finds it whatever the app is called
  * @property {(opts: { reset: boolean, content?: boolean }) => Promise<void>} [seed]   writes this app's seed files into dataDir;
  *                                           `content: false` (a blank NooblyJS) means its system files only, no sample story
- *                                           (first start, and `npm run seed -- --reset` in nooblyjs-ai-host)
+ *                                           (first start, and `npm run seed -- --reset`)
  * @property {() => Promise<void>} close     stops timers, workers and queues
  */
 ```
@@ -359,11 +369,11 @@ What `register()` must do:
    without that app (its rail item shows "Unavailable"). It doesn't crash NooblyJS. A `status()`
    that throws or takes longer than 1 s is left out of that response. It never blocks the shell.
 
-How `nooblyjs-ai-host` loads them (`src/hosted-apps.js`), listed in `data/config/hosted-apps.yaml`:
+How the host loads them (`src/hosted-apps.js`, which maps each package name to `src/apps/<app>/` through `LOCAL_APPS`), listed in `data/config/hosted-apps.yaml`:
 
 ```yaml
 apps:
-  - package: nooblyjs-ai-factory     # file:../nooblyjs-ai-factory in package.json
+  - package: nooblyjs-ai-factory     # file:src/apps/factory in package.json
     mountPath: /factory
     enabled: true
   - package: nooblyjs-ai-teammate
@@ -405,7 +415,7 @@ fallbacks (`/product/*`, `/platform/*`, `/`) after every hosted app has register
 ### One frame for every app
 
 The frame, its router and the UI kit live in **`nooblyjs-core`**: `public/ui/` in the browser and
-`createShell()` on the server. `nooblyjs-ai-host` and a standalone child serve the same frame, without copies.
+`createShell()` on the server. The host serves that one frame; no app has a copy.
 
 **The frame page.** `shell.frame` returns one static page for every UI URL and every person.
 It checks the session first and sends a signed-out person to `/login`:
@@ -458,7 +468,7 @@ screen-reader users land on it. Back and forward re-route. A change of `#hash` a
 **The module contract.** An app's `public/js/module.js` exports its route table:
 
 ```js
-// nooblyjs-ai-factory/public/js/module.js
+// src/apps/factory/public/js/module.js
 export const routes = [
   { path: '/',         redirect: '/line' },
   { path: '/line',     nav: 'line', title: 'Line', page: () => import('./pages/line.js') },
@@ -475,7 +485,7 @@ Knowledge Graph) · `redirect` (relative to the mount path) · `meta` (anything 
 `route.meta`; the built-in placeholders keep their phase and mockup there).
 
 ```js
-// nooblyjs-ai-factory/public/js/pages/runs.js
+// src/apps/factory/public/js/pages/runs.js
 export async function render(view, { params, query, ctx, route }) { … }   // renders into view; route = the matched entry
 export function destroy() {}                                       // optional
 ```
@@ -521,18 +531,12 @@ kit's, and kit class collisions reverted inside the app's pages.
 `ui: { mode: 'document' }`. Its rail item is then a normal link (a full page load), and the app
 serves its own page. It doesn't pass the hosted-app checklist in this mode, and new apps never use it.
 
-### Standalone mode (development of one child)
+### No standalone mode
 
-`npm start` in a child runs its `server.js`. That file initialises its own `serverManager`,
-Express app and `createShell()` from `nooblyjs-core`, and serves `/ui/`. It calls
-`register(app, serverManager, { mountPath: '/factory', host: { …, frame: shell.frame } })`,
-passes the result to `shell.add()`, and listens. Hosted and standalone run the same code path
-and the same frame. In standalone mode, the rail items for other apps show "Not running here",
-and the chat panel is hidden because chat belongs to `nooblyjs-ai-host`.
-
-Standalone mode is optional. `nooblyjs-ai-teammate` has none: it is a library only NooblyJS runs, and its tests mount
-`register()` on a stand-in host (`test/fixtures/host.js`) instead. The wiki's standalone server is `server.mjs`
-(`npm run start:nooblyjs-ai-host`).
+The apps run only inside the host (2026-11-18, when NooblyJS became one solution): there is no `server.js` and no
+`npm start` per app. An app's tests mount `register()` on a stand-in host (`test/fixtures/host.js` in the app) and run
+from the solution root (`npm run test:apps`). The one other way in is the Software Factory's `factory` CLI
+(`npm run factory`), which hosted runs also start as an MCP server for the stations' tools.
 
 ## 3. The browser apps
 
@@ -570,7 +574,7 @@ ui/
 The server half of the kit is `createShell({ express, auth, can, permissionsFor, features, log })`
 in `nooblyjs-core/src/shell` (CommonJS). It returns `{ router, frame, uiDir, builtIn(desc, { position:
 'start'|'end' }), add(hosted, entry), unavailable(entry, meta), notInstalled(entry, meta), list(),
-appsFor(person), statusFor(req) }`. `/dev/styleguide` in `nooblyjs-ai-host` shows every component in every state.
+appsFor(person), statusFor(req) }`. `/dev/styleguide` in the host shows every component in every state.
 
 ### 3.2 The host's pages (`noobly/public/`)
 
@@ -609,9 +613,9 @@ public/
 Each app's `public/js/module.js` lists these pages in its route table.
 
 ```
-nooblyjs-ai-factory/public/js/pages/     line.js · runs.js · inbox.js · campaigns.js · metrics.js
-nooblyjs-ai-teammate/public/js/pages/   roster.js · profile.js · timeline.js · billing.js · hire.js · team-memory.js · settings.js · admin.js
-nooblyjs-ai-knowledge/public/js/pages/   ask.js · spaces.js · process-model.js · collections.js · sources.js · graph.js · review.js · contributions.js · access.js
+src/apps/factory/public/js/pages/     line.js · runs.js · inbox.js · campaigns.js · metrics.js
+src/apps/teammate/public/js/pages/   roster.js · profile.js · timeline.js · billing.js · hire.js · team-memory.js · settings.js · admin.js
+src/apps/knowledge/public/js/pages/   ask.js · spaces.js · process-model.js · collections.js · sources.js · graph.js · review.js · contributions.js · access.js
 ```
 
 URLs: `/` and `/home/approvals`, `/product/specs/PRD-031`, `/platform/repositories/acme__slots-api`
@@ -693,7 +697,7 @@ data/
 ```
 
 Each module writes only under its own folder. Shared folders (`events/`, `audit/`, `people/`,
-`teams/`, `access/`) are written only through `nooblyjs-core` / `nooblyjs-ai-host` services.
+`teams/`, `access/`) are written only through `nooblyjs-core` / host services.
 
 ## 5. Naming conventions
 
@@ -727,4 +731,4 @@ Each module writes only under its own folder. Shared folders (`events/`, `audit/
 - **A new rule or policy:** a service function plus a "refuses" test. If people should change
   it at runtime, it is configured in `data/**/*.yaml`.
 - **A decision about NooblyJS itself:** `.claude/adr/ADR-NNN-<slug>.md`.
-- **Design input:** `.claude/steering/brief/` is read-only. Never edit the mockups.
+- **Design input:** The design brief (not in this repo) is read-only. Never edit the mockups.

@@ -36,7 +36,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
 
-const WorkflowBridge = require('../../../src/datasources/lib/workflowBridge');
+const WorkflowBridge = require('../../../src/datasources/lib/workflowBridge.cjs');
 
 const silentLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
@@ -85,7 +85,7 @@ describe('run-workflow activity — definition discovery', () => {
     // before the activity is required — and the module cache reset per test.
     jest.resetModules();
     process.env.WORKFLOWS_PATH = workflowsPath;
-    activity = require('../../../src/configuration/activities/run-workflow');
+    activity = require('../../../src/configuration/activities/run-workflow.cjs');
   });
 
   afterEach(() => {

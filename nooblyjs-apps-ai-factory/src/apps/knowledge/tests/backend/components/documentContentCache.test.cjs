@@ -19,7 +19,7 @@ const path = require('node:path');
 const {
   readContentCache,
   writeContentCache,
-} = require('../../../src/wiki/utils/documentContentCache');
+} = require('../../../src/wiki/utils/documentContentCache.cjs');
 
 /** Minimal stand-in for the core cache: put(key, value) — no TTL, like the real one. */
 function makeCache() {

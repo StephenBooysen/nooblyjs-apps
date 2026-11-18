@@ -22,7 +22,7 @@ const {
   legacyContentPath,
   readContent,
   writeContent
-} = require('../../../src/shared/content/contentPaths');
+} = require('../../../src/shared/content/contentPaths.cjs');
 
 const KINDS = Object.keys(CONTENT_KINDS);
 

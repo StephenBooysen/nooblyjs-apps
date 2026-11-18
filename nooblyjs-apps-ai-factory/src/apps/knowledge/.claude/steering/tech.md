@@ -9,9 +9,9 @@ tags: [nooblyjs-ai-knowledge, steering]
 # Knowledge Repository (the Wiki Platform): this repo in NooblyJS
 
 > **Read `NOOBLY.md` first** (in this folder; generated from noobly). noobly owns everything shared, and this file does not
-> repeat it: the hosted-app contract is `../nooblyjs-ai-host/.claude/steering/structure.md` §2a, the cross-app services are
-> `../nooblyjs-ai-host/.claude/steering/tech.md` §8b, governance and the permissions matrix are `../nooblyjs-ai-host/.claude/steering/product.md`,
-> and the one roadmap is `../.claude/steering/roadmap.md` (with the hosted-app checklist this repo must pass).
+> repeat it: the hosted-app contract is `../../../.claude/steering/structure.md` §2a, the cross-app services are
+> `../../../.claude/steering/tech.md` §8b, governance and the permissions matrix are `../../../.claude/steering/product.md`,
+> and the one roadmap is `../../../.claude/steering/roadmap.md` (with the hosted-app checklist this repo must pass).
 > If this file and noobly disagree, **noobly wins**: follow it and fix this file in the same change.
 >
 > NooblyJS mounts this repo at **`/wiki`**. This file gives only this repo's values for the contract, where it
@@ -23,7 +23,7 @@ tags: [nooblyjs-ai-knowledge, steering]
 | --- | --- |
 | Entry | **`index.mjs`** (`"main"`, `"exports"`), ES modules; the legacy wiki is CommonJS under `src/`, hosted through an adapter (`src/hosted/`), with its UI generated into the frame. See `CLAUDE.md`, "Hosted in NooblyJS" |
 | `register()` | default mount **`/wiki`** (`DEFAULT_MOUNT_PATH`), name `wiki`, `provides: ['knowledge']` so other apps find it as `host.service('knowledge')`; it uses the host's registry and maps the legacy routes under `<mountPath>/api/v1` |
-| Standalone | `npm start` still runs the legacy wiki (`app.js`, port 9101). There is no `server.mjs` yet |
+| Standalone | **None** (2026-11-18): `app.js` and its port 9101 are gone; the wiki runs only inside NooblyJS |
 | Storage | Records are JSON files under `data/wiki/` (the legacy format), not Markdown + YAML: a known deviation until the legacy app is retired `[CONFIRM]` |
 | Dependencies | The legacy app's (Express 4 era, Socket.IO, Passport…) stay until it is retired; hosted code must not use them |
 | `agent.action` | `system: 'knowledge'`. Hosted, the wiki's own AI agents are teammate tasks (NooblyJS Phase 24): checked by Platform, billed to the teammate and in Platform's Knowledge budget. Standalone they call their provider |
@@ -47,6 +47,11 @@ redaction, sources, cited answers with no model, answer actions, needs review, t
 The wiki's AI agents called their provider directly until NooblyJS Phase 24; hosted, they are now teammate tasks.
 
 ## 4. This repo today, and the plan it was hosted against
+
+> **As built (2026-11-18).** The app is `src/apps/knowledge/` in the one NooblyJS solution: no `package.json`, no
+> `app.js` and no standalone server (port 9101) any more. The host loads `index.mjs` through `LOCAL_APPS`. The legacy
+> CommonJS code is `.cjs` (the solution is ES modules), it `require`s Express 4 as `express4`, and its Jest suite runs as
+> `npm run test:knowledge:jest` from the solution root. Read the plan below with that in mind.
 
 > **As built (2026-10-09).** The entry is `index.mjs`, mounted at **`/wiki`** (name `wiki`), and `backend/` plus
 > `applications/` are now one `src/` folder with a single root `package.json`. So the table below is the plan, with

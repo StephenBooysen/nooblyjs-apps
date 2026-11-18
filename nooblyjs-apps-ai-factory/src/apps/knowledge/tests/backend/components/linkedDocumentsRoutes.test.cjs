@@ -103,7 +103,7 @@ describe('linked-documents routes', () => {
         );
 
         const app = makeApp();
-        require('../../../src/wiki/routes/linkedDocumentsRoutes')(
+        require('../../../src/wiki/routes/linkedDocumentsRoutes.cjs')(
             { app }, null, { log: noopLog, appBaseDir }
         );
         routes = app.routes;

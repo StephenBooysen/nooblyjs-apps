@@ -2,14 +2,14 @@
 inclusion: always
 type: Steering
 title: 'Agent harness: what NooblyJS needs from this repo'
-description: Extracted from the NooblyJS product definition (`../nooblyjs-ai-host/.claude/steering/product.md`, the source of truth) and the design mockups in `../nooblyjs-ai-host/.claude/steering/brief/`.
+description: Extracted from the NooblyJS product definition (`../nooblyjs-apps-ai-factory/.claude/steering/product.md`, the source of truth) and the design mockups in the design brief (not in this repo).
 tags: [nooblyjs-ai-harness, steering]
 ---
 
 # Agent harness: what NooblyJS needs from this repo
 
-> Extracted from the NooblyJS product definition (`../nooblyjs-ai-host/.claude/steering/product.md`, the source
-> of truth) and the design mockups in `../nooblyjs-ai-host/.claude/steering/brief/`. This file lists only
+> Extracted from the NooblyJS product definition (`../nooblyjs-apps-ai-factory/.claude/steering/product.md`, the source
+> of truth) and the design mockups in the design brief (not in this repo). This file lists only
 > what the **agent runtime** must provide to NooblyJS. The harness's own plan and phase history
 > are in `.claude/specs/` (PRD, Architecture, Roadmap) and `.claude/docs/`. If this file and
 > the NooblyJS `product.md` disagree, NooblyJS wins. Numbers are **sample data** from the PRD-031
@@ -110,7 +110,6 @@ These are company governance rules, checked in the runtime, not only in the UI:
 - The harness defaults to consumer provider keys (`XAI_API_KEY`, `ANTHROPIC_API_KEY`,
   `OPENAI_API_KEY`). In NooblyJS, providers come only from `nooblyjs-ai-common` routes, and the
   direct providers are development-only.
-- The package is named `nooblyjs-learn-harness`, and its sibling repos refer to it as
-  `nooblyjs-ai-harness`. Agree on one name.
+- The package is named `nooblyjs-ai-harness`, the name its folder and the factory's dependency use.
 - How the harness learns the repo-access toggles and guardrails at run time: passed in by
   the worker, or read from a host service `[CONFIRM]`.

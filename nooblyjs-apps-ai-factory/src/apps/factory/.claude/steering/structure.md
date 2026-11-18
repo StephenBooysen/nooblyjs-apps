@@ -82,7 +82,7 @@ replace them.
 }
 ```
 
-**Status card** (`status()`, `../nooblyjs-ai-host/.claude/steering/product.md` §5.4): accepting work or
+**Status card** (`status()`, `../../../.claude/steering/product.md` §5.4): accepting work or
 stopped, slots running and queued, and spend today against the daily cap. **Stop all runs** is a
 button on the Line page, because the status card holds text only. If it must also sit in the
 sidebar, ask NooblyJS for a card action `[CONFIRM]`.

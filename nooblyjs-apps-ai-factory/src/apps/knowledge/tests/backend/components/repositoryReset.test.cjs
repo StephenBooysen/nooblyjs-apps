@@ -36,8 +36,8 @@ const {
   parseCleanOutput,
   assertRemoteBranch,
   findCaseCollisions,
-} = require('../../../src/shared/repositories/repositoryReset');
-const { isBusy, syncRepository } = require('../../../src/shared/repositories/repositorySync');
+} = require('../../../src/shared/repositories/repositoryReset.cjs');
+const { isBusy, syncRepository } = require('../../../src/shared/repositories/repositorySync.cjs');
 
 /**
  * A stand-in for simple-git that records every command and flips its answers once
@@ -431,7 +431,7 @@ describe('resetRepository — exclusion and timers', () => {
 describe('Reset — route and screen contract', () => {
   const REPO = path.resolve(__dirname, '../../..');
   const routes = fs.readFileSync(
-    path.join(REPO, 'src/datasources/routes/repositoriesRoutes.js'), 'utf8');
+    path.join(REPO, 'src/datasources/routes/repositoriesRoutes.cjs'), 'utf8');
   const screen = fs.readFileSync(
     path.join(REPO, 'src/web/datasources/public/js/screens/repository.js'), 'utf8');
   const css = fs.readFileSync(

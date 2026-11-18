@@ -42,7 +42,7 @@
 
 'use strict';
 
-const userStore = require('./userStore');
+const userStore = require('./userStore.cjs');
 
 /** File name inside a user's activity folder. */
 const TALLY_FILE = 'visits.json';

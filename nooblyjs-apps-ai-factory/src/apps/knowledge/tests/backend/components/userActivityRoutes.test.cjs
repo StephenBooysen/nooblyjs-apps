@@ -27,7 +27,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const visitTally = require('../../../src/wiki/components/visitTally');
+const visitTally = require('../../../src/wiki/components/visitTally.cjs');
 
 const LIST = 'GET /api/user-activity';
 const DETAIL = 'GET /api/user-activity/:userKey';
@@ -108,7 +108,7 @@ const YESTERDAY = visitTally.dayKey(visitTally.shiftDays(new Date(), 1));
 
 function register({ authservice } = {}) {
   const app = makeApp();
-  require('../../../src/datasources/routes/userActivityRoutes')(
+  require('../../../src/datasources/routes/userActivityRoutes.cjs')(
     'test',
     {
       'express-app': app,

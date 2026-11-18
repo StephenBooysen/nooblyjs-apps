@@ -37,7 +37,7 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const { compileVisibility } = require('./spaceVisibility');
+const { compileVisibility } = require('./spaceVisibility.cjs');
 
 /** Error code thrown when a path exists but the space does not expose it. */
 const PATH_HIDDEN = 'PATH_HIDDEN';

@@ -8,14 +8,14 @@ import os from 'node:os';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
-import express from 'express5';
+import express from 'express';
 import { register } from '../index.mjs';
 import { createHost, PERSON_HEADER } from './fixtures/host.mjs';
 
 const require = createRequire(import.meta.url);
 const registry = require('nooblyjs-core');
-const { parseBlock, modelFor } = require('../src/wiki/knowledge/processModel.js');
-const { bestPassage, knowledgeId, linkFor, kindOf } = require('../src/wiki/knowledge/answers.js');
+const { parseBlock, modelFor } = require('../src/wiki/knowledge/processModel.cjs');
+const { bestPassage, knowledgeId, linkFor, kindOf } = require('../src/wiki/knowledge/answers.cjs');
 
 const API = '/wiki/api/v1/knowledge';
 let t;

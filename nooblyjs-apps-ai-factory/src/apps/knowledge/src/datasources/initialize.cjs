@@ -10,12 +10,12 @@
 'use strict';
 
 const path = require('node:path');
-const express = require('express');
-const WorkflowBridge = require('./lib/workflowBridge');
-const SpaceManager = require('./components/SpaceManager');
-const SecurityManager = require('./components/SecurityManager');
-const SpaceFilingManager = require('./components/SpaceFilingManager');
-const { startup } = require('../shared/startup/startupRunner');
+const express = require('express4');
+const WorkflowBridge = require('./lib/workflowBridge.cjs');
+const SpaceManager = require('./components/SpaceManager.cjs');
+const SecurityManager = require('./components/SecurityManager.cjs');
+const SpaceFilingManager = require('./components/SpaceFilingManager.cjs');
+const { startup } = require('../shared/startup/startupRunner.cjs');
 
 /**
  * Initialize the Datasources module
@@ -177,7 +177,7 @@ module.exports = (app, server, io, eventEmitter, serviceRegistry, services) => {
       // exchanges request/response files under <appBaseDir>/workflow/.bridge/
       // instead. Steps use common/bridge/workflowBridgeClient.js in the sibling
       // workflows repo.
-      const WorkflowBridgeServer = require('./lib/workflowBridgeServer');
+      const WorkflowBridgeServer = require('./lib/workflowBridgeServer.cjs');
       const workflowBridgeServer = new WorkflowBridgeServer({
         bridge: workflowBridge,
         appBaseDir,
@@ -196,7 +196,7 @@ module.exports = (app, server, io, eventEmitter, serviceRegistry, services) => {
   // Initialize AI Service Instances (from the Agents configuration)
   // ========================================================================
 
-  const { initializeAIInstances } = require('./lib/aiInstances');
+  const { initializeAIInstances } = require('./lib/aiInstances.cjs');
 
   startup.track('datasources:ai-instances', async () => {
     try {
@@ -210,7 +210,7 @@ module.exports = (app, server, io, eventEmitter, serviceRegistry, services) => {
   // Setup Role Validation Middleware
   // ========================================================================
 
-  const RoleValidationMiddleware = require('./middleware/roleValidationMiddleware');
+  const RoleValidationMiddleware = require('./middleware/roleValidationMiddleware.cjs');
   // Hosted in NooblyJS the screens are open to everyone signed in (src/hosted/platform.cjs); standalone keeps the role.
   const roleValidator = new RoleValidationMiddleware(log, { anySignedIn: app.get('datasourcesOpenToSignedIn') === true });
 
@@ -295,16 +295,16 @@ module.exports = (app, server, io, eventEmitter, serviceRegistry, services) => {
   try {
     startup.trackSync('datasources:routes', () => {
       // Import and register datasources routes
-      const contentRoutes = require('./routes/contentRoutes');
-      const dashboardRoutes = require('./routes/dashboardRoutes');
-      const workflowRoutes = require('./routes/workflowdashboard');
-      const workflowApiRoutes = require('./routes/workflowApiRoutes');
-      const spacesRoutes = require('./routes/spacesRoutes');
-      const securityRoutes = require('./routes/securityRoutes');
-      const spaceFilingRoutes = require('./routes/spaceFilingRoutes');
-      const repositoriesRoutes = require('./routes/repositoriesRoutes');
-      const promptRoutes = require('./routes/promptRoutes');
-      const userActivityRoutes = require('./routes/userActivityRoutes');
+      const contentRoutes = require('./routes/contentRoutes.cjs');
+      const dashboardRoutes = require('./routes/dashboardRoutes.cjs');
+      const workflowRoutes = require('./routes/workflowdashboard.cjs');
+      const workflowApiRoutes = require('./routes/workflowApiRoutes.cjs');
+      const spacesRoutes = require('./routes/spacesRoutes.cjs');
+      const securityRoutes = require('./routes/securityRoutes.cjs');
+      const spaceFilingRoutes = require('./routes/spaceFilingRoutes.cjs');
+      const repositoriesRoutes = require('./routes/repositoriesRoutes.cjs');
+      const promptRoutes = require('./routes/promptRoutes.cjs');
+      const userActivityRoutes = require('./routes/userActivityRoutes.cjs');
 
       // Register routes using the service registry pattern. serviceRegistry is
       // included so repositories routes can resolve live git filers by instance.

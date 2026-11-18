@@ -16,8 +16,8 @@
 
 'use strict';
 
-const ModelBase = require('./modelBase');
-const ModelClass = require('./model');
+const ModelBase = require('./modelBase.cjs');
+const ModelClass = require('./model.cjs');
 
 /**
  * Base class for a domain inventory model.

@@ -40,14 +40,14 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 
-const L = require('../components/linkedDocumentBlocks');
+const L = require('../components/linkedDocumentBlocks.cjs');
 const {
     readSpaces,
     resolveSpacePath,
     isPathVisible,
     handleSpacePathError
-} = require('../../shared/spaces/spacePaths');
-const { writeContentCache } = require('../utils/documentContentCache');
+} = require('../../shared/spaces/spacePaths.cjs');
+const { writeContentCache } = require('../utils/documentContentCache.cjs');
 
 /** Cap on a single block's references — a relationship band, not a directory. */
 const MAX_ITEMS = 60;
