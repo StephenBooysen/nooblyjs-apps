@@ -1,0 +1,7 @@
+# Runtime data (auth, sessions, uploads, personal data)
+.application/
+.env
+
+# Runtime folders
+*/node_modules/
+**/package-lock.json

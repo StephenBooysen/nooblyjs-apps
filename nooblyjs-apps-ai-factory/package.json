@@ -1,0 +1,39 @@
+{
+  "name": "nooblyjs-ai",
+  "version": "1.0.0",
+  "description": "NooblyJS AI: the host and its hosted apps (Product, Design, the Software Factory, Infrastructure, Security, Operations, Teammates, Knowledge), the agent harness, the AI module and the desktop app, in one repository",
+  "homepage": "https://github.com/nooblyjs/nooblyjs-ai#readme",
+  "bugs": {
+    "url": "https://github.com/nooblyjs/nooblyjs-ai/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nooblyjs/nooblyjs-ai.git"
+  },
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm start --prefix nooblyjs-ai-host",
+    "run": "npm start",
+    "test": "node scripts/each.js test",
+    "coverage": "node scripts/each.js coverage",
+    "build": "node scripts/each.js build",
+    "clean": "node scripts/each.js clean",
+    "install": "node scripts/each.js install",
+    "seed": "npm run seed --prefix nooblyjs-ai-host",
+    "seed:clear": "npm run seed:clear --prefix nooblyjs-ai-host --",
+    "steering:sync": "npm run steering:sync --prefix nooblyjs-ai-host",
+    "docs:okf": "npm run docs:okf --prefix nooblyjs-ai-host",
+    "start:host": "npm start --prefix nooblyjs-ai-host",
+    "start:desktop": "npm start --prefix nooblyjs-ai-desktop",
+    "start:teammate": "npm start --prefix nooblyjs-ai-teammate",
+    "start:infrastructure": "npm start --prefix nooblyjs-ai-infrastructure",
+    "start:knowledge": "npm start --prefix nooblyjs-ai-knowledge",
+    "start:factory": "npm start --prefix nooblyjs-ai-factory",
+    "start:harness": "npm start --prefix nooblyjs-ai-harness",
+    "test:e2e": "npm run test:e2e --prefix nooblyjs-ai-host"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
