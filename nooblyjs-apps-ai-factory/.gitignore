@@ -1,7 +1,10 @@
-# Runtime data (auth, sessions, uploads, personal data)
+# Runtime data and secrets never go in the repo (the seed writes data/ on first start).
+/data/
+/certs/
 .application/
 .env
-
-# Runtime folders
-*/node_modules/
-**/package-lock.json
+.temp/
+node_modules/
+package-lock.json
+# The seed folders under src/ are source, not runtime data.
+!**/src/**/seed/data/
