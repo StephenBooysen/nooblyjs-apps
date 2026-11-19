@@ -57,32 +57,43 @@ Ground rules for every phase:
 
 Goal: the app boots with core and the three accelerators mounted, the theme, the shell and empty pages for every route.
 
-- [ ] 0.1 `package.json`: ESM, `engines >= 22.12`, `file:` links to core and the three accelerators, scripts (`start`, `dev`, `seed`, `test`, `test:ui`); `CLAUDE.md` pointing at these three files.
-- [ ] 0.2 `app.js`: Express 5, one shared `EventEmitter`, `serviceRegistry.initialize(app, eventEmitter, …)`, providers per stack §3.1 (dev), core's CSP helper, `/health/live`.
-- [ ] 0.3 `src/platform/accelerators.js`: `mount()` customers (`customer`, `marketing`) → payments (`payments`, `billing`, mock provider; stub until [pay 0] lands) → infrastructure (`/admin/infrastructure`, `platform: { enabled: true }`, with the `host` object: auth, `requireRole`, audit, events, store, people, frame); reverse `shutdown()`. Test: all mount on Express 5; a missing capability mounts nothing.
-- [ ] 0.4 Theme: copy `nooblyjs/styling/styles.css` verbatim to `public/css/styles.css`; load Bootstrap 5.3.3 and Bootstrap Icons 1.11.3 from jsDelivr before it; `public/css/hero-co.css` with JetBrains Mono and the token map of stack §5.
-- [ ] 0.5 `.nj-` components in `hero-co.css`: status pill, stat tile, meter, option card, stepper, sticky summary, repo row, instance tile, log viewer shell, empty state.
-- [ ] 0.6 Client: `router.js` (real URLs, deep links), `api.js`, `sse.js`, `charts.js` (area, stacked bar); the app shell (top bar, workspace switcher, sidebar from product §5) with an empty page per route.
-- [ ] 0.7 Test harness: `node:test` on the mock cloud; Playwright smoke at desktop and phone width with a CSP-violation check.
+- [x] 0.1 `package.json`: ESM, `engines >= 22.12`, `file:` links to core and the three accelerators, scripts (`start`, `dev`, `seed`, `test`, `test:ui`); `CLAUDE.md` pointing at these three files.
+- [x] 0.2 `app.js`: Express 5, one shared `EventEmitter`, `serviceRegistry.initialize(app, eventEmitter, …)`, providers per stack §3.1 (dev), core's CSP helper, `/health/live`.
+- [x] 0.3 `src/platform/accelerators.js`: `mount()` customers (`customer`, `marketing`) → payments (`payments`, `billing`, mock provider; stub until [pay 0] lands) → infrastructure (`/infrastructure`, `platform: { enabled: true }`, with the `host` object: auth, `requireRole`, audit, events, store, people, frame); reverse `shutdown()`. Test: all mount on Express 5; a missing capability mounts nothing.
+- [x] 0.4 Theme: copy `nooblyjs/styling/styles.css` verbatim to `public/css/styles.css`; load Bootstrap 5.3.3 and Bootstrap Icons 1.11.3 from jsDelivr before it; `public/css/hero-co.css` with JetBrains Mono and the token map of stack §5.
+- [x] 0.5 `.nj-` components in `hero-co.css`: status pill, stat tile, meter, option card, stepper, sticky summary, repo row, instance tile, log viewer shell, empty state.
+- [x] 0.6 Client: `router.js` (real URLs, deep links), `api.js`, `sse.js`, `charts.js` (area, stacked bar); the app shell (top bar, workspace switcher, sidebar from product §5) with an empty page per route.
+- [x] 0.7 Test harness: `node:test` on the mock cloud; Playwright smoke at desktop and phone width with a CSP-violation check.
 
 **Exit check:** `npm start` serves the shell; every route in product §5 renders (deep link + refresh); the operator
-can open `/admin/infrastructure` and `/admin/customer/`; `npm test` and `npm run test:ui` green offline.
+can open `/infrastructure` and `/admin/customer/`; `npm test` and `npm run test:ui` green offline. *Done 2026-11-19: payments reported pending until [pay 0] lands.*
 
 ## Phase 1 — Accounts, workspaces and the sign-up screen
 
 Goal: a person can sign up and land in their own empty workspace.
 
-- [ ] 1.1 Sign-up screen (*Sign up* mock-up): hero, service chips, feature rows, the account card with validation (password ≥ 12 chars with a number).
-- [ ] 1.2 Email + password sign-up and sign-in on core `authservice`; sessions; verify-email and reset-password flows.
-- [ ] 1.3 **Continue with GitHub** through core's `passport` provider (`passport-github2`). **[core]** if a reusable GitHub strategy belongs in core.
-- [ ] 1.4 Domain records on dataService: workspace, membership (Owner/Member), project, environment; created on sign-up.
-- [ ] 1.5 Customers accelerator link: `customers:upsert` by identity `nooblyjs-cloud:<personId>`, organisation per workspace, consent from the form; welcome and verify-email via `sendTransactional`.
-- [ ] 1.6 Workspace isolation middleware; isolation test suite started here and extended every phase.
-- [ ] 1.7 Settings → Members: invite by email, remove, one role.
+- [x] 1.1 Sign-up screen (*Sign up* mock-up): hero, service chips, feature rows, the account card with validation (password ≥ 12 chars with a number).
+- [x] 1.2 Email + password sign-up and sign-in on core `authservice`; sessions; verify-email and reset-password flows.
+- [x] 1.3 **Continue with GitHub** through `passport-github2` (core's `passport` provider is local-strategy only, so the strategy lives in `src/platform/auth.js`; a mock GitHub at `/dev/github` serves the OAuth flow offline). **[core]** if a reusable GitHub strategy belongs in core.
+- [x] 1.4 Domain records on dataService: workspace, membership (Owner/Member), project, environment; created on sign-up.
+- [x] 1.5 Customers accelerator link: `customers:upsert` by identity `nooblyjs-cloud:<personId>`, organisation per workspace, consent from the form; welcome and verify-email via `sendTransactional`.
+- [x] 1.6 Workspace isolation middleware; isolation test suite started here and extended every phase.
+- [x] 1.7 Settings → Members: invite by email, remove, one role.
 
 **Exit check:** sign up with email and with GitHub; each lands in its own workspace with *Production*; the operator
 sees the new customer, organisation and consent in the customer 360; a second person cannot reach the first's workspace
-by any URL or API call.
+by any URL or API call. *Done 2026-11-19 (`test/accounts.test.js`, `members.test.js`, `isolation.test.js`, Playwright).*
+
+Follow-ups found in Phase 1:
+- **[core]** a password-policy option on authservice: core's rule (10+ characters with upper, lower, digit and symbol)
+  differs from product §3.1, so `createCoreAuth()` replaces the instance's `validatePasswordStrength`.
+- **[cx]** a way to send a transactional template without click tracking: verify, reset and invitation links are
+  rewritten through the customers accelerator's click tracker, so their one-time tokens are stored in its tracking
+  links. The tokens are single-use and short-lived; the store is operator-only.
+- Production email: the customers accelerator's SMTP adapter (needs a nodemailer transport) is not wired yet, so
+  account emails stay in its console outbox. Needed before a production launch.
+- The customers accelerator runs on the memory data provider here, so customer records are lost on restart in
+  development; production needs its MongoDB provider (stack §3.1).
 
 ## Phase 2 — Service catalogue and the create flow (mock platform)
 

@@ -87,10 +87,11 @@ clicks through `data-onclick`), injected logger with structured metadata.
 
 ### 3.2 nooblyjs-accl-infrastructure (the control plane)
 
-Mounted **for operators only** at `/admin/infrastructure` with `mount(app, eventEmitter, serviceRegistry, { mountPath,
+Mounted **for operators only** at `/infrastructure` (the accelerator takes a single-segment `mountPath`) with `mount(app, eventEmitter, serviceRegistry, { mountPath,
 dataDir, host, platform: { enabled: true } })`. Its events (`infrastructure.deploy.*`, `infrastructure.instance.*`,
-`infrastructure.telemetry.*`) arrive on our shared `eventEmitter`. This repo builds the `host` object (auth, `requireRole`, audit, events, store, people, frame) rather than using
-`createDevLauncher()`, which refuses production.
+`infrastructure.telemetry.*`) arrive on our shared `eventEmitter`. This repo builds the `host` object (auth, `requireRole`, audit, events, store, people, frame) in
+`src/platform/host.js` rather than using `createDevLauncher()`, which refuses production. Its people are the operators
+from the accounts store.
 
 What NooblyJS Cloud takes from it:
 
@@ -167,6 +168,28 @@ service into a workload spec (`services.platform.workloads.create(workspaceId, s
 `services.platform.databases` / `services.platform.keyvalue` (8.6, 8.7); Static Sites to `static` workloads (8.8).
 Cron Jobs: our core `scheduling` fires `services.platform.workloads.runJob()`. Workflows: core `workflow` here.
 
+### 4.1a Accounts (built in Phase 1)
+
+- **Records** (`src/platform/accounts.js`, core dataService `file` → `mongodb`): `hero_people`, `hero_workspaces`,
+  `hero_memberships`, `hero_projects`, `hero_environments`, `hero_invitations`, `hero_tokens`. Workspace ids are URL
+  slugs from the team name (`acme`, `acme-2`), fixed when renamed. Tokens and invitations store only a SHA-256 hash.
+- **Credentials**: core `authservice` (`file` under `<DATA_DIR>/auth`) holds passwords; the person is found by email.
+  The product's rule (12+ characters with a number) replaces core's on the instance (roadmap Phase 1 follow-up [core]).
+- **Sessions** (`src/platform/session.js`): `express-session` cookie `hero.sid` (HttpOnly, SameSite=Lax, Secure in
+  production) on core's `createSessionStore` (memory, or Redis with `REDIS_URL`); a new session id at every sign-in;
+  a per-person `sessionEpoch` that a password reset bumps, signing out every other session. CSRF: double-submit
+  `noobly.csrf` or a same-origin Origin, on every cookie write and on the sign-in forms.
+- **GitHub sign-in** (`src/platform/auth.js`): `passport-github2` with `read:user,user:email`; the primary verified
+  email links to an existing account. Without `GITHUB_CLIENT_ID` outside production it talks to the mock at
+  `/dev/github`.
+- **Gates**: `requireWorkspace` (non-members get a 404) on every `/w/:workspace` page and `/api/v1/workspaces/:workspace`
+  route; `requireOwner` for members, invitations and rename; core's `/services` portal for platform operators only.
+- **Customers link** (`src/platform/customers-link.js`): identity `nooblyjs-cloud:<personId>`, an organisation per
+  workspace, the sign-up checkbox on the consent ledger (`source: form`, the checkbox text as evidence), and the
+  `cloud-*` transactional templates (created and approved at start if missing; operators may edit them).
+- **Development**: `/dev/login`, the `X-Dev-Person` header and the people in `people.js` (password
+  `development-only-1`) exist only when `NODE_ENV` is not production. Operators: `node app.js --operator <email> <role>`.
+
 ### 4.2 Live data
 
 - Deploy progress: `infrastructure.deploy.*` events on our `eventEmitter` → our deploy records → SSE.
@@ -240,19 +263,21 @@ theme (tokens, type, buttons, cards, forms, badges, pills, chips, alerts, tables
 | `DATA_DIR` | Records and accelerator data (default `./.application`) |
 | `SESSION_SECRET`, `HERO_SECRET_KEY` | Sessions; encryption of env vars and tokens (required in production) |
 | `PUBLIC_URL`, `APP_DOMAIN` | Our base URL; the customer domain (`nooblyjs.app`) |
-| `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub connect and sign-in |
+| `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub connect and sign-in (sign-in uses the OAuth app's client id and secret; callback `<PUBLIC_URL>/auth/github/callback`) |
+| `DEV_SIGN_IN` | `0` turns the development sign-in off outside production (it is always off in production) |
 | `INFRA_PROVIDERS`, `INFRA_*` | Passed through to the infrastructure accelerator (`mock` until its phase 2 adapters land) |
 | `REDIS_URL`, `MONGODB_URL` | Production providers for queueing/caching/sessions and dataService |
 | `SMTP_URL`, `CX_TRACKING_SECRET` | Transactional email through the customers accelerator |
 | `PAY_PROVIDER`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYSTACK_SECRET_KEY` | The payments accelerator's provider (`mock` until set) |
 | `INFRA_PLATFORM_DOMAIN`, `INFRA_PLATFORM_DNS_ZONE` | `nooblyjs.app` and its DNS zone, for the accelerator's ingress (spec 8.4) |
 
-## 7. Commands (Phase 0 target)
+## 7. Commands
 
 ```bash
 npm start            # app.js on :11010
 npm run dev          # nodemon over src/ and public/
 npm run seed         # the seed story; -- --reset to start again
+node app.js --operator <email> <platform|support|none>   # grant or remove an operator role
 npm test             # node:test, offline, mock cloud
 npm run test:ui      # Playwright, desktop + phone
 ```
