@@ -7,7 +7,7 @@ export const STATUS_TONE = {
   Live: 'live', Healthy: 'live', Succeeded: 'idle',
   Deploying: 'deploying', Building: 'deploying', Slow: 'deploying',
   Failed: 'failed', Error: 'failed',
-  Suspended: 'idle', Idle: 'idle',
+  Suspended: 'idle', Idle: 'idle', Sleeping: 'idle',
   New: 'new', Beta: 'new', Invited: 'new',
 };
 

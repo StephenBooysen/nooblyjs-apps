@@ -5,6 +5,7 @@
 // /api/v1/invitations/:token : the invitation link (public read; accept needs a sign-in with the invited email).
 import { normaliseEmail } from '../platform/accounts.js';
 import { DEFAULT_REGION } from '../platform/accounts.js';
+import { addServiceRoutes } from './services.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const sendError = (res, status, code, message, details) => res.status(status).json({ error: { code, message, ...(details ? { details } : {}) } });
@@ -18,8 +19,12 @@ const sendError = (res, status, code, message, details) => res.status(status).js
  * @param {{ publicUrl: string }} o.config
  * @param {(entry: object) => Promise<void>} o.audit
  * @param {ReturnType<import('../platform/realtime.js').createRealtime>} o.realtime
+ * @param {object} [o.records]    services, deploys, env groups, GitHub (src/domain/records.js)
+ * @param {object} [o.secrets]
+ * @param {object} [o.github]
+ * @param {() => object} [o.platform]   the infrastructure accelerator's services.platform
  */
-export function createWorkspacesApi({ express, session, accounts, link, config, audit, realtime }) {
+export function createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform }) {
   const router = express.Router({ mergeParams: true });
   router.use(express.json({ limit: '16kb' }));
   router.param('workspace', (req, res, next) => session.requireWorkspace(req, res, next));
@@ -112,6 +117,9 @@ export function createWorkspacesApi({ express, session, accounts, link, config, 
       next(err);
     }
   });
+
+  // Services, environment groups and GitHub (Phase 2).
+  addServiceRoutes(router, { session, records, secrets, github, platform, config, audit, realtime, W });
 
   // ---- invitation links ------------------------------------------------------------
 

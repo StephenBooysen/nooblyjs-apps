@@ -9,7 +9,7 @@ export const DEFAULT_PORT = 11010;
  * @param {NodeJS.ProcessEnv} [env]
  * @returns {{ port: number, dataDir: string, production: boolean, publicUrl: string, appDomain: string,
  *   trustProxy: boolean, devSignIn: boolean, cxTrackingSecret: string|undefined, sessionSecret: string|undefined,
- *   github: { clientId: string|undefined, clientSecret: string|undefined } }}
+ *   github: { clientId: string|undefined, clientSecret: string|undefined }, secretKey: string|undefined }}
  */
 export function loadConfig(env = process.env) {
   const production = env.NODE_ENV === 'production';
@@ -27,5 +27,7 @@ export function loadConfig(env = process.env) {
     sessionSecret: env.SESSION_SECRET,
     // GitHub OAuth app. Without it, outside production, GitHub sign-in uses the mock at /dev/github.
     github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
+    // Encrypts environment variables and GitHub tokens at rest (required in production; a dev key file otherwise).
+    secretKey: env.HERO_SECRET_KEY,
   };
 }

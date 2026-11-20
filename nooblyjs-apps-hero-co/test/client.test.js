@@ -88,3 +88,20 @@ test('components render units and limits, statuses as words, and never an inline
   assert.match(parts[12], /boom &#60;x&#62;/);
   assert.match(parts[13], /No log lines at this level in the last hour\./);
 });
+
+test('the shared catalogue: specs with units, no made-up prices, only open regions choosable', async () => {
+  const cat = await import('../public/js/shared/catalog.js');
+  const { statusWord } = await import('../public/js/pages/service.js');
+  assert.equal(cat.specText(cat.planOf('standard')), '1 CPU · 2 GB');
+  assert.equal(cat.specText(cat.planOf('starter')), '0.5 CPU · 512 MB');
+  assert.equal(cat.planOf('free'), null, 'no Free plan: Starter is the free one');
+  assert.deepEqual(cat.PLANS.map((p) => [p.name, p.priceUsd]), [['Starter', 0], ['Standard', 5], ['Pro', 20], ['Pro Plus', 100]]);
+  assert.deepEqual(cat.estimate('pro-plus', 10), { usd: 100, text: '$100 / mo' }, 'flat: instances do not change the price');
+  assert.deepEqual(cat.estimate('starter'), { usd: 0, text: '$0 / mo' });
+  assert.equal(cat.MAX_INSTANCES, 10);
+  assert.deepEqual(Object.entries(cat.CREATABLE).filter(([, t]) => t.sleeps).map(([k]) => k), ['web', 'private']);
+  assert.deepEqual(cat.REGIONS.filter((r) => r.platform).map((r) => r.id), ['af-south', 'us-east']);
+  assert.deepEqual(Object.keys(cat.CREATABLE), ['web', 'private', 'worker', 'static']);
+  for (const key of Object.keys(cat.CREATABLE)) assert.ok(CLIENT_TYPES.some((t) => t.key === key), key);
+  assert.deepEqual(['building', 'live', 'failed', 'superseded'].map(statusWord), ['Building', 'Live', 'Failed', 'Succeeded']);
+});

@@ -21,6 +21,12 @@ import { createCoreAuth, createAuth, githubMockRoutes } from './platform/auth.js
 import { createApi } from './routes/api.js';
 import { createWorkspacesApi } from './routes/workspaces.js';
 import { createPages } from './routes/pages.js';
+import { createGithubConnect } from './routes/github-connect.js';
+import { createRecords } from './domain/records.js';
+import { createSecrets } from './domain/secrets.js';
+import { createGithub } from './github/github.js';
+import { followDeploys } from './platform/workloads.js';
+import { seedRecords } from './domain/seed.js';
 
 const require = createRequire(import.meta.url);
 const { helmetCspOption } = require('nooblyjs-core/src/shared/utils/contentSecurityPolicy.js');
@@ -64,6 +70,10 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   const data = serviceRegistry.dataService('file', { instanceName: 'nooblyjs-cloud', dataDir: path.join(config.dataDir, 'data') });
   const accounts = createAccounts({ data });
   await accounts.init();
+  const records = createRecords({ data });
+  await records.init();
+  const secrets = await createSecrets({ dataDir: config.dataDir, keyMaterial: config.secretKey, production: config.production });
+  const github = createGithub({ records, secrets, config });
   const core = await createCoreAuth({ serviceRegistry, dataDir: config.dataDir });
   session = createSession({ accounts, config, log });
 
@@ -99,6 +109,9 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     infraHost: changeInfraHost(host.hostFor(path.join(config.dataDir, 'infrastructure'))),
   });
 
+  const platform = () => accelerators.mounted.infrastructure.services.platform;
+  const deploysFollower = followDeploys({ eventEmitter, records, realtime, platform, log });
+
   const link = createCustomersLink({ cx: accelerators.mounted.customers, systemContext: cxContext.systemContext, accounts, log, audit });
   await link.ensureTemplates();
   if (config.devSignIn) await seedDevPeople({ accounts, core, link });
@@ -111,6 +124,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     const empty = (await fs.readdir(infraDir).catch(() => [])).filter((f) => !f.startsWith('.') && f !== 'secrets').length === 0;
     if (empty) {
       await accelerators.mounted.infrastructure.seed({ reset: false });
+      await seedRecords({ records, secrets, platform, accounts });
       await accelerators.mounted.infrastructure.resume();
     }
   }
@@ -118,9 +132,10 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   const auth = createAuth({ express, session, accounts, core, link, config, audit, log });
   app.use('/api/v1/auth', auth.api);
   app.use(auth.pages);
-  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime }));
+  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform }));
   app.use('/api/v1', createApi({ express, session, realtime, accelerators: accelerators.describe, about: { name: 'nooblyjs-cloud', version: VERSION } }));
   app.use(express.static(path.join(ROOT, 'public'), { index: false, redirect: false }));
+  app.use(createGithubConnect({ express, session, accounts, github, config, audit, log }));
   app.use(createPages({ express, session }));
 
   app.use((req, res) => {
@@ -153,12 +168,23 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     realtime,
     accelerators,
     accounts,
+    records,
+    github,
+    platform,
     core,
     link,
+    /** The seed story's hero-co half (services, deploys, GitHub) on top of the infrastructure seed. */
+    seedRecords: ({ reset = false } = {}) => seedRecords({ records, secrets, platform, accounts, reset }),
+    /** For the tests: resolves when the platform has no operation under way and every deploy event is written. */
+    async idle() {
+      await accelerators.mounted.infrastructure.idle();
+      await deploysFollower.idle();
+    },
     serviceRegistry,
     eventEmitter,
     setOperator,
     async shutdown() {
+      deploysFollower.stop();
       await accelerators.shutdown();
       await session.close?.();
       await serviceRegistry.shutdown?.();

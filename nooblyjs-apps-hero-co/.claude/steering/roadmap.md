@@ -99,14 +99,14 @@ Follow-ups found in Phase 1:
 
 Goal: the create screens work end to end against the infrastructure accelerator's mock platform API.
 
-- [ ] 2.1 **[infra 8.1]** Platform API and workloads on the mock cloud (`services.platform`, tenant labels, deploy events).
-- [ ] 2.2 Service model and `src/platform/workloads.js` (service → workload spec; plan name → `{ cpu, memoryMb }`). Plan names and prices come from the payments catalogue once [pay 1.2] lands; a local table until then.
-- [ ] 2.3 **Create a new service** screen: the nine option cards in two groups, copy verbatim, Beta badge, stepper.
-- [ ] 2.4 **GitHub connection**: install/OAuth, organisations, repo search and list (cached), branches. GitHub page.
-- [ ] 2.5 **New web service** screen: four fieldsets, live Summary with estimate, Auto-deploy switch, *Deploy web service*; 422 field errors inline.
-- [ ] 2.6 Env vars and **environment groups**: encrypted at rest, *Add from .env*, link group; Environment groups page.
-- [ ] 2.7 Deploy records from `infrastructure.deploy.*` events; service page shows build progress.
-- [ ] 2.8 Seed story (product §9) on top of the accelerator's [infra 8.1.7] tenant seed: `npm run seed [-- --reset]`.
+- [x] 2.1 **[infra 8.1]** Platform API and workloads on the mock cloud (`services.platform`, tenant labels, deploy events).
+- [x] 2.2 Service model and `src/platform/workloads.js` (service → workload spec; plan name → `{ cpu, memoryMb }`). Plan names and prices come from the payments catalogue once [pay 1.2] lands; a local table until then.
+- [x] 2.3 **Create a new service** screen: the nine option cards in two groups, copy verbatim, Beta badge, stepper.
+- [x] 2.4 **GitHub connection**: install/OAuth, organisations, repo search and list (cached), branches. GitHub page.
+- [x] 2.5 **New web service** screen: four fieldsets, live Summary with estimate, Auto-deploy switch, *Deploy web service*; 422 field errors inline.
+- [x] 2.6 Env vars and **environment groups**: encrypted at rest, *Add from .env*, link group; Environment groups page.
+- [x] 2.7 Deploy records from `infrastructure.deploy.*` events; service page shows build progress.
+- [x] 2.8 Seed story (product §9) on top of the accelerator's [infra 8.1.7] tenant seed: `npm run seed [-- --reset]`.
 
 **Exit check:** after `npm run seed`, creating a web service from a seeded repo shows mock build progress and lands on
 its service page as *Live*; secrets never appear in API responses; another workspace cannot see the workload.
@@ -125,6 +125,9 @@ Goal: Web, Private and Worker services build from GitHub and run on shared hosts
 - [ ] 3.8 Auto-deploy webhook (`/hooks/github`, HMAC, branch filter) → `workloads.deploy()`; *Manual deploy*, *Restart*, *Suspend* buttons.
 - [ ] 3.9 Private Services: internal host name shown on the service page; Worker: no URL, no port fields.
 - [ ] 3.10 "Region is full" message from `quota` errors on the create flow.
+- [ ] 3.11 **Idle sleep [infra 8.4]**: Web and Private services with no requests for 15 minutes scale to zero; the
+  ingress holds the next request, wakes the service and forwards it. The service page shows *Sleeping*. Workers, cron
+  jobs and static sites never sleep. Plans are a flat price per service for 1 to 10 instances (product.md §11).
 
 **Exit check:** in one real region, deploy a private Node repo as a 2-instance Web Service; reach it on
 `https://<name>.nooblyjs.app`; push a commit and watch it roll out with zero failed requests; push a failing health

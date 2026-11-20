@@ -61,6 +61,8 @@ export function start(onRoute) {
     if (!a || a.target || a.hasAttribute('download') || a.dataset.reload !== undefined) return;
     const url = new URL(a.href);
     if (url.origin !== window.location.origin || !match(url.pathname)) return;
+    // A link to a section of this page (#id): the browser scrolls to it.
+    if (url.hash && url.pathname === window.location.pathname && url.search === window.location.search) return;
     event.preventDefault();
     navigate(url.pathname + url.search);
   });

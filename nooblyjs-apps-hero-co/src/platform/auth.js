@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import { Passport } from 'passport';
 import { Strategy as GitHubStrategy } from 'passport-github2';
+import { MOCK_ORGS, MOCK_BRANCHES, mockRepos, mockCommit, mockTokenFor } from '../github/mock-data.js';
 import { normaliseEmail } from './accounts.js';
 import { safeNext } from './session.js';
 
@@ -375,7 +376,10 @@ export function githubMockRoutes(express) {
   const codes = new Map();
   const tokens = new Map();
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-  const userFor = (req) => tokens.get(String(req.get('authorization') ?? '').replace(/^(bearer|token)\s+/i, ''));
+  const userFor = (req) => {
+    const token = String(req.get('authorization') ?? '').replace(/^(bearer|token)\s+/i, '');
+    return tokens.get(token) ?? GITHUB_MOCK_USERS.find((u) => mockTokenFor(u.login) === token);
+  };
 
   router.get('/login/oauth/authorize', (req, res) => {
     const { redirect_uri: redirect, state = '' } = req.query;
@@ -421,6 +425,39 @@ export function githubMockRoutes(express) {
     const u = userFor(req);
     if (!u) return res.status(401).json({ message: 'Bad credentials' });
     res.json([{ email: u.email, primary: true, verified: true, visibility: 'private' }]);
+  });
+
+  // Repository access (roadmap 2.4): organisations, repositories, branches and a branch's latest commit.
+  const signedIn = (req, res) => {
+    const u = userFor(req);
+    if (!u) res.status(401).json({ message: 'Bad credentials' });
+    return u;
+  };
+  const visible = (u, owner, name) => mockRepos(u.login).find((r) => r.owner === owner && r.name === name);
+  router.get('/api/user/orgs', (req, res) => {
+    const u = signedIn(req, res);
+    if (u) res.json((MOCK_ORGS[u.login] ?? []).map((login) => ({ login })));
+  });
+  router.get('/api/user/repos', (req, res) => {
+    const u = signedIn(req, res);
+    if (u) {
+      res.json(mockRepos(u.login).map((r) => ({
+        name: r.name, full_name: `${r.owner}/${r.name}`, owner: { login: r.owner }, private: r.private, language: r.language, pushed_at: r.pushedAt, default_branch: 'main',
+      })));
+    }
+  });
+  router.get('/api/repos/:owner/:repo/branches', (req, res) => {
+    const u = signedIn(req, res);
+    if (!u) return;
+    if (!visible(u, req.params.owner, req.params.repo)) return res.status(404).json({ message: 'Not Found' });
+    res.json(MOCK_BRANCHES.map((name) => ({ name })));
+  });
+  router.get('/api/repos/:owner/:repo/commits/:ref', (req, res) => {
+    const u = signedIn(req, res);
+    if (!u) return;
+    if (!visible(u, req.params.owner, req.params.repo) || !MOCK_BRANCHES.includes(req.params.ref)) return res.status(404).json({ message: 'Not Found' });
+    const c = mockCommit(`${req.params.owner}/${req.params.repo}`, req.params.ref);
+    res.json({ sha: c.sha, commit: { message: c.message } });
   });
 
   return router;

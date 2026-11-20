@@ -1,7 +1,7 @@
 // NooblyJS Cloud: starts the app (src/app.js) on PORT (default 11010).
 //
 //   npm start                  http://localhost:11010 (sign up at /, or /dev/login outside production)
-//   npm run seed [-- --reset]  writes the infrastructure seed story into DATA_DIR and exits
+//   npm run seed [-- --reset]  writes the seed story (infrastructure, then services and GitHub) into DATA_DIR and exits
 //   node app.js --operator <email> <platform|support|none>   grants (or removes) an operator role and exits
 import { createApp } from './src/app.js';
 import { loadConfig } from './src/config.js';
@@ -33,7 +33,8 @@ if (args.has('--operator')) {
 
 if (args.has('--seed')) {
   await hero.accelerators.mounted.infrastructure.seed({ reset: args.has('--reset') });
-  console.log(`Seeded ${config.dataDir}${args.has('--reset') ? ' (reset)' : ''}.`);
+  const result = await hero.seedRecords({ reset: args.has('--reset') });
+  console.log(`Seeded ${config.dataDir}${args.has('--reset') ? ' (reset)' : ''}: ${result.skipped ? `services ${result.skipped}` : `${result.services} services, ${result.deploys} deploys, GitHub as stevie`}.`);
   await hero.shutdown();
   process.exit(0);
 }

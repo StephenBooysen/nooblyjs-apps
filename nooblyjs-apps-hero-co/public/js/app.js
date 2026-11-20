@@ -10,6 +10,8 @@ import { PAGES, SERVICE_TYPES, notFound } from './pages/index.js';
 
 const root = document.getElementById('app');
 let me = null;
+/** What the current page's mount() returned to undo (live-channel listeners), run before the next page. */
+let unmount = null;
 let config = { github: false, devSignIn: false, passwordHint: 'Use 12 or more characters with a number.' };
 
 async function loadMe() {
@@ -29,11 +31,14 @@ async function loadConfig() {
 }
 
 async function show(layoutHtml, page) {
+  unmount?.();
+  unmount = null;
   document.title = page.title;
   render(root, layoutHtml);
   applySizes(root);
   root.querySelector('#main')?.focus({ preventScroll: true });
-  await page.mount?.(root);
+  const undo = await page.mount?.(root);
+  if (typeof undo === 'function') unmount = undo;
   applySizes(root);
 }
 
