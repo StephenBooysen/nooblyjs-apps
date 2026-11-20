@@ -17,6 +17,9 @@ export const groupRefFor = (group, key) => `hero:grp:${group.id}:${key}`;
 /** The public URL of a service on the app domain: <name>.nooblyjs.app. */
 export const hostFor = (name, appDomain) => `${name}.${appDomain}`;
 
+/** A Local network service's path on this app's own URL (infra spec 8.9; the decision of 2026-11-20): /<workspace>/<name>/. */
+export const pathFor = (workspaceId, name) => `/${workspaceId}/${name}/`;
+
 /**
  * The workload spec for a service.
  * @param {object} service   our service record
@@ -34,17 +37,19 @@ export function toWorkloadSpec(service, { appDomain, groups = [] }) {
   // A key in two linked groups: the first group linked wins.
   const seen = new Set();
   const uniqueEnv = env.filter((e) => (seen.has(e.key) ? false : seen.add(e.key)));
+  const region = regionOf(service.region);
   return {
     name: service.name,
     kind: type.kind,
-    region: regionOf(service.region).platform,
-    source: { repo: service.source.repo, branch: service.source.branch, rootDir: service.source.rootDir ?? '', gitConnection: service.workspaceId },
+    region: region.platform,
+    source: { repo: service.source.url ?? service.source.repo, branch: service.source.branch, rootDir: service.source.rootDir ?? '', ...(service.source.url ? {} : { gitConnection: service.workspaceId }) },
     build: { runtime: service.build.runtime, buildCommand: service.build.buildCommand || null, startCommand: service.build.startCommand || null },
     run: { ...(type.port ? { port: service.port ?? 10000 } : {}), env: uniqueEnv },
     plan: { cpu: plan.cpu, memoryMb: plan.memoryMb },
     instances: type.instances ? service.instances : 1,
     ...(type.port ? { healthCheck: { path: service.healthCheckPath ?? '/' } } : {}),
-    domains: type.publicUrl ? [hostFor(service.name, appDomain)] : [],
+    // A Local network service answers on this app's own URL, not on a domain of its own.
+    domains: type.publicUrl && !region.local ? [hostFor(service.name, appDomain)] : [],
     autoDeploy: service.autoDeploy ? { branch: service.source.branch } : null,
   };
 }
@@ -98,6 +103,8 @@ export function followDeploys({ eventEmitter, records, realtime, platform, log }
       const d = await platform().deploys.get(ws, service.name, p.deployId).catch(() => null);
       if (d) patch = { ...fromPlatformDeploy(d), ...patch };
     }
+    // A real build (Local network) finds the commit itself and reports it on a later event.
+    if (p.commit && !prev?.commit) patch.commit = p.commit;
     if (type === 'started') patch.status = 'building';
     if (type === 'progress') patch.status = p.status === 'deploying' ? 'deploying' : 'building';
     if (type === 'succeeded') Object.assign(patch, { status: 'live', endedAt: new Date().toISOString(), step: p.of ?? patch.of, });

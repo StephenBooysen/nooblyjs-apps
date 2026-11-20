@@ -13,6 +13,7 @@ import { ROOT, loadConfig } from './config.js';
 import { createAccounts } from './platform/accounts.js';
 import { createSession } from './platform/session.js';
 import { INFRA_MATRIX, DEV_PEOPLE, DEV_PASSWORD, OPERATOR_ROLES } from './platform/people.js';
+import { createServiceProxy } from './routes/proxy.js';
 import { createHost } from './platform/host.js';
 import { createRealtime, OPERATORS } from './platform/realtime.js';
 import { mountAccelerators, INFRA_MOUNT, CX_BASE, CX_PUBLIC } from './platform/accelerators.js';
@@ -52,6 +53,10 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   app.disable('x-powered-by');
   if (config.trustProxy) app.set('trust proxy', 1);
   app.use(helmet({ contentSecurityPolicy: helmetCspOption() }));
+  // Local network services at /<workspace>/<service>/… (routes/proxy.js), before sessions: they are other people's
+  // apps, so they never see our session. Set once the accelerators are mounted.
+  let serviceProxy = null;
+  app.use((req, res, next) => (serviceProxy ? serviceProxy.middleware(req, res, next) : next()));
 
   // Sessions run before nooblyjs-core so its /services portal (and its own login API) can be closed to customers.
   // The handlers are bound below, once core (and the accounts store on its dataService) exists.
@@ -88,7 +93,10 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   app.get('/health/live', (req, res) => res.json({ status: 'ok' }));
 
   // The back office: operators only, except the customers accelerator's public marketing routes.
-  app.use(INFRA_MOUNT, (req, res, next) => session.requireOperator(req, res, next));
+  // The one exception under /infrastructure: the agent's install script and files (infra spec 8.9 R2), which a server
+  // being set up fetches without a sign-in. They are the agent's own source, with no secret; the list is the accelerator's.
+  let infraPublic = new Set();
+  app.use(INFRA_MOUNT, (req, res, next) => (req.method === 'GET' && infraPublic.has(req.path) ? next() : session.requireOperator(req, res, next)));
   app.use(CX_BASE, (req, res, next) => (req.originalUrl.startsWith(CX_PUBLIC) ? next() : session.requireOperator(req, res, next)));
 
   const realtime = createRealtime();
@@ -106,14 +114,37 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   app.use(shell.router);
   app.use('/ui', express.static(UI_DIR, { index: false, redirect: false }));
 
+  /** Opens our secretRefs for the platform when a container starts (infra 8.9 R9); never logged, never kept there. */
+  async function resolveSecrets(tenantId, refs) {
+    const out = {};
+    for (const ref of refs) {
+      const m = /^hero:(svc|grp):([^:]+):([A-Za-z_][A-Za-z0-9_]*)$/.exec(ref);
+      if (!m) continue;
+      const [, kind, id, key] = m;
+      const owner = kind === 'svc'
+        ? (await records.services.list(tenantId)).find((s) => s.id === id)
+        : await records.envGroups.get(tenantId, id);
+      const v = (kind === 'svc' ? owner?.env : owner?.vars)?.find((e) => e.key === key);
+      if (v?.sealed) out[ref] = secrets.open(v.sealed, `${kind}:${id}:${key}`);
+    }
+    return out;
+  }
+
   const accelerators = await mountAccelerators({
-    app, eventEmitter, serviceRegistry, shell, config, log, mockStepMs, jobCheckMs,
+    app, eventEmitter, serviceRegistry, shell, config, log, mockStepMs, jobCheckMs, resolveSecrets,
     dataDir: config.dataDir,
     infraHost: changeInfraHost(host.hostFor(path.join(config.dataDir, 'infrastructure'))),
   });
+  infraPublic = new Set(accelerators.mounted.infrastructure.publicPaths ?? []);
 
   const platform = () => accelerators.mounted.infrastructure.services.platform;
   const deploysFollower = followDeploys({ eventEmitter, records, realtime, platform, log });
+  // Runtime log lines of a service go to its workspace's live channel (the service page's Logs).
+  const onLogLines = (e) => realtime.publish(e.tenantId, 'log', { service: e.workload, lines: e.lines });
+  eventEmitter.on('infrastructure.workload.log', onLogLines);
+  const proxy = createServiceProxy({ records, platform, eventEmitter, log });
+  await proxy.load((await accounts.listWorkspaces()).map((w) => w.id));
+  serviceProxy = proxy;
 
   const link = createCustomersLink({ cx: accelerators.mounted.customers, systemContext: cxContext.systemContext, accounts, log, audit });
   await link.ensureTemplates();
@@ -125,7 +156,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
 
   if (seed) {
     const infraDir = path.join(config.dataDir, 'infrastructure');
-    const empty = (await fs.readdir(infraDir).catch(() => [])).filter((f) => !f.startsWith('.') && f !== 'secrets').length === 0;
+    const empty = (await fs.readdir(infraDir).catch(() => [])).filter((f) => !f.startsWith('.') && !['secrets', 'local', 'local-agent', 'config.yaml'].includes(f)).length === 0;
     if (empty) {
       await accelerators.mounted.infrastructure.seed({ reset: false });
       await seedRecords({ records, secrets, platform, accounts });
@@ -170,6 +201,8 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     app,
     config,
     host,
+    /** Call with the HTTP server once listening: local servers' agents connect over a WebSocket (infra spec 8.9). */
+    attachUpgrades: (server) => host.attachUpgrades(server),
     realtime,
     accelerators,
     accounts,
@@ -190,6 +223,8 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     setOperator,
     async shutdown() {
       deploysFollower.stop();
+      proxy.stop();
+      eventEmitter.off('infrastructure.workload.log', onLogLines);
       await accelerators.shutdown();
       await session.close?.();
       await serviceRegistry.shutdown?.();
@@ -204,9 +239,17 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
  */
 async function ensureCoreAdmins({ accounts, core, log }) {
   for (const admin of await core.getUsersInRole('admin')) {
-    if (!admin?.email || await accounts.findPersonByEmail(admin.email)) continue;
-    await accounts.createPerson({ name: admin.fullName || 'Administrator', email: admin.email, emailVerified: true, operator: 'platform', signedUpWith: 'core-admin' });
-    log.info?.(`[hero-co] ${admin.email} (nooblyjs-core admin) is a platform operator.`);
+    if (!admin?.email) continue;
+    let person = await accounts.findPersonByEmail(admin.email);
+    if (!person) {
+      person = await accounts.createPerson({ name: admin.fullName || 'Administrator', email: admin.email, emailVerified: true, operator: 'platform', signedUpWith: 'core-admin' });
+      log.info?.(`[hero-co] ${admin.email} (nooblyjs-core admin) is a platform operator.`);
+    }
+    // The admin deploys like a customer, in a workspace of their own (/w/<id>; services at /<id>/<service>/).
+    if (person.signedUpWith === 'core-admin' && !(await accounts.workspacesFor(person.id)).length) {
+      const ws = await accounts.createWorkspace({ name: person.name || 'Administrator', ownerId: person.id });
+      log.info?.(`[hero-co] ${admin.email} has the workspace ${ws.id}.`);
+    }
   }
 }
 

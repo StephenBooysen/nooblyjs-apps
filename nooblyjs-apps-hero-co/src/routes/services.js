@@ -5,12 +5,29 @@
 // service or group.
 import { CREATABLE, PLANS, REGIONS, RUNTIMES, MAX_INSTANCES, planOf, regionOf, runtimeOf, estimate, specText } from '../../public/js/shared/catalog.js';
 import { serviceView, groupView, githubView } from '../domain/records.js';
-import { toWorkloadSpec, fromPlatformDeploy, mergeDeploy, hostFor } from '../platform/workloads.js';
+import { toWorkloadSpec, fromPlatformDeploy, mergeDeploy, hostFor, pathFor } from '../platform/workloads.js';
 import { GithubError } from '../github/github.js';
 
 const NAME = /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/;
 const ENV_KEY = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/;
 const REPO = /^[A-Za-z0-9_.-]{1,100}\/[A-Za-z0-9_.-]{1,100}$/;
+const BRANCH = /^[A-Za-z0-9._/-]{1,200}$/;
+
+/** A public Git repository's https:// URL (no credentials, query or fragment), or null. */
+export function publicGitUrl(v) {
+  if (typeof v !== 'string' || v.length > 500) return null;
+  const s = v.trim();
+  // URL() resolves '..' and percent-escapes away, so look at the text as written first.
+  if (!s.startsWith('https://') || s.includes('%') || s.slice(8).split('/').includes('..')) return null;
+  try {
+    const u = new URL(s);
+    if (!u.hostname || u.username || u.password || u.search || u.hash || u.pathname.length < 2) return null;
+    if (!/^\/[A-Za-z0-9._~/-]+$/.test(u.pathname) || u.pathname.split('/').includes('..')) return null;
+    return u.toString().replace(/\/$/, '');
+  } catch {
+    return null;
+  }
+}
 const MAX_ENV = 100;
 const sendError = (res, status, code, message, details) => res.status(status).json({ error: { code, message, ...(details ? { details } : {}) } });
 const invalid = (res, details) => sendError(res, 422, 'invalid', 'Check the highlighted fields.', details);
@@ -81,6 +98,9 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       spec: plan ? specText(plan) : null,
       runtimeName: runtimeOf(s.build?.runtime)?.name ?? s.build?.runtime ?? null,
       regionName: regionOf(s.region)?.name ?? s.region,
+      local: Boolean(regionOf(s.region)?.local),
+      // A Local network service answers on this app's URL (infra 8.9): the path, and the whole URL from PUBLIC_URL.
+      ...(regionOf(s.region)?.local && type?.publicUrl ? { path: pathFor(s.workspaceId, s.name), url: `${config.publicUrl}${pathFor(s.workspaceId, s.name)}` } : {}),
       estimate: estimate(s.plan),
       sleepsWhenIdle: Boolean(type?.sleeps),
       envGroups: groups.map((g) => ({ id: g.id, name: g.name })),
@@ -91,7 +111,7 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
   // ---- the catalogue -----------------------------------------------------------------
 
   router.get(`${W}/catalog`, (req, res) => res.json({
-    plans: PLANS, regions: REGIONS.map((r) => ({ id: r.id, name: r.name, available: Boolean(r.platform) })), runtimes: RUNTIMES, creatable: CREATABLE, appDomain: config.appDomain,
+    plans: PLANS, regions: REGIONS.map((r) => ({ id: r.id, name: r.name, available: Boolean(r.platform), local: Boolean(r.local) })), runtimes: RUNTIMES, creatable: CREATABLE, appDomain: config.appDomain,
   }));
 
   // ---- services ----------------------------------------------------------------------
@@ -118,10 +138,14 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     if (!NAME.test(name)) problems.push({ path: 'name', message: 'Lower-case letters, digits and hyphens, starting with a letter; up to 63 characters.' });
     else if (await records.services.byName(ws, name)) problems.push({ path: 'name', message: `You already have a service called ${name}.` });
 
-    const connection = await records.github.get(ws);
+    // The source: a repository through the GitHub connection, or a public Git URL (repoUrl) that needs no connection.
+    const fromUrl = b.repoUrl !== undefined && b.repoUrl !== null && b.repoUrl !== '';
+    const gitUrl = fromUrl ? publicGitUrl(b.repoUrl) : null;
+    if (fromUrl && !gitUrl) problems.push({ path: 'repoUrl', message: 'A public https:// Git URL, such as https://github.com/render-examples/express-hello-world.' });
+    const connection = fromUrl ? null : await records.github.get(ws);
     const repoName = typeof b.repo === 'string' ? b.repo.trim() : '';
     let repo = null;
-    if (!connection) problems.push({ path: 'repo', message: 'Connect GitHub first: the workspace owner does it on the GitHub page.' });
+    if (fromUrl) { /* checked above */ } else if (!connection) problems.push({ path: 'repo', message: 'Connect GitHub first: the workspace owner does it on the GitHub page.' });
     else if (!REPO.test(repoName)) problems.push({ path: 'repo', message: 'Choose a repository.' });
     else {
       try {
@@ -131,7 +155,8 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
         problems.push({ path: 'repo', message: err.message });
       }
     }
-    const branch = typeof b.branch === 'string' && b.branch ? b.branch : repo?.defaultBranch ?? 'main';
+    const branch = typeof b.branch === 'string' && b.branch.trim() ? b.branch.trim() : repo?.defaultBranch ?? 'main';
+    if (fromUrl && (!BRANCH.test(branch) || branch.startsWith('-') || branch.includes('..'))) problems.push({ path: 'branch', message: 'A branch name, such as main.' });
     if (repo) {
       try {
         if (!(await github.branches(ws, repo.fullName)).includes(branch)) problems.push({ path: 'branch', message: `${repo.fullName} has no branch ${branch}.` });
@@ -148,7 +173,7 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     if (!runtime) problems.push({ path: 'runtime', message: 'Choose a runtime.' });
     const rootDir = typeof b.rootDir === 'string' ? b.rootDir.trim().replace(/^(\.\/)+/, '').replace(/\/+$/, '') : '';
     if (!text(rootDir, 200) || rootDir.startsWith('/') || rootDir.split('/').includes('..')) problems.push({ path: 'rootDir', message: 'A folder inside the repository, such as apps/api.' });
-    for (const key of ['buildCommand', 'startCommand']) if (b[key] !== undefined && b[key] !== null && !text(b[key], 500)) problems.push({ path: key, message: 'Up to 500 characters.' });
+    for (const key of ['buildCommand', 'startCommand']) if (b[key] !== undefined && b[key] !== null && (!text(b[key], 500) || /[\r\n]/.test(b[key]))) problems.push({ path: key, message: 'One line of up to 500 characters.' });
     const plan = planOf(b.plan ?? 'standard');
     if (!plan) problems.push({ path: 'plan', message: 'Choose an instance type.' });
     const instances = type.instances ? Number(b.instances ?? 1) : 1;
@@ -163,23 +188,27 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     }
     if (problems.length) return invalid(res, problems);
 
-    let commit;
-    try {
-      commit = await github.latestCommit(ws, repo.fullName, branch);
-    } catch (err) {
-      if (!(err instanceof GithubError)) throw err;
-      return invalid(res, [{ path: 'branch', message: err.message }]);
+    // GitHub tells us the commit; a public URL's commit is the one the build finds on the branch.
+    let commit = { sha: undefined, message: undefined };
+    if (!fromUrl) {
+      try {
+        commit = await github.latestCommit(ws, repo.fullName, branch);
+      } catch (err) {
+        if (!(err instanceof GithubError)) throw err;
+        return invalid(res, [{ path: 'branch', message: err.message }]);
+      }
     }
+    const repoLabel = fromUrl ? gitUrl.replace(/^https:\/\//, '').replace(/\.git$/, '') : repo.fullName;
 
     // Our record first, so the platform's events find it; removed again if the platform refuses.
     const service = await records.services.create({
       workspaceId: ws, name, type: b.type,
-      source: { provider: 'github', repo: repo.fullName, branch, rootDir },
+      source: fromUrl ? { provider: 'git', repo: repoLabel, url: gitUrl, branch, rootDir } : { provider: 'github', repo: repo.fullName, branch, rootDir },
       build: { runtime: runtime.key, buildCommand: b.buildCommand || null, startCommand: b.startCommand || null },
       region: region.id, plan: plan.key, instances,
       env: [], envGroups: groups.map((g) => g.id),
       autoDeploy: b.autoDeploy !== false,
-      url: type.publicUrl ? `https://${hostFor(name, config.appDomain)}` : null,
+      url: type.publicUrl ? (region.local ? `${config.publicUrl}${pathFor(ws, name)}` : `https://${hostFor(name, config.appDomain)}`) : null,
       internalHost: b.type === 'private' ? `${name}:10000` : null,
       status: 'deploying', current: null, workload: name,
       createdBy: { id: req.person.id, name: req.person.name },
@@ -206,10 +235,24 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       const prev = await records.deploys.get(ws, first.id);
       deploy = await records.deploys.upsert(ws, first.id, mergeDeploy(prev, { ...fromPlatformDeploy(first), serviceId: service.id, serviceName: name }));
     }
-    await audit({ action: 'service.created', actor: req.person.id, target: ws, detail: { service: name, type: b.type, repo: repo.fullName, operation: created.operation.id } });
+    await audit({ action: 'service.created', actor: req.person.id, target: ws, detail: { service: name, type: b.type, repo: repoLabel, operation: created.operation.id } });
     realtime.publish(ws, 'deploy', { service: name, deploy });
     const saved = await records.services.byName(ws, name);
     res.status(201).json({ service: await fullView(saved), deploy, redirect: `/w/${ws}/services/${name}` });
+  }));
+
+  /** The service's console output (Local network services, infra 8.9 R11): lines after a cursor; live ones arrive as 'log' events. */
+  router.get(`${W}/services/:service/logs`, wrap(async (req, res) => {
+    const s = await serviceOr404(req, res);
+    if (!s) return;
+    const after = Math.max(0, Number.parseInt(req.query.after ?? '0', 10) || 0);
+    try {
+      const { lines, cursor } = await platform().logs.tail(req.workspace.id, s.workload ?? s.name, { after, limit: 500 });
+      res.json({ lines: lines.map((l) => ({ seq: l.seq, at: l.at, out: l.out, line: l.line, instance: l.instance ? l.instance.slice(-6) : null })), cursor });
+    } catch (err) {
+      if (err.code === 'not_found') return res.json({ lines: [], cursor: 0 });
+      throw err;
+    }
   }));
 
   router.get(`${W}/services/:service/deploys`, wrap(async (req, res) => {

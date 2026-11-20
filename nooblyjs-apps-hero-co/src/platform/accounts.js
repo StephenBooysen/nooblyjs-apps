@@ -250,6 +250,7 @@ export function createAccounts({ data }) {
     init,
     getPerson, findPersonByEmail, findPersonByGithub, listPeople, createPerson, updatePerson,
     getWorkspace, createWorkspace, updateWorkspace, projectsOf, environmentsOf,
+    listWorkspaces: () => all(C.workspaces),
     membership, workspacesFor, membersOf, addMember, removeMember,
     createInvitation, invitationsOf, findInvitation, revokeInvitation, acceptInvitation,
     issueToken, consumeToken,

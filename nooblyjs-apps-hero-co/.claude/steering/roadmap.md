@@ -115,6 +115,18 @@ its service page as *Live*; secrets never appear in API responses; another works
 
 Goal: Web, Private and Worker services build from GitHub and run on shared hosts behind `*.nooblyjs.app`.
 
+**First, on local servers (decided 2026-11-20).** Before any cloud, services run on your own Ubuntu servers on the
+local network, through the infrastructure accelerator's spec **8.9 Local servers** (an outbound Node 22 agent driving
+Docker; LAN addresses, no TLS; live logs like Render's). The first server is this Codespace. hero-co's part:
+
+- [ ] 3.0a **[infra 8.9]** Local servers in the accelerator (sites, enrolment, agent, `runtime-local`, telemetry).
+- [x] 3.0b Local sites in the region list ("Local network · lan-dev"); `resolveSecrets` hook opening sealed variables at deploy.
+- [x] 3.0c Service page: its URL `<base URL>/<workspace>/<service>/` (decided 2026-11-20: path routing on this app's URL, like Render; `src/routes/proxy.js`); live build log and a Logs terminal (search, errors only, pause). Public Git URLs as a source.
+- [ ] 3.0d Exit check: this Codespace enrolled; a web service created in hero-co builds from a repo, runs as two instances
+  and answers on its LAN address; its logs stream live on the service page.
+
+The items below then bring the same services to a cloud region behind `*.nooblyjs.app`.
+
 - [ ] 3.1 **[infra 3]** Public endpoints (Caddy, Let's Encrypt).
 - [ ] 3.2 **[infra 6]** Deploy from Git (clone with a token, health-check gate).
 - [ ] 3.3 **[infra 8.2]** Containers on shared hosts: pools, placement, limits, tenant networks, jobs.

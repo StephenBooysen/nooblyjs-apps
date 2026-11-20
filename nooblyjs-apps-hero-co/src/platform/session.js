@@ -194,7 +194,8 @@ export function createSession({ accounts, config, log }) {
   }
 
   /** Where a person goes after signing in. */
-  const homeOf = (person) => (person.operator && !person.workspaces.length ? '/admin' : `/w/${person.workspaces[0]?.id ?? ''}`);
+  // Operators land on the back office even when they have a workspace of their own (core-login decision).
+  const homeOf = (person) => (person.operator ? '/admin' : `/w/${person.workspaces[0]?.id ?? ''}`);
 
   /** The development sign-in (not in production): GET/POST /dev/login. */
   function devRoutes(express) {

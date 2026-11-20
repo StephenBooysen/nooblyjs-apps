@@ -191,6 +191,7 @@ code { color: var(--nj-ink-2); }
 .nj-logs-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid rgba(255, 248, 242, .12); }
 .nj-logs-body { font-family: var(--nj-mono); font-size: 13px; line-height: 1.6; padding: 12px 16px; max-height: 420px; overflow: auto; }
 .nj-log-line { display: grid; grid-template-columns: 92px 100px 58px 1fr; gap: 12px; white-space: pre-wrap; word-break: break-word; }
+.nj-log-line-build { grid-template-columns: 92px 58px 1fr; }
 .nj-log-time, .nj-log-inst { color: var(--nj-on-ink-muted); }
 .nj-log-level { display: inline-block; padding: 0 6px; border-radius: 6px; font-weight: 500; text-align: center; }
 .nj-log-info { background: rgba(255, 248, 242, .1); }
@@ -198,6 +199,9 @@ code { color: var(--nj-ink-2); }
 .nj-log-error { background: var(--nj-danger-soft); color: var(--nj-danger-text); }
 .nj-logs-foot { padding: 10px 16px; font-size: 12.5px; color: var(--nj-on-ink-muted); border-top: 1px solid rgba(255, 248, 242, .12); }
 .nj-logs-empty { color: var(--nj-on-ink-muted); padding: 24px 0; text-align: center; font-family: var(--font-body); }
+.nj-logs-title { font-size: 15px; font-weight: 600; margin: 0 auto 0 0; color: var(--nj-on-ink); }
+.nj-logs-input { width: auto; min-width: 140px; background: rgba(255, 248, 242, .08); color: var(--nj-on-ink); border-color: rgba(255, 248, 242, .2); }
+.nj-logs-input::placeholder { color: var(--nj-on-ink-muted); }
 
 /* Empty state. */
 .nj-empty { background: var(--nj-surface); border: 1px dashed var(--nj-border-strong); border-radius: var(--nj-radius-card); padding: 40px 32px; text-align: center; }

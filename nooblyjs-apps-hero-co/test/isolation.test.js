@@ -105,7 +105,8 @@ test('core\'s start-up admin (INITIAL_ADMIN_PASSWORD.txt) signs in on the login 
   assert.equal(res.status, 200);
   assert.equal(res.json.redirectUrl, '/admin');
   const me = (await t.get('/api/v1/me', { jar })).json;
-  assert.deepEqual([me.email, me.operator, me.workspaces.length], [email, 'platform', 0]);
+  // Operators land on /admin; the start-up admin also has a workspace of their own to deploy into (decided 2026-11-20).
+  assert.deepEqual([me.email, me.operator, me.workspaces.length], [email, 'platform', 1]);
   assert.equal((await t.get('/admin', { jar })).status, 200);
 
   // The same sign-in opens nooblyjs-core's /services portal: core sees its own session token (req.session.authToken).

@@ -22,6 +22,7 @@ export default defineConfig({
     url: `${baseURL}/health/live`,
     timeout: 60_000,
     reuseExistingServer: false,
-    env: { PORT: String(port), DATA_DIR: dataDir, PUBLIC_URL: baseURL, NODE_ENV: 'development' },
+    // The in-process agent: the browser tests check screens, not this machine's Docker.
+    env: { PORT: String(port), DATA_DIR: dataDir, PUBLIC_URL: baseURL, NODE_ENV: 'development', HERO_LOCAL_AGENT: 'mock' },
   },
 });

@@ -39,10 +39,10 @@ const webService = (over = {}) => ({
   env: [{ key: 'NODE_ENV', value: 'production' }, { key: 'DATABASE_URL', value: SECRET }], autoDeploy: true, ...over,
 });
 
-test('the catalogue: four instance types, four regions (two open), four runtimes', async () => {
+test('the catalogue: four instance types, five regions (Local network and two clouds open), four runtimes', async () => {
   const c = (await t.get(`${WS}/catalog`, { as: 'stevie' })).json;
   assert.deepEqual(c.plans.map((p) => [p.name, p.cpu, p.memoryMb]), [['Starter', 0.5, 512], ['Standard', 1, 2048], ['Pro', 2, 4096], ['Pro Plus', 4, 8192]]);
-  assert.deepEqual(c.regions.map((r) => [r.name, r.available]), [['Johannesburg', true], ['Frankfurt', false], ['Virginia', true], ['Singapore', false]]);
+  assert.deepEqual(c.regions.map((r) => [r.name, r.available]), [['Local network', true], ['Johannesburg', true], ['Frankfurt', false], ['Virginia', true], ['Singapore', false]]);
   assert.deepEqual(c.runtimes.map((r) => r.name), ['Node.js 22', 'Docker (Dockerfile in repo)', 'Python 3.12', 'Go 1.23']);
 });
 
@@ -100,7 +100,7 @@ test('2.5 the create form\'s fields are checked, each problem under its field', 
   assert.equal(res.status, 422);
   const byPath = Object.fromEntries(res.json.error.details.map((d) => [d.path, d.message]));
   assert.deepEqual(Object.keys(byPath).sort(), ['env.1.key', 'instances', 'name', 'plan', 'region', 'rootDir']);
-  assert.match(byPath.region, /Frankfurt is not open yet\. Choose Johannesburg or Virginia\./);
+  assert.match(byPath.region, /Frankfurt is not open yet\. Choose Local network or Johannesburg or Virginia\./);
   const many = await t.post(`${WS}/services`, { as: 'stevie', body: webService({ instances: 11 }) });
   assert.deepEqual(many.json.error.details, [{ path: 'instances', message: 'Between 1 and 10.' }]);
   const repo = await t.post(`${WS}/services`, { as: 'stevie', body: webService({ repo: 'someone/private' }) });

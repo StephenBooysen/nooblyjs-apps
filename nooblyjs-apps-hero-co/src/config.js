@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 // Configuration from the environment (stack.md §6). Read once, by createApp() or app.js; tests pass their own.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,13 @@ export const DEFAULT_PORT = 11010;
  *   trustProxy: boolean, devSignIn: boolean, cxTrackingSecret: string|undefined, sessionSecret: string|undefined,
  *   github: { clientId: string|undefined, clientSecret: string|undefined }, secretKey: string|undefined }}
  */
+function localAgentOf(env, production) {
+  if (['fork', 'mock', 'off'].includes(env.HERO_LOCAL_AGENT)) return env.HERO_LOCAL_AGENT;
+  if (env.NODE_ENV === 'test') return 'mock';
+  if (production) return 'off';
+  return fs.existsSync('/var/run/docker.sock') ? 'fork' : 'off';
+}
+
 export function loadConfig(env = process.env) {
   const production = env.NODE_ENV === 'production';
   const port = Number(env.PORT ?? DEFAULT_PORT);
@@ -20,6 +28,10 @@ export function loadConfig(env = process.env) {
     production,
     publicUrl: (env.PUBLIC_URL ?? `http://localhost:${port}`).replace(/\/$/, ''),
     appDomain: env.APP_DOMAIN ?? 'nooblyjs.app',
+    // The agent for the Local network region (infra spec 8.9) on this machine: 'fork' runs the real agent with this
+    // machine's Docker, 'mock' an in-process one (tests), 'off' none. Default: 'mock' in tests, 'off' in production,
+    // otherwise 'fork' when Docker's socket is here. HERO_LOCAL_AGENT overrides.
+    localAgent: localAgentOf(env, production),
     // One proxy hop: set TRUST_PROXY=1 behind a load balancer; Codespaces port forwarding is one (TRUST_PROXY=0 turns it off).
     trustProxy: env.TRUST_PROXY !== '0' && (env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true' || env.CODESPACES === 'true'),
     // The development sign-in (/dev/login, X-Dev-Person) and the development people: never in production.

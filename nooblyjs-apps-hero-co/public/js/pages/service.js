@@ -47,8 +47,29 @@ function logView(lines, live) {
   return html`<section class="nj-logs" aria-label="Build log">
     <div class="nj-logs-bar"><span class="nj-pill ${live ? 'nj-pill-live' : 'nj-pill-idle'}">${live ? 'Live' : 'Finished'}</span><span class="nj-meta">Build and rollout</span></div>
     <div class="nj-logs-body" role="log" aria-live="polite">${lines.length
-      ? lines.map((l) => html`<div class="nj-log-line"><span class="nj-log-time">${time(l.at)}</span><span class="nj-log-level nj-log-${(l.level ?? 'info').toLowerCase()}">${(l.level ?? 'info').toUpperCase()}</span><span>${l.text}</span></div>`)
+      ? lines.map((l) => html`<div class="nj-log-line nj-log-line-build"><span class="nj-log-time">${time(l.at)}</span><span class="nj-log-level nj-log-${(l.level ?? 'info').toLowerCase()}">${(l.level ?? 'info').toUpperCase()}</span><span>${l.text}</span></div>`)
       : html`<div class="nj-logs-empty">Waiting for the build to start…</div>`}</div>
+  </section>`;
+}
+
+const LOG_KEEP = 2000;
+
+/** One console line: time, instance, OUT or ERR (a word as well as a colour), the text. */
+const runtimeLine = (l) => html`<div class="nj-log-line"><span class="nj-log-time">${time(l.at)}</span><span class="nj-log-inst">${l.instance ?? ''}</span><span class="nj-log-level nj-log-${l.out === 'stderr' ? 'error' : 'info'}">${l.out === 'stderr' ? 'ERR' : 'OUT'}</span><span>${l.line}</span></div>`;
+
+/** The live Logs terminal of a Local network service (infra 8.9 R11): live tail, search, errors only, pause. */
+function runtimeLogs() {
+  return html`<section class="nj-logs mb-4" aria-labelledby="logs-title">
+    <div class="nj-logs-bar">
+      <span class="nj-pill nj-pill-live" data-logs-state>Live</span><h2 class="nj-logs-title" id="logs-title">Logs</h2>
+      <label class="visually-hidden" for="logs-search">Search the logs</label>
+      <input class="form-control form-control-sm nj-logs-input" id="logs-search" type="search" placeholder="Search" autocomplete="off">
+      <label class="visually-hidden" for="logs-stream">Which output</label>
+      <select class="form-select form-select-sm nj-logs-input" id="logs-stream"><option value="">All output</option><option value="stderr">Errors only (stderr)</option></select>
+      <button type="button" class="btn btn-sm btn-secondary" data-logs-pause aria-pressed="false">Pause</button>
+    </div>
+    <div class="nj-logs-body" role="log" aria-live="polite" data-logs-body><div class="nj-logs-empty">Waiting for output…</div></div>
+    <div class="nj-logs-foot" data-logs-foot>The console output of the running instances, as it happens. The last ${LOG_KEEP.toLocaleString()} lines are kept.</div>
   </section>`;
 }
 
@@ -86,7 +107,8 @@ export async function servicePage({ workspace, params }) {
         <p class="nj-meta mb-1">${svc.estimate.text}${svc.sleepsWhenIdle ? ` · sleeps after ${SLEEP.afterMinutes} minutes without requests` : ''}</p>
         ${svc.source ? html`<p class="nj-meta mb-0"><i class="bi bi-github" aria-hidden="true"></i> ${svc.source.repo} · ${svc.source.branch}${svc.source.rootDir ? ` · ${svc.source.rootDir}` : ''} · ${svc.autoDeploy ? 'Auto-deploy on push' : 'Manual deploys'}</p>` : html`<p class="nj-meta mb-0">Managed data store. Its own page (connection details, backups) arrives with managed ${svc.typeLabel === 'postgres' ? 'Postgres' : 'Key Value'}.</p>`}
       </div>
-      ${svc.url ? html`<a class="btn btn-secondary" href="${svc.url}" data-reload rel="noopener" target="_blank">${svc.url.replace('https://', '')} <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a>` : svc.internalHost ? html`<span class="nj-meta">Private: <code>${svc.internalHost}</code></span>` : ''}
+      ${svc.path ? html`<a class="btn btn-secondary" href="${svc.path}" data-reload rel="noopener" target="_blank">${window.location.origin}${svc.path} <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a>`
+    : svc.url ? html`<a class="btn btn-secondary" href="${svc.url}" data-reload rel="noopener" target="_blank">${svc.url.replace('https://', '')} <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a>` : svc.internalHost ? html`<span class="nj-meta">Private: <code>${svc.internalHost}</code></span>` : ''}
       </div>
 
       <section class="nj-card mb-4" aria-labelledby="deploy-title">
@@ -94,6 +116,7 @@ export async function servicePage({ workspace, params }) {
         <div data-deploy>${deployCard(latest)}</div>
       </section>
       <div class="mb-4" data-log>${logView(detail?.log ?? [], running(latest))}</div>
+      ${svc.local ? runtimeLogs() : ''}
 
       <section class="nj-card mb-4" aria-labelledby="deploys-title">
         <h2 class="nj-card-title" id="deploys-title">Deploys</h2>
@@ -122,7 +145,53 @@ export async function servicePage({ workspace, params }) {
         } catch { /* the next event tries again */ }
       }
 
-      const stop = on('deploy', async (e) => {
+      // The build log grows line by line while a deploy runs: read it again every 2 seconds until it ends.
+      const poll = setInterval(() => { if (running(current)) refreshLog(current); }, 2000);
+
+      // Logs: the kept lines, then live 'log' events for this service.
+      let stopLogs = () => {};
+      if (svc.local) {
+        const body = root.querySelector('[data-logs-body]');
+        const search = root.querySelector('#logs-search');
+        const stream = root.querySelector('#logs-stream');
+        const pause = root.querySelector('[data-logs-pause]');
+        const state = root.querySelector('[data-logs-state]');
+        let lines = [];
+        let paused = false;
+        let lastSeq = 0;
+        const draw = () => {
+          const q = search.value.trim().toLowerCase();
+          const shown = lines.filter((l) => (!stream.value || l.out === stream.value) && (!q || l.line.toLowerCase().includes(q)));
+          const atEnd = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
+          body.innerHTML = shown.length ? String(html`${shown.slice(-500).map(runtimeLine)}`) : String(html`<div class="nj-logs-empty">${lines.length ? 'No lines match.' : 'Waiting for output…'}</div>`);
+          if (atEnd || !paused) body.scrollTop = body.scrollHeight;
+        };
+        const add = (more) => {
+          const fresh = more.filter((l) => !l.seq || l.seq > lastSeq);
+          if (!fresh.length) return;
+          lastSeq = Math.max(lastSeq, ...fresh.map((l) => l.seq ?? 0));
+          // stdout and stderr are followed separately: keep the lines in time order.
+          lines = [...lines, ...fresh].sort((a, b) => String(a.at).localeCompare(String(b.at))).slice(-LOG_KEEP);
+          if (!paused) draw();
+        };
+        api(`${base}/logs`).then((r) => add(r.lines)).catch(() => {});
+        stopLogs = on('log', (e) => {
+          if (e.service !== svc.name) return;
+          add(e.lines.map((l) => ({ ...l, instance: l.instance ? l.instance.slice(-6) : null })));
+        });
+        search.addEventListener('input', draw);
+        stream.addEventListener('change', draw);
+        pause.addEventListener('click', () => {
+          paused = !paused;
+          pause.setAttribute('aria-pressed', String(paused));
+          pause.textContent = paused ? 'Resume' : 'Pause';
+          state.textContent = paused ? 'Paused' : 'Live';
+          state.className = `nj-pill ${paused ? 'nj-pill-idle' : 'nj-pill-live'}`;
+          if (!paused) draw();
+        });
+      }
+
+      const stopDeploys = on('deploy', async (e) => {
         if (e.service !== svc.name) return;
         if (e.status) root.querySelector('[data-status]').innerHTML = String(statusPill(statusWord(e.status)));
         if (!e.deploy) return;
@@ -152,7 +221,11 @@ export async function servicePage({ workspace, params }) {
           window.alert(err.details?.[0]?.message ?? err.message);
         }
       });
-      return stop;
+      return () => {
+        clearInterval(poll);
+        stopDeploys();
+        stopLogs();
+      };
     },
   };
 }

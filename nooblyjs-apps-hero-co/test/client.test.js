@@ -100,7 +100,7 @@ test('the shared catalogue: specs with units, no made-up prices, only open regio
   assert.deepEqual(cat.estimate('starter'), { usd: 0, text: '$0 / mo' });
   assert.equal(cat.MAX_INSTANCES, 10);
   assert.deepEqual(Object.entries(cat.CREATABLE).filter(([, t]) => t.sleeps).map(([k]) => k), ['web', 'private']);
-  assert.deepEqual(cat.REGIONS.filter((r) => r.platform).map((r) => r.id), ['af-south', 'us-east']);
+  assert.deepEqual(cat.REGIONS.filter((r) => r.platform).map((r) => r.id), ['local', 'af-south', 'us-east']);
   assert.deepEqual(Object.keys(cat.CREATABLE), ['web', 'private', 'worker', 'static']);
   for (const key of Object.keys(cat.CREATABLE)) assert.ok(CLIENT_TYPES.some((t) => t.key === key), key);
   assert.deepEqual(['building', 'live', 'failed', 'superseded'].map(statusWord), ['Building', 'Live', 'Failed', 'Succeeded']);

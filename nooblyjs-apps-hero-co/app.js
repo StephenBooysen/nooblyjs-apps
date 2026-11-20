@@ -42,6 +42,8 @@ if (args.has('--seed')) {
 const server = hero.app.listen(config.port, () => {
   console.log(`NooblyJS Cloud on ${config.publicUrl} (data in ${config.dataDir})`);
 });
+// Local servers' agents connect to /infrastructure/agent/v1 over a WebSocket (infra spec 8.9).
+hero.attachUpgrades(server);
 
 let stopping = false;
 async function stop(signal) {

@@ -3,6 +3,7 @@
 // operators only, so its `auth` admits operators and nobody else.
 import { createRequire } from 'node:module';
 import { EventEmitter } from 'node:events';
+import { createUpgradeRouter } from 'nooblyjs-accelerator-infrastructure/host';
 import { INFRA_MATRIX, toPerson } from './people.js';
 
 const require = createRequire(import.meta.url);
@@ -75,9 +76,14 @@ export function createHost({ express, session, accounts, dataDir, frame, service
     getByEmail: async (email) => toPerson(await accounts.findPersonByEmail(email)),
   };
 
+  // WebSocket upgrades: local servers' agents connect to /infrastructure/agent/v1 (infra spec 8.9).
+  const upgrades = createUpgradeRouter();
+
   return {
     auditLog,
     eventLog,
+    /** Passes the HTTP server's upgrades to what the accelerator registered with host.onUpgrade. */
+    attachUpgrades: (server) => upgrades.attach(server),
     events,
     can,
     record,
@@ -96,6 +102,7 @@ export function createHost({ express, session, accounts, dataDir, frame, service
         frame: (req, res, next) => frame()(req, res, next),
         clock: { now: () => Date.now() },
         checksCsrf: true,
+        onUpgrade: (path, handler) => upgrades.onUpgrade(path, handler),
       };
     },
   };

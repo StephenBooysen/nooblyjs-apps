@@ -44,6 +44,11 @@ test('create a web service from a repo and watch it go Live', async ({ page, con
   await page.locator('label.nj-plan', { hasText: 'Pro Plus' }).click();
   await page.getByLabel('Instances').fill('3');
 
+  // The URL follows the region: Local network (the default) answers on this site's own URL, a cloud region on its domain.
+  await expect(page.locator('[data-url-full]')).toHaveText(`${baseURL}/exclusivity-life/software-factory/`);
+  await page.getByLabel('Region').selectOption('af-south');
+  await expect(page.locator('[data-url-full]')).toHaveText('software-factory.nooblyjs.app');
+
   // A refused name shows its message under the field.
   await page.getByLabel('Service name').fill('Bad Name');
   await summary.getByRole('button', { name: 'Deploy web service' }).click();

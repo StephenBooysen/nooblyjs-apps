@@ -79,6 +79,7 @@ export async function startApp(options = {}) {
   const config = { ...loadConfig({ NODE_ENV: 'test' }), dataDir, publicUrl: base, ...(options.config ?? {}) };
   const hero = await createApp({ config, mockStepMs: 0, jobCheckMs: 0, ...options, ...(options.config ? { config } : {}) });
   server.on('request', hero.app);
+  hero.attachUpgrades(server);
   const call = caller(base);
   const outbox = () => hero.accelerators.mounted.customers.marketing.channels.email.outbox;
   return {

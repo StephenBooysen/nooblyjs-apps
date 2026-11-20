@@ -34,8 +34,9 @@ async function importOptional(name) {
  * @param {object} [o.log]
  * @param {number} [o.mockStepMs]        passed to the infrastructure accelerator (tests pass 0)
  * @param {number} [o.jobCheckMs]
+ * @param {(tenantId: string, refs: string[]) => Promise<Record<string, string>>} [o.resolveSecrets]   opens our secretRefs at deploy (infra 8.9 R9)
  */
-export async function mountAccelerators({ app, eventEmitter, serviceRegistry, infraHost, shell, dataDir, config, log = console, mockStepMs, jobCheckMs }) {
+export async function mountAccelerators({ app, eventEmitter, serviceRegistry, infraHost, shell, dataDir, config, log = console, mockStepMs, jobCheckMs, resolveSecrets }) {
   // Check before mounting anything.
   if (typeof eventEmitter?.emit !== 'function') throw new Error('mountAccelerators needs the shared EventEmitter.');
   if (!serviceRegistry?.initialized) throw new Error('mountAccelerators needs an initialised serviceRegistry.');
@@ -90,8 +91,15 @@ export async function mountAccelerators({ app, eventEmitter, serviceRegistry, in
       mountPath: INFRA_MOUNT,
       dataDir: path.join(dataDir, 'infrastructure'),
       host: infraHost,
-      // Platform hosting (the accelerator's phase 8) is asked for now and ignored until its 8.1 lands.
-      platform: { enabled: true },
+      // Platform hosting (the accelerator's phase 8); environment values are opened by us when a container starts.
+      platform: { enabled: true, resolveSecrets },
+      // The Local network region (infra spec 8.9): site lan-dev, and in development an agent on this machine.
+      local: {
+        // Tests take the top of the host port range, so they never meet a development instance on this machine.
+        site: { id: 'lan-dev', name: 'Local network', bind: '127.0.0.1', ...(config.localAgent === 'mock' ? { ports: { min: 29000, max: 29999 } } : {}) },
+        agent: config.localAgent === 'off' ? null : config.localAgent,
+        controller: `http://127.0.0.1:${config.port}`,
+      },
       ...(mockStepMs === undefined ? {} : { mockStepMs }),
       ...(jobCheckMs === undefined ? {} : { jobCheckMs }),
     });

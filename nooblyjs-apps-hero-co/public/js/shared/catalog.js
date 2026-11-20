@@ -24,6 +24,8 @@ export const SLEEP = { afterMinutes: 15, wakeText: 'The first request after a sl
  * without one is shown but cannot be chosen yet.
  */
 export const REGIONS = [
+  // Your own servers on the local network (infra spec 8.9): services run there for real, at <base URL>/<workspace>/<service>.
+  { id: 'local', name: 'Local network', platform: 'lan-dev', local: true },
   { id: 'af-south', name: 'Johannesburg', platform: 'af-south-1' },
   { id: 'eu-central', name: 'Frankfurt', platform: null },
   { id: 'us-east', name: 'Virginia', platform: 'us-east-1' },

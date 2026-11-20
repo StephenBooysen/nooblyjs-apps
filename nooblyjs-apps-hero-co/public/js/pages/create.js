@@ -62,7 +62,13 @@ function sourceFieldset({ github, repos, workspace }) {
       <button type="button" role="tab" class="nj-tab" aria-selected="false" aria-controls="src-image" id="tab-image" data-tab="image" tabindex="-1">Docker image</button>
     </div>
     <div role="tabpanel" id="src-github" aria-labelledby="tab-github" class="nj-stack-gap">${connected}${feedback('repo')}</div>
-    <div role="tabpanel" id="src-git" aria-labelledby="tab-git" hidden><p class="nj-meta mb-0">Deploying from a public Git URL is coming soon. Use GitHub for now.</p></div>
+    <div role="tabpanel" id="src-git" aria-labelledby="tab-git" hidden class="nj-stack-gap">
+      <div><label class="form-label" for="f-git-url">Public Git repository</label>
+        <input class="form-control" id="f-git-url" name="repoUrl" type="url" inputmode="url" placeholder="https://github.com/render-examples/express-hello-world" autocomplete="off" spellcheck="false" aria-describedby="git-url-hint repoUrl-error">
+        <div class="form-text" id="git-url-hint">Any public repository you can clone over https://. No GitHub connection needed.</div>${feedback('repoUrl')}</div>
+      <div><label class="form-label" for="f-git-branch">Branch</label>
+        <input class="form-control" id="f-git-branch" name="gitBranch" value="main" autocomplete="off" spellcheck="false" aria-describedby="branch-error"></div>
+    </div>
     <div role="tabpanel" id="src-image" aria-labelledby="tab-image" hidden><p class="nj-meta mb-0">Deploying a prebuilt Docker image is coming soon. Use GitHub for now.</p></div>
   </fieldset>`;
 }
@@ -74,12 +80,12 @@ function buildFieldset({ catalog, type, firstRepo }) {
     <div class="nj-grid-2">
       <div><label class="form-label" for="f-name">Service name</label>
         <input class="form-control" id="f-name" name="name" value="${name}" required maxlength="63" autocomplete="off" spellcheck="false" aria-describedby="name-hint name-error">
-        <div class="form-text" id="name-hint">${type.publicUrl ? html`Your URL will be <span data-url>${name || 'name'}</span>.${catalog.appDomain}` : type.key === 'private' ? 'Reachable inside this workspace by this name.' : 'A worker has no URL.'}</div>${feedback('name')}</div>
+        <div class="form-text" id="name-hint">${type.publicUrl ? html`Your URL will be <span data-url-full>${name || 'name'}.${catalog.appDomain}</span>` : type.key === 'private' ? 'Reachable inside this workspace by this name.' : 'A worker has no URL.'}</div>${feedback('name')}</div>
       <div><label class="form-label" for="f-branch">Branch</label>
         <select class="form-select" id="f-branch" name="branch" aria-describedby="branch-error"><option>main</option></select>${feedback('branch')}</div>
       <div><label class="form-label" for="f-region">Region</label>
         <select class="form-select" id="f-region" name="region" aria-describedby="region-hint region-error">${catalog.regions.map((r) => html`<option value="${r.id}"${r.available ? '' : html` disabled`}>${r.name} (${r.id})${r.available ? '' : ' · coming soon'}</option>`)}</select>
-        <div class="form-text" id="region-hint">Frankfurt and Singapore open later.</div>${feedback('region')}</div>
+        <div class="form-text" id="region-hint">Local network runs on your own servers. Frankfurt and Singapore open later.</div>${feedback('region')}</div>
       <div><label class="form-label" for="f-runtime">Runtime</label>
         <select class="form-select" id="f-runtime" name="runtime" aria-describedby="runtime-error">${RUNTIMES.map((r) => html`<option value="${r.key}">${r.name}</option>`)}</select>${feedback('runtime')}</div>
     </div>
@@ -197,16 +203,19 @@ export async function createServicePage({ workspace, typeInfo, url }) {
       const branchSelect = $('#f-branch');
       let rowCount = form.querySelectorAll('[data-env-row]').length;
 
-      // Source tabs (arrow keys move between them).
+      // Source tabs (arrow keys move between them). `source` is the chosen one: github or git.
       const tabs = [...form.querySelectorAll('[role="tab"]')];
-      const select = (tab) => {
+      let source = 'github';
+      const select = (tab, { focus = true } = {}) => {
+        source = tab.dataset.tab;
         for (const t of tabs) {
           const on = t === tab;
           t.setAttribute('aria-selected', String(on));
           t.tabIndex = on ? 0 : -1;
           form.querySelector(`#${t.getAttribute('aria-controls')}`).hidden = !on;
         }
-        tab.focus();
+        if (focus) tab.focus();
+        update();
       };
       for (const t of tabs) {
         t.addEventListener('click', () => select(t));
@@ -232,15 +241,16 @@ export async function createServicePage({ workspace, typeInfo, url }) {
       }
 
       function update() {
-        const repo = form.querySelector('input[name="repo"]:checked')?.value;
+        const gitUrl = $('#f-git-url').value.trim();
+        const repo = source === 'git' ? gitUrl.replace(/^https:\/\//, '') : form.querySelector('input[name="repo"]:checked')?.value;
         const plan = planOf(form.querySelector('input[name="plan"]:checked')?.value ?? 'standard');
         const instances = type.instances ? Math.max(1, Number($('#f-instances')?.value) || 1) : 1;
-        const branch = branchSelect.value || 'main';
+        const branch = (source === 'git' ? $('#f-git-branch').value.trim() : branchSelect.value) || 'main';
         const set = (key, value) => {
           const el = form.querySelector(`[data-sum="${key}"]`);
           if (el) el.textContent = value;
         };
-        set('repo', repo ? repo.replace('/', ' / ') : '—');
+        set('repo', repo ? (source === 'git' ? repo : repo.replace('/', ' / ')) : '—');
         set('branch', branch);
         if (plan) {
           set('plan', plan.name);
@@ -249,8 +259,11 @@ export async function createServicePage({ workspace, typeInfo, url }) {
         const est = estimate(plan?.key);
         set('price', est.text);
         set('auto', $('#f-auto').checked ? `Deploy on every push to ${branch}` : 'Deploy only when you ask');
-        const url = form.querySelector('[data-url]');
-        if (url) url.textContent = $('#f-name').value || 'name';
+        // A Local network service answers at <this site>/<workspace>/<name>/; elsewhere at <name>.<app domain>.
+        const url = form.querySelector('[data-url-full]');
+        const regionId = $('#f-region').value;
+        const local = catalog.regions.find((r) => r.id === regionId)?.local;
+        if (url) url.textContent = local ? `${window.location.origin}/${workspace.id}/${$('#f-name').value || 'name'}/` : `${$('#f-name').value || 'name'}.${catalog.appDomain}`;
       }
 
       // Pick a repository: name and branch follow it until the person changes the name themselves.
@@ -264,6 +277,13 @@ export async function createServicePage({ workspace, typeInfo, url }) {
         update();
       });
       form.addEventListener('input', update);
+      // A public URL names the service after its last part, until the person names it themselves.
+      $('#f-git-url').addEventListener('input', () => {
+        if (nameTouched) return;
+        const last = $('#f-git-url').value.trim().replace(/\.git$/, '').replace(/\/+$/, '').split('/').pop() ?? '';
+        $('#f-name').value = last.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^[^a-z]+/, '').slice(0, 63);
+        update();
+      });
 
       const search = $('#repo-search');
       search?.addEventListener('input', () => {
@@ -332,8 +352,9 @@ export async function createServicePage({ workspace, typeInfo, url }) {
         const body = {
           type: type.key,
           name: $('#f-name').value.trim(),
-          repo: form.querySelector('input[name="repo"]:checked')?.value ?? '',
-          branch: branchSelect.value,
+          ...(source === 'git'
+            ? { repoUrl: $('#f-git-url').value.trim(), branch: $('#f-git-branch').value.trim() }
+            : { repo: form.querySelector('input[name="repo"]:checked')?.value ?? '', branch: branchSelect.value }),
           region: $('#f-region').value,
           runtime: $('#f-runtime').value,
           rootDir: $('#f-root').value,
@@ -362,6 +383,8 @@ export async function createServicePage({ workspace, typeInfo, url }) {
         }
       });
 
+      // Without a GitHub connection, a public Git URL is the way in.
+      if (!github.connected) select(tabs.find((t) => t.dataset.tab === 'git'), { focus: false });
       await loadBranches();
       update();
     },

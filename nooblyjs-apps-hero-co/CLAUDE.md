@@ -18,6 +18,11 @@ npm run test:ui:install   # once: Playwright Chromium (needs system libraries: s
 npm run test:ui           # Playwright, desktop + phone
 ```
 
+Local network region (infra spec 8.9): in development `npm start` also runs the infrastructure accelerator's agent
+against this machine's Docker (`HERO_LOCAL_AGENT=fork|mock|off`; tests use `mock`). A Local network service builds on
+this machine and answers at `<base URL>/<workspace>/<service>/` (`src/routes/proxy.js`: none of our cookies go to the
+app, its cookies are dropped, its pages are sandboxed). The start-up admin gets a workspace of their own.
+
 Development people (created on first start outside production; password `development-only-1`): `stevie` (workspace
 exclusivity-life), `amara` (amara-labs), `ops-platform` (operator, infra Owner), `ops-support` (operator, infra Viewer).
 Tests call as a person with the `X-Dev-Person` header (id or email), or sign in with a cookie jar (`test/helpers.js`).
