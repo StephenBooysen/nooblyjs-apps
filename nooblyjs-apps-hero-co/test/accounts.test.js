@@ -12,7 +12,9 @@ before(async () => { t = await startApp(); });
 after(async () => { await t?.close(); });
 
 const signUp = (jar, body) => t.post('/api/v1/auth/signup', { jar, body, headers: { origin: t.base } });
-const signIn = (jar, body) => t.post('/api/v1/auth/signin', { jar, body, headers: { origin: t.base } });
+// Signing in is nooblyjs-core's login page, which posts here (answered by this app).
+const LOGIN_API = '/services/authservice/api/login';
+const signIn = (jar, body) => t.post(LOGIN_API, { jar, body, headers: { origin: t.base } });
 const auth = (jar, path, body) => t.post(`/api/v1/auth/${path}`, { jar, body, headers: { origin: t.base } });
 const ada = { name: 'Ada Lovelace', team: 'Analytical Engines', email: 'Ada@Engines.dev', password: 'difference engine 1', marketing: true };
 
@@ -80,12 +82,15 @@ test('sign in, wrong password, sign out', async () => {
   const jar = cookieJar();
   const wrong = await signIn(jar, { email: 'ada@engines.dev', password: 'not the password 1' });
   assert.equal(wrong.status, 401);
-  assert.equal(wrong.json.error.message, 'That email and password do not match.');
+  assert.deepEqual(wrong.json, { success: false, error: 'Login failed' });
   assert.equal((await signIn(jar, { email: 'nobody@engines.dev', password: 'whatever 12345' })).status, 401, 'the same answer for unknown emails');
-  const ok = await signIn(jar, { email: 'ADA@engines.dev', password: ada.password, next: '/w/analytical-engines/settings' });
+  const ok = await signIn(jar, { email: 'ADA@engines.dev', password: ada.password, returnUrl: '/w/analytical-engines/settings' });
   assert.equal(ok.status, 200);
-  assert.equal(ok.json.redirect, '/w/analytical-engines/settings');
-  assert.equal((await signIn(cookieJar(), { email: 'ada@engines.dev', password: ada.password, next: '//evil.example' })).json.redirect, '/w/analytical-engines', 'no open redirect');
+  assert.equal(ok.json.success, true);
+  assert.equal(ok.json.redirectUrl, '/w/analytical-engines/settings');
+  assert.equal((await signIn(cookieJar(), { email: 'ada@engines.dev', password: ada.password })).json.redirectUrl, '/w/analytical-engines', 'home: the workspace');
+  assert.equal((await signIn(cookieJar(), { email: 'ada@engines.dev', password: ada.password, returnUrl: '//evil.example' })).json.redirectUrl, '/w/analytical-engines', 'no open redirect');
+  assert.equal((await t.get('/services/authservice/api/auth/check', { jar })).json.authenticated, true);
   assert.equal((await t.get('/api/v1/me', { jar })).status, 200);
   assert.equal((await t.post('/api/v1/auth/signout', { jar, headers: { 'x-csrf-token': jar.get('noobly.csrf') } })).status, 204);
   assert.equal((await t.get('/api/v1/me', { jar })).status, 401);
@@ -189,7 +194,7 @@ test('GitHub with the email of an existing account links to it; a forged state i
   await t.get('/auth/github', { jar: fresh });
   const forged = await t.get('/auth/github/callback?code=anything&state=forged', { jar: fresh });
   assert.equal(forged.status, 303);
-  assert.equal(forged.location, '/signin?error=github');
+  assert.equal(forged.location, '/?error=github');
   assert.equal((await t.get('/api/v1/me', { jar: fresh })).status, 401);
 });
 

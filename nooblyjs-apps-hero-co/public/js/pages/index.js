@@ -3,7 +3,7 @@
 import { html } from '../html.js';
 import { api } from '../api.js';
 import { emptyState, optionCard, statusPill, stepper } from '../components/index.js';
-import { signUpPage, signInPage, forgotPasswordPage, resetPasswordPage, verifyEmailPage, invitePage } from './account.js';
+import { signUpPage, forgotPasswordPage, resetPasswordPage, verifyEmailPage, invitePage } from './account.js';
 import { settingsPage } from './settings.js';
 import { createServicePage, comingTypePage } from './create.js';
 import { servicePage, statusWord } from './service.js';
@@ -116,7 +116,6 @@ export const PAGES = {
   settings: settingsPage,
 
   marketing: (ctx) => signUpPage({ ...ctx, serviceTypes: SERVICE_TYPES }),
-  signin: signInPage,
   'forgot-password': forgotPasswordPage,
   'reset-password': resetPasswordPage,
   'verify-email': verifyEmailPage,

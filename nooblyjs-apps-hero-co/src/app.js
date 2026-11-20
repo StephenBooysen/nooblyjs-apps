@@ -59,6 +59,9 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   app.use((req, res, next) => session.cookie(req, res, next));
   app.use((req, res, next) => session.identify(req, res, next));
   app.use((req, res, next) => session.csrf(req, res, next));
+  // nooblyjs-core's login page is the only sign-in screen; this app answers its API (auth.js), ahead of core.
+  let coreLogin = null;
+  app.use((req, res, next) => (coreLogin ? coreLogin(req, res, next) : next()));
   app.use('/services', (req, res, next) => session.requirePlatform(req, res, next));
 
   // nooblyjs-core: one shared emitter for core and every accelerator.
@@ -114,6 +117,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
 
   const link = createCustomersLink({ cx: accelerators.mounted.customers, systemContext: cxContext.systemContext, accounts, log, audit });
   await link.ensureTemplates();
+  await ensureCoreAdmins({ accounts, core, log });
   if (config.devSignIn) await seedDevPeople({ accounts, core, link });
   if (config.production && !config.emailChannel) {
     log.warn?.('[hero-co] No email channel is configured: account emails go to the customers accelerator\'s console outbox only.');
@@ -130,6 +134,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   }
 
   const auth = createAuth({ express, session, accounts, core, link, config, audit, log });
+  coreLogin = auth.login;
   app.use('/api/v1/auth', auth.api);
   app.use(auth.pages);
   app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform }));
@@ -190,6 +195,19 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
       await serviceRegistry.shutdown?.();
     },
   };
+}
+
+/**
+ * nooblyjs-core's admins (its start-up admin, admin@localhost unless DEFAULT_ADMIN_EMAIL says otherwise, whose password
+ * is in <dataDir>/auth/INITIAL_ADMIN_PASSWORD.txt or DEFAULT_ADMIN_PASSWORD) are this app's platform operators, so
+ * they can sign in on core's login page and land on /admin. An existing account with the same email is left alone.
+ */
+async function ensureCoreAdmins({ accounts, core, log }) {
+  for (const admin of await core.getUsersInRole('admin')) {
+    if (!admin?.email || await accounts.findPersonByEmail(admin.email)) continue;
+    await accounts.createPerson({ name: admin.fullName || 'Administrator', email: admin.email, emailVerified: true, operator: 'platform', signedUpWith: 'core-admin' });
+    log.info?.(`[hero-co] ${admin.email} (nooblyjs-core admin) is a platform operator.`);
+  }
 }
 
 /** The development people (people.js), created once: each with a workspace, verified, linked to a customer. */

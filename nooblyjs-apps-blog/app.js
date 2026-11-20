@@ -23,8 +23,11 @@ const { EventEmitter } = require('events');
 
 // Iniitiate the Web and Api Interface
 const app = express();
+// Behind one proxy (Codespaces port forwarding, a load balancer) the client address is in X-Forwarded-For; trusting
+// that one hop lets the rate limiters tell people apart. Set TRUST_PROXY=0 to turn it off.
+if (process.env.TRUST_PROXY !== '0' && (process.env.TRUST_PROXY === '1' || process.env.CODESPACES === 'true')) app.set('trust proxy', 1);
 const server = http.createServer(app);
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 11012;
 
 // The redirect URI registered with Google is the app's base URL followed by this path.
 const GOOGLE_CALLBACK_PATH = '/services/authservice/openid';
@@ -82,7 +85,9 @@ serviceRegistry.initialize(app,eventEmitter,options);
 const log = serviceRegistry.logger('console');
 const cache = serviceRegistry.cache('memory');
 const dataservice = serviceRegistry.dataService('memory');
-const filing = serviceRegistry.filing('local');
+// Core's local filing keeps every path inside its storage root (core ea5e473), so the root is the posts folder
+// that src/services/filePostStore.js reads and writes.
+const filing = serviceRegistry.filing('local', { baseDir: path.resolve(process.cwd(), 'posts') });
 const queue = serviceRegistry.queue('memory');
 const scheduling = serviceRegistry.scheduling('memory');
 const searching = serviceRegistry.searching('memory');
@@ -170,7 +175,7 @@ app.get('/', (req, res) => {
   res.redirect('/applications/blog/');
 });
 
-server.listen(process.env.PORT || 3003, () => {
+server.listen(process.env.PORT || 11012, () => {
   log.warn(`====================================`);
   log.warn(`Nooblyjs Blog running on port ${process.env.PORT || 3003}`);
   log.warn(`Sign-in method: ${AUTH_METHOD}`);

@@ -4,7 +4,6 @@
 /** Route patterns → { name, layout }. Order matters: first match wins. */
 export const ROUTES = [
   { pattern: '/', name: 'marketing', layout: 'public' },
-  { pattern: '/signin', name: 'signin', layout: 'public' },
   { pattern: '/forgot-password', name: 'forgot-password', layout: 'public' },
   { pattern: '/reset-password', name: 'reset-password', layout: 'public' },
   { pattern: '/verify-email', name: 'verify-email', layout: 'public' },

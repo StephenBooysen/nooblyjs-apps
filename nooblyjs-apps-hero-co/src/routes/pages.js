@@ -9,7 +9,7 @@ export const INDEX_FILE = path.join(ROOT, 'public', 'index.html');
 export const WORKSPACE_PAGES = ['', '/new', '/projects', '/deploys', '/metrics', '/logs', '/env-groups', '/github', '/billing', '/settings'];
 
 /** Pages anyone may open (besides /). */
-export const PUBLIC_PAGES = ['/signin', '/forgot-password', '/reset-password', '/verify-email', '/invite'];
+export const PUBLIC_PAGES = ['/forgot-password', '/reset-password', '/verify-email', '/invite'];
 
 /** Service types (product.md §6.2), the :type of /w/:workspace/new/:type. */
 export const SERVICE_TYPES = ['static', 'web', 'private', 'worker', 'cron', 'workflow', 'postgres', 'keyvalue', 'sandbox'];

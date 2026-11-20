@@ -1,5 +1,8 @@
 // Who is signed in, and the gates every route uses.
 //
+// The session also carries `authToken`, core's own session token (set at sign-in exactly as core's login route does),
+// so nooblyjs-core's /services gate recognises the same sign-in.
+//
 // A sign-in is an express-session (cookie `hero.sid`, store from nooblyjs-core's createSessionStore: memory, or Redis
 // when REDIS_URL / SESSION_REDIS_URL is set) holding the person's id and their session epoch. Changing or resetting a
 // password bumps the epoch, which signs out every other session. Outside production the X-Dev-Person header (tests,
@@ -40,6 +43,23 @@ const isApi = (req) => req.originalUrl.split('?')[0].includes('/api/');
 const sendError = (res, status, code, message) => res.status(status).json({ error: { code, message } });
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 export const safeNext = (next) => (typeof next === 'string' && /^\/(?![/\\])/.test(next) ? next : null);
+
+/**
+ * The one sign-in screen: nooblyjs-core's authservice login page. It posts to /services/authservice/api/login, which
+ * this app answers (auth.js coreLoginRoutes), and then goes to `returnUrl`: the page the person was heading to, or
+ * their home (their workspace for customers, /admin for operators).
+ */
+export const LOGIN_PAGE = '/services/authservice/views/login.html';
+export const loginUrl = (next) => (safeNext(next) ? `${LOGIN_PAGE}?returnUrl=${encodeURIComponent(next)}` : LOGIN_PAGE);
+
+/** The login page and the files it loads: the only /services paths open to people who are not platform operators. */
+export const LOGIN_ASSETS = new Set([
+  LOGIN_PAGE,
+  '/services/authservice/views/js/login.page.js',
+  '/services/css/styles.css',
+  '/services/css/core.css',
+  '/services/css/auth-login.css',
+]);
 const notFound = (req, res, what = 'page') => (isApi(req) ? sendError(res, 404, 'not_found', `No such ${what}.`) : res.status(404).type('text').send('Not found.'));
 
 /**
@@ -113,7 +133,7 @@ export function createSession({ accounts, config, log }) {
   function auth(req, res, next) {
     if (req.person) return next();
     if (isApi(req)) return sendError(res, 401, 'unauthenticated', 'Sign in to continue.');
-    res.redirect(302, `/signin?next=${encodeURIComponent(req.originalUrl)}`);
+    res.redirect(302, loginUrl(req.originalUrl));
   }
 
   /** Operators only. Customers get a 404, so the back office is not advertised. */
@@ -123,6 +143,7 @@ export function createSession({ accounts, config, log }) {
 
   /** Platform operators only (nooblyjs-core's /services portal). */
   function requirePlatform(req, res, next) {
+    if (READS.has(req.method) && LOGIN_ASSETS.has(req.originalUrl.split('?')[0])) return next();
     auth(req, res, () => (req.person.operator === 'platform' ? next() : notFound(req, res)));
   }
 
@@ -201,7 +222,7 @@ export function createSession({ accounts, config, log }) {
 <link rel="stylesheet" href="/css/styles.css"><link rel="stylesheet" href="/css/hero-co.css"></head>
 <body class="nj-dev-login"><main class="nj-card nj-dev-card">
 <p class="nj-eyebrow">Development sign-in</p><h1>Sign in as</h1>
-<p class="lead">Anyone can be anyone here. This page does not exist in production: <a href="/signin">use the real sign-in</a>.</p>
+<p class="lead">Anyone can be anyone here. This page does not exist in production: <a href="${LOGIN_PAGE}">use the real sign-in</a>.</p>
 <ul class="nj-dev-people">${rows.join('')}</ul></main></body></html>`);
       } catch (err) {
         next(err);

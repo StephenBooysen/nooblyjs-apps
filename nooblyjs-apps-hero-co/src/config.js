@@ -20,7 +20,8 @@ export function loadConfig(env = process.env) {
     production,
     publicUrl: (env.PUBLIC_URL ?? `http://localhost:${port}`).replace(/\/$/, ''),
     appDomain: env.APP_DOMAIN ?? 'nooblyjs.app',
-    trustProxy: env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true',
+    // One proxy hop: set TRUST_PROXY=1 behind a load balancer; Codespaces port forwarding is one (TRUST_PROXY=0 turns it off).
+    trustProxy: env.TRUST_PROXY !== '0' && (env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true' || env.CODESPACES === 'true'),
     // The development sign-in (/dev/login, X-Dev-Person) and the development people: never in production.
     devSignIn: !production && env.DEV_SIGN_IN !== '0',
     cxTrackingSecret: env.CX_TRACKING_SECRET,

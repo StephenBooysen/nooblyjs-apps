@@ -107,7 +107,7 @@ code { color: var(--nj-ink-2); }
 /* Marketing and sign-in layouts: no sidebar. */
 .nj-public { min-height: 100vh; }
 .nj-public-bar { display: flex; align-items: center; gap: 20px; padding: 18px 32px; }
-.nj-public-bar a { color: var(--nj-ink-2); font-weight: 600; text-decoration: none; }
+.nj-public-bar a:not(.btn) { color: var(--nj-ink-2); font-weight: 600; text-decoration: none; }
 .nj-hero { max-width: 1120px; margin: 0 auto; padding: 48px 32px 64px; }
 .nj-hero-title { font-family: var(--font-display); font-size: 60px; font-weight: 800; letter-spacing: -.035em; line-height: 1.04; max-width: 16ch; margin: 0 0 16px; }
 

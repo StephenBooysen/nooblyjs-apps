@@ -12,7 +12,7 @@ The UI spec and mock-ups live in `.claude/steering/ui/`.
 
 ```bash
 npm install
-npm start                 # http://localhost:11010: sign up at /, or the development sign-in at /dev/login
+npm start                 # http://localhost:11010: sign up at /, sign in at /services/authservice/views/login.html (or /dev/login in development)
 npm test                  # node:test, offline, on the mock cloud
 npm run test:ui:install   # once: Playwright Chromium (needs system libraries: sudo npx playwright install-deps chromium)
 npm run test:ui           # Playwright, desktop + phone
@@ -43,6 +43,8 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
 - No inline `style=""`, `<style>`, inline scripts or `on*=` handlers: core's CSP has no `unsafe-inline`. Set dynamic
   sizes through the CSSOM (`data-pct` + `applySizes()`). `test/app.test.js` checks this.
 - Escape everything with `html```; numbers carry units and limits; statuses are words as well as colours.
+- The only sign-in screen is nooblyjs-core's `/services/authservice/views/login.html` (with `?returnUrl=`); this app
+  answers its API in `auth.js` (`login` router). Never build another sign-in page.
 - Another workspace is a 404, never a 403. Operator-only routes are a 404 for customers. A new workspace route goes in
   `src/routes/workspaces.js` (behind `requireWorkspace`): `test/isolation.test.js` walks that router.
 - Accelerators are mounted with `mount(app, eventEmitter, serviceRegistry, options)` and shut down in reverse.

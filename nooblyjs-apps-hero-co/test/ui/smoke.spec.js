@@ -147,18 +147,33 @@ test('Continue with GitHub signs up through the mock GitHub and lands in a works
   await expect(page.getByText('Verify your email')).toHaveCount(0);
 });
 
-test('sign in: a wrong password says so; the right one opens the workspace; sign out', async ({ page }) => {
-  await page.goto('/signin');
+test('sign in is nooblyjs-core\'s login page: back to the page you wanted; a wrong password says so; sign out', async ({ page }) => {
+  const problems = watch(page);
+  await page.goto(`${WS}/settings`, { waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveURL(/\/services\/authservice\/views\/login\.html\?returnUrl=%2Fw%2Fexclusivity-life%2Fsettings$/);
+  await expect(page.locator('#app-name')).toHaveText('NooblyJS Cloud');
   await page.getByLabel('Email').fill('stevie@exclusivity.life');
   await page.getByLabel('Password').fill('not the password 1');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('alert')).toHaveText('That email and password do not match.');
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await expect(page.locator('#login-btn')).toHaveText('Login failed try again');
   await page.getByLabel('Password').fill('development-only-1');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/w\/exclusivity-life$/);
+  await page.locator('#login-btn').click();
+  await expect(page).toHaveURL(new RegExp(`${WS}/settings$`), { timeout: 10_000 });
+  await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
+  expect(problems).toEqual([]);
+});
+
+test('operators sign in on the same page and land on /admin', async ({ page }) => {
+  await page.goto('/signin', { waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveURL(/\/services\/authservice\/views\/login\.html$/);
+  await page.getByLabel('Email').fill('platform@nooblyjs.cloud');
+  await page.getByLabel('Password').fill('development-only-1');
+  await page.locator('#login-btn').click();
+  await expect(page).toHaveURL(/\/admin$/, { timeout: 10_000 });
+  await expect(page.getByRole('heading', { level: 1, name: 'Back office' })).toBeVisible();
 });
 
 test('Settings: the owner invites a member and sees the invitation', async ({ page, context, baseURL }) => {

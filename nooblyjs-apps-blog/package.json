@@ -24,7 +24,9 @@
   ],
   "scripts": {
     "dev": "node ./app.js",
-    "kill": "  kill -9 $(lsof -t -i:3003)"
+    "test": "jest",
+    "start": "node ./app.js",
+    "kill": "  kill -9 $(lsof -t -i:11012)"
   },
   "dependencies": {
     "cors": "^2.8.5",

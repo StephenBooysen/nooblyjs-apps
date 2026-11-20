@@ -3,6 +3,8 @@
 // route added later is covered without editing this file. A non-member must get a 404 (never a 403, never data).
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import express from 'express';
 import { startApp, cookieJar } from './helpers.js';
 import { createWorkspacesApi } from '../src/routes/workspaces.js';
@@ -61,7 +63,7 @@ test('signed out, the workspace API is a 401 and the pages send you to sign in',
     const r = await t.call(method, url, { headers: { origin: t.base }, ...(method === 'GET' || method === 'DELETE' ? {} : { body: {} }) });
     assert.equal(r.status, 401, `${method} ${url}`);
   }
-  assert.match((await t.get('/w/exclusivity-life/settings')).location, /^\/signin\?next=/);
+  assert.match((await t.get('/w/exclusivity-life/settings')).location, /^\/services\/authservice\/views\/login\.html\?returnUrl=/);
 });
 
 test('operators are not workspace members: the back office does not open customer workspaces', async () => {
@@ -69,8 +71,46 @@ test('operators are not workspace members: the back office does not open custome
   assert.equal((await t.get('/api/v1/workspaces/exclusivity-life', { as: 'ops-support' })).status, 404);
 });
 
-test('customers cannot reach nooblyjs-core\'s /services portal or its login API', async () => {
-  for (const url of ['/services/', '/services/authservice/api/status']) assert.equal((await t.get(url, { as: 'stevie' })).status, 404, url);
-  assert.equal((await t.post('/services/authservice/api/login', { as: 'stevie', body: { email: 'stevie@exclusivity.life', password: 'x' } })).status, 404);
+test('customers cannot reach nooblyjs-core\'s /services portal; only its login page and that page\'s files are open', async () => {
+  for (const url of ['/services/', '/services/authservice/api/status', '/services/authservice/views/register.html', '/services/authservice/api/users', '/services/authservice/views/profile.html']) {
+    assert.equal((await t.get(url, { as: 'stevie' })).status, 404, url);
+  }
   assert.equal((await t.get('/services/', { as: 'ops-support' })).status, 404, 'support operators neither');
+  for (const url of ['/services/authservice/views/login.html', '/services/authservice/views/js/login.page.js', '/services/css/auth-login.css', '/images/nooblyjs-logo.png']) {
+    assert.equal((await t.get(url)).status, 200, `${url} is open signed out`);
+  }
+  assert.equal((await t.get('/services/authservice/views/request-invitation.html')).location, '/', 'Create New Account is the sign-up page');
+  const branding = (await t.get('/services/authservice/api/branding')).json.data;
+  assert.deepEqual([branding.appName, branding.homeUrl], ['NooblyJS Cloud', '/']);
+  assert.equal((await t.get('/services/authservice/api/sso-config')).json.data.enabled, false);
+  assert.equal((await t.get('/services/authservice/api/auth/check')).json.authenticated, false);
+});
+
+test('core\'s login page sends customers to their workspace and operators to /admin', async () => {
+  for (const [who, home] of [['stevie', '/w/exclusivity-life'], ['ops-platform', '/admin']]) {
+    const person = await t.accounts.getPerson(who);
+    const res = await t.post('/services/authservice/api/login', { body: { email: person.email, password: 'development-only-1' }, headers: { origin: t.base } });
+    assert.equal(res.status, 200, who);
+    assert.equal(res.json.redirectUrl, home, who);
+  }
+  assert.match((await t.get('/infrastructure/')).location, /^\/services\/authservice\/views\/login\.html\?returnUrl=%2Finfrastructure/);
+});
+
+test('core\'s start-up admin (INITIAL_ADMIN_PASSWORD.txt) signs in on the login page as a platform operator', async () => {
+  const file = await fs.readFile(path.join(t.dataDir, 'auth', 'INITIAL_ADMIN_PASSWORD.txt'), 'utf8');
+  const [, email] = /email:\s*(\S+)/.exec(file);
+  const [, password] = /password:\s*(\S+)/.exec(file);
+  const jar = cookieJar();
+  const res = await t.post('/services/authservice/api/login', { jar, body: { email, password }, headers: { origin: t.base } });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.redirectUrl, '/admin');
+  const me = (await t.get('/api/v1/me', { jar })).json;
+  assert.deepEqual([me.email, me.operator, me.workspaces.length], [email, 'platform', 0]);
+  assert.equal((await t.get('/admin', { jar })).status, 200);
+
+  // The same sign-in opens nooblyjs-core's /services portal: core sees its own session token (req.session.authToken).
+  const portal = await t.get('/services/', { jar, headers: { accept: 'text/html' } });
+  assert.equal(portal.status, 200);
+  assert.doesNotMatch(portal.text, /Checking authentication/);
+  assert.equal((await t.get('/services/authservice/api/auth/check', { jar })).json.authenticated, true);
 });

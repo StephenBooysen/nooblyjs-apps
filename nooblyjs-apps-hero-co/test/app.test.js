@@ -32,7 +32,8 @@ test('every workspace page answers with the app shell for a member', async () =>
 
 test('public pages answer for anyone; an unknown service type or path is a 404', async () => {
   assert.ok(isIndex(await t.get('/')));
-  assert.ok(isIndex(await t.get('/signin')));
+  const signin = await t.get('/signin?next=/w/x');
+  assert.equal(signin.location, `/services/authservice/views/login.html?returnUrl=${encodeURIComponent('/w/x')}`, '/signin is core\'s login page now');
   assert.equal((await t.get('/w/exclusivity-life/new/mainframe', { as: 'stevie' })).status, 404);
   assert.equal((await t.get('/nowhere')).status, 404);
   const api = await t.get('/api/v1/nowhere', { as: 'stevie' });
@@ -43,7 +44,7 @@ test('public pages answer for anyone; an unknown service type or path is a 404',
 test('signed-out visitors are sent to sign in; another workspace is a 404, never a 403', async () => {
   const out = await t.get('/w/exclusivity-life/logs');
   assert.equal(out.status, 302);
-  assert.equal(out.headers.get('location'), `/signin?next=${encodeURIComponent('/w/exclusivity-life/logs')}`);
+  assert.equal(out.headers.get('location'), `/services/authservice/views/login.html?returnUrl=${encodeURIComponent('/w/exclusivity-life/logs')}`);
   assert.equal((await t.get('/w/exclusivity-life', { as: 'amara' })).status, 404);
   assert.equal((await t.get('/w/exclusivity-life/settings', { as: 'amara' })).status, 404);
   assert.ok(isIndex(await t.get('/w/amara-labs', { as: 'amara' })));
@@ -123,8 +124,9 @@ test('a cookie sign-in cannot write cross-site: it needs the CSRF token or a sam
   const sameOrigin = await t.post('/admin/customer/api/v1/customers', { jar, body, headers: { origin: t.base } });
   assert.notEqual(sameOrigin.json?.error?.code, 'csrf');
   // The sign-in forms are covered too (login CSRF), signed in or not.
-  const login = await t.post('/api/v1/auth/signin', { body: { email: 'a@b.co', password: 'x' }, headers: { origin: 'https://evil.example' } });
-  assert.equal(login.json.error.code, 'csrf');
+  const login = await t.post('/services/authservice/api/login', { body: { email: 'a@b.co', password: 'x' }, headers: { origin: 'https://evil.example' } });
+  assert.equal(login.status, 403);
+  assert.equal((await t.post('/services/authservice/api/login', { body: { email: 'a@b.co', password: 'x' } })).status, 403, 'no Origin or Referer: refused');
 });
 
 test('the live channel says hello with the person\'s workspaces', async () => {

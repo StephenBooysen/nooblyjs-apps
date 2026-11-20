@@ -92,7 +92,7 @@ Sidebar (from the mock-ups, in order), heading **Workspace**:
 | Path | Screen | Mock-up |
 | --- | --- | --- |
 | `/` (signed out) | Marketing + sign up | *Sign up* |
-| `/signin` | Sign in | none (reuse the sign-up card) |
+| `/services/authservice/views/login.html` | Sign in: nooblyjs-core's authservice login page, the only sign-in screen for customers and operators (decided 2026-11-20). `?returnUrl=` brings them back; without it customers go to their workspace and operators to `/admin`. `/signin` redirects here. | core's page |
 | `/w/:workspace` | Environment dashboard (default project, Production) | *Production dashboard* |
 | `/w/:workspace/new` | Create a new service — choose type | *Create a new service* |
 | `/w/:workspace/new/:type` | New service of that type (repo → build → instance → env → deploy) | *New web service* (the template for all app types) |

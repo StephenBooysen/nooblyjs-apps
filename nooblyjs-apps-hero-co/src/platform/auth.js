@@ -10,7 +10,7 @@ import { Passport } from 'passport';
 import { Strategy as GitHubStrategy } from 'passport-github2';
 import { MOCK_ORGS, MOCK_BRANCHES, mockRepos, mockCommit, mockTokenFor } from '../github/mock-data.js';
 import { normaliseEmail } from './accounts.js';
-import { safeNext } from './session.js';
+import { safeNext, LOGIN_PAGE, loginUrl } from './session.js';
 
 export const PASSWORD_HINT = 'Use 12 or more characters with a number.';
 export const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
@@ -166,43 +166,42 @@ export function createAuth({ express, session, accounts, core, link, config, aud
       if (!done.person.emailVerifiedAt) await sendVerify(done.person);
       else await sendWelcome(done.person);
       const signedIn = await core.authenticateUser(values.email, values.password).catch(() => null);
-      await session.signIn(req, res, done.person, { coreToken: signedIn?.session?.token });
+      await session.signIn(req, res, done.person, { authToken: signedIn?.session?.token });
       res.status(201).json({ redirect: done.home });
     } catch (err) {
       next(err);
     }
   });
 
-  api.post('/signin', async (req, res, next) => {
-    try {
-      const email = normaliseEmail(text(req.body?.email, 254));
-      const password = typeof req.body?.password === 'string' ? req.body.password.slice(0, 1024) : '';
-      if (!email || !password) return invalid(res, [...(email ? [] : [{ path: 'email', message: 'Enter your email.' }]), ...(password ? [] : [{ path: 'password', message: 'Enter your password.' }])]);
-      if (limits.signinEmail.blocked(email) || limits.signinIp.blocked(req.ip)) return tooMany(res);
-      const person = await accounts.findPersonByEmail(email);
-      const result = person ? await core.authenticateUser(email, password).catch(() => null) : null;
-      if (!result) {
-        limits.signinEmail.hit(email);
-        limits.signinIp.hit(req.ip);
-        await audit({ action: 'person.sign-in-failed', actor: person?.id ?? null, target: person?.id ?? 'unknown' });
-        return sendError(res, 401, 'wrong_credentials', 'That email and password do not match.');
-      }
-      limits.signinEmail.clear(email);
-      await session.signIn(req, res, person, { coreToken: result.session?.token });
-      if (!person.customerId) await link.linkPerson(person);
-      await audit({ action: 'person.signed-in', actor: person.id, target: person.id, detail: { with: 'email' } });
-      res.json({ redirect: safeNext(req.body?.next) ?? session.homeOf(await session.load(person)) });
-    } catch (err) {
-      next(err);
+  /** Email and password against core's authservice. → { person } or { status, error } */
+  async function passwordSignIn(req, res, email, password) {
+    if (!email || !password) return { status: 400, error: 'Enter your email and password.' };
+    if (limits.signinEmail.blocked(email) || limits.signinIp.blocked(req.ip)) return { status: 429, error: 'Too many attempts. Wait a few minutes and try again.' };
+    const person = await accounts.findPersonByEmail(email);
+    const result = person ? await core.authenticateUser(email, password).catch(() => null) : null;
+    if (!result) {
+      limits.signinEmail.hit(email);
+      limits.signinIp.hit(req.ip);
+      await audit({ action: 'person.sign-in-failed', actor: person?.id ?? null, target: person?.id ?? 'unknown' });
+      return { status: 401, error: 'Login failed' };
     }
-  });
+    limits.signinEmail.clear(email);
+    await session.signIn(req, res, person, { authToken: result.session?.token });
+    if (!person.customerId) await link.linkPerson(person);
+    await audit({ action: 'person.signed-in', actor: person.id, target: person.id, detail: { with: 'email' } });
+    return { person: await session.load(person) };
+  }
+
+  async function signOut(req, res) {
+    const token = req.session?.authToken;
+    if (token) await core.logout(token).catch(() => {});
+    if (req.person) await audit({ action: 'person.signed-out', actor: req.person.id, target: req.person.id });
+    await session.signOut(req, res);
+  }
 
   api.post('/signout', async (req, res, next) => {
     try {
-      const token = req.session?.coreToken;
-      if (token) await core.logout(token).catch(() => {});
-      if (req.person) await audit({ action: 'person.signed-out', actor: req.person.id, target: req.person.id });
-      await session.signOut(req, res);
+      await signOut(req, res);
       res.status(204).end();
     } catch (err) {
       next(err);
@@ -216,7 +215,7 @@ export function createAuth({ express, session, accounts, core, link, config, aud
       const person = await accounts.updatePerson(personId, { emailVerifiedAt: new Date().toISOString() });
       await audit({ action: 'person.email-verified', actor: personId, target: personId });
       await sendWelcome(person);
-      res.json({ verified: true, redirect: req.person?.id === personId ? session.homeOf(req.person) : '/signin' });
+      res.json({ verified: true, redirect: req.person?.id === personId ? session.homeOf(req.person) : LOGIN_PAGE });
     } catch (err) {
       next(err);
     }
@@ -269,7 +268,7 @@ export function createAuth({ express, session, accounts, core, link, config, aud
       const updated = await accounts.updatePerson(personId, { sessionEpoch: (person.sessionEpoch ?? 0) + 1, emailVerifiedAt: person.emailVerifiedAt ?? new Date().toISOString() });
       await audit({ action: 'person.password-reset', actor: personId, target: personId });
       const signedIn = await core.authenticateUser(person.email, req.body.password).catch(() => null);
-      await session.signIn(req, res, updated, { coreToken: signedIn?.session?.token });
+      await session.signIn(req, res, updated, { authToken: signedIn?.session?.token });
       res.json({ redirect: session.homeOf(await session.load(updated)) });
     } catch (err) {
       next(err);
@@ -311,13 +310,13 @@ export function createAuth({ express, session, accounts, core, link, config, aud
       try {
         if (err || !profile) {
           log?.warn?.(`[hero-co] GitHub sign-in failed: ${err?.message ?? 'no profile'}`);
-          return res.redirect(303, '/signin?error=github');
+          return res.redirect(303, '/?error=github');
         }
         const intent = req.session.githubIntent ?? {};
         delete req.session.githubIntent;
         const emails = (profile.emails ?? []).filter((e) => e.verified !== false);
         const email = normaliseEmail((emails.find((e) => e.primary) ?? emails[0])?.value);
-        if (!email) return res.redirect(303, '/signin?error=github-email');
+        if (!email) return res.redirect(303, '/?error=github-email');
 
         let person = await accounts.findPersonByGithub(profile.id);
         let home = null;
@@ -358,7 +357,65 @@ export function createAuth({ express, session, accounts, core, link, config, aud
     })(req, res, next);
   });
 
-  return { api, pages, githubMock };
+  // ---- nooblyjs-core's login page (the only sign-in screen) --------------------------
+  // Mounted ahead of core and of the /services gate: the page itself is core's, the answers are this app's, so a
+  // sign-in makes a hero-co session (session epoch, rate limits, audit, customer link) and lands on returnUrl or home.
+  const A = '/services/authservice';
+  const login = express.Router();
+  const sameSite = (req) => {
+    const from = req.get('origin') ?? req.get('referer');
+    try {
+      return Boolean(from) && new URL(from).host === req.get('host');
+    } catch {
+      return false;
+    }
+  };
+  login.get('/signin', (req, res) => res.redirect(302, loginUrl(req.query.next)));
+  // "Create New Account" on the login page: sign-up is the marketing page.
+  login.get(`${A}/views/request-invitation.html`, (req, res) => res.redirect(302, '/'));
+  login.get(`${A}/api/branding`, (req, res) => res.json({
+    success: true,
+    data: { appName: 'NooblyJS Cloud', logoUrl: '/images/nooblyjs-logo.png', stylesheetUrl: null, homeUrl: req.person ? session.homeOf(req.person) : '/' },
+  }));
+  login.get(`${A}/api/sso-config`, (req, res) => res.json({ success: true, data: { enabled: false, provider: null, initiateUrl: null } }));
+  // Core's meaning: signed in with a live core session (req.session.authToken, which core's /services gate checks).
+  // A hero-co session whose core session has expired is asked for the password again, rather than sent round in a loop.
+  login.get(`${A}/api/auth/check`, async (req, res) => {
+    const token = req.session?.authToken;
+    const live = Boolean(req.person && token) && Boolean(await core.validateSession(token).catch(() => null));
+    res.json({ success: true, authenticated: live });
+  });
+  login.post(`${A}/api/login`, express.json({ limit: '16kb' }), async (req, res, next) => {
+    try {
+      // Login CSRF: the form posts from this site only.
+      if (!sameSite(req)) return res.status(403).json({ success: false, error: 'Sign in from the NooblyJS Cloud sign-in page.' });
+      const email = normaliseEmail(text(req.body?.email, 254));
+      const password = typeof req.body?.password === 'string' ? req.body.password.slice(0, 1024) : '';
+      const out = await passwordSignIn(req, res, email, password);
+      if (out.error) return res.status(out.status).json({ success: false, error: out.error });
+      const p = out.person;
+      res.json({
+        success: true,
+        message: 'Login successful',
+        data: { user: { id: p.id, name: p.name, email: p.email } },
+        redirectUrl: safeNext(req.body?.returnUrl) ?? session.homeOf(p),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+  login.all(`${A}/api/logout`, async (req, res, next) => {
+    try {
+      if (req.method !== 'GET' && req.person && !sameSite(req)) return res.status(403).json({ success: false, error: 'Sign out from this site.' });
+      await signOut(req, res);
+      if (req.method === 'GET') return res.redirect(302, LOGIN_PAGE);
+      res.json({ success: true });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  return { api, pages, login, githubMock };
 }
 
 /**

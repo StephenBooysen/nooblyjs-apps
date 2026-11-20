@@ -1,9 +1,10 @@
-// The public account screens: sign up (the marketing page, product.md §6.1), sign in, forgot and reset password,
-// verify email and the invitation link. Each returns { title, content, mount? }; mount binds the forms.
+// The public account screens: sign up (the marketing page, product.md §6.1), forgot and reset password, verify email
+// and the invitation link. Signing in is nooblyjs-core's login page (login.js). Each returns { title, content, mount? }; mount binds the forms.
 import { html } from '../html.js';
 import { api } from '../api.js';
 import { bindForm } from '../forms.js';
 import { emptyState } from '../components/index.js';
+import { LOGIN_PAGE, loginUrl } from '../login.js';
 
 const homeOf = (me) => (me.operator && !me.workspaces.length ? '/admin' : `/w/${me.workspaces[0]?.id ?? ''}`);
 
@@ -42,11 +43,13 @@ const GITHUB_ERRORS = {
 
 export function signUpPage({ me, config, url, serviceTypes }) {
   const invite = url.searchParams.get('invite') ?? '';
+  const githubError = GITHUB_ERRORS[url.searchParams.get('error')];
   const ghHref = (marketing) => `/auth/github?${new URLSearchParams({ ...(invite ? { invite } : {}), ...(marketing ? { marketing: '1' } : {}) })}`;
   const account = me
     ? card('You are signed in', `As ${me.name} (${me.email}).`, html`<a class="btn btn-primary w-100" href="${homeOf(me)}">Open dashboard</a>`)
     : card('Create your account', 'Free to start. Add a card when you need more than the free tier.', html`
       <p class="nj-invite-note" data-invite-note hidden></p>
+      ${githubError ? html`<div class="alert alert-warning" role="alert">${githubError}</div>` : ''}
       ${githubButton({ label: 'Continue with GitHub', href: ghHref(false), enabled: config.github })}
       ${config.github ? html`<div class="nj-divider"><span>or sign up with email</span></div>` : ''}
       <form novalidate data-form="signup">
@@ -62,7 +65,7 @@ export function signUpPage({ me, config, url, serviceTypes }) {
         ${invite ? html`<input type="hidden" name="invite" value="${invite}">` : ''}
         <button type="submit" class="btn btn-primary w-100">Create account</button>
       </form>
-      <p class="nj-meta text-center mt-3 mb-0">Already have an account? <a href="/signin${invite ? `?next=${encodeURIComponent(`/invite?token=${invite}`)}` : ''}">Sign in</a></p>`);
+      <p class="nj-meta text-center mt-3 mb-0">Already have an account? <a href="${invite ? loginUrl(`/invite?token=${invite}`) : LOGIN_PAGE}">Sign in</a> · <a href="/forgot-password">Forgot your password?</a></p>`);
 
   const features = [
     ['github', 'Connect GitHub', 'Pick a repo and a branch. Every push deploys.'],
@@ -104,37 +107,6 @@ export function signUpPage({ me, config, url, serviceTypes }) {
   };
 }
 
-// ---- sign in -------------------------------------------------------------------------
-
-export function signInPage({ me, config, url }) {
-  const next = url.searchParams.get('next') ?? '';
-  if (me) {
-    window.location.replace(next.startsWith('/') && !next.startsWith('//') ? next : homeOf(me));
-    return { title: 'Signing in…', content: '' };
-  }
-  const error = GITHUB_ERRORS[url.searchParams.get('error')];
-  return {
-    title: 'Sign in · NooblyJS Cloud',
-    content: html`<div class="nj-auth">${card('Sign in to NooblyJS Cloud', '', html`
-      ${error ? html`<div class="alert alert-warning" role="alert">${error}</div>` : ''}
-      ${githubButton({ label: 'Continue with GitHub', href: `/auth/github${next ? `?next=${encodeURIComponent(next)}` : ''}`, enabled: config.github })}
-      ${config.github ? html`<div class="nj-divider"><span>or sign in with email</span></div>` : ''}
-      <form novalidate data-form="signin">
-        ${alertSlot()}
-        ${field({ name: 'email', label: 'Email', type: 'email', autocomplete: 'email' })}
-        ${field({ name: 'password', label: 'Password', type: 'password', autocomplete: 'current-password' })}
-        <input type="hidden" name="next" value="${next}">
-        <p class="text-end mb-3"><a class="nj-meta" href="/forgot-password">Forgot your password?</a></p>
-        <button type="submit" class="btn btn-primary w-100">Sign in</button>
-      </form>
-      <p class="nj-meta text-center mt-3 mb-0">New to NooblyJS Cloud? <a href="/">Create an account</a></p>
-      ${config.devSignIn ? html`<p class="nj-meta text-center mt-2 mb-0"><a href="/dev/login${next ? `?next=${encodeURIComponent(next)}` : ''}" data-reload>Development sign-in</a></p>` : ''}`)}</div>`,
-    mount(root) {
-      bindForm(root.querySelector('[data-form="signin"]'), { path: '/api/v1/auth/signin', busy: 'Signing in…' });
-    },
-  };
-}
-
 // ---- forgot and reset password --------------------------------------------------------
 
 export function forgotPasswordPage() {
@@ -147,7 +119,7 @@ export function forgotPasswordPage() {
         <button type="submit" class="btn btn-primary w-100">Send reset link</button>
       </form>
       <div data-sent hidden></div>
-      <p class="nj-meta text-center mt-3 mb-0"><a href="/signin">Back to sign in</a></p>`)}</div>`,
+      <p class="nj-meta text-center mt-3 mb-0"><a href="${LOGIN_PAGE}">Back to sign in</a></p>`)}</div>`,
     mount(root) {
       bindForm(root.querySelector('[data-form="forgot"]'), {
         path: '/api/v1/auth/forgot-password',
@@ -195,7 +167,7 @@ export function verifyEmailPage({ url }) {
         const result = await api('/api/v1/auth/verify-email', { method: 'POST', body: { token } });
         box.innerHTML = String(card('Your email is verified', 'Thank you. You can now use everything in your workspace.', html`<a class="btn btn-primary w-100" href="${result.redirect}">Continue</a>`));
       } catch (err) {
-        box.innerHTML = String(card('This link did not work', err.message, html`<a class="btn btn-secondary w-100" href="/signin">Sign in</a>`));
+        box.innerHTML = String(card('This link did not work', err.message, html`<a class="btn btn-secondary w-100" href="${LOGIN_PAGE}">Sign in</a>`));
       }
     },
   };
@@ -227,7 +199,7 @@ export function invitePage({ url, me, config }) {
         body = html`<p class="nj-meta">The invitation is for <strong>${inv.email}</strong>.</p>
           ${githubButton({ label: 'Continue with GitHub', href: `/auth/github?invite=${encodeURIComponent(token)}`, enabled: config.github })}
           <a class="btn btn-primary w-100 mt-2" href="/?invite=${encodeURIComponent(token)}">Create an account</a>
-          <a class="btn btn-secondary w-100 mt-2" href="/signin?next=${encodeURIComponent(here)}">Sign in</a>`;
+          <a class="btn btn-secondary w-100 mt-2" href="${loginUrl(here)}">Sign in</a>`;
       }
       box.innerHTML = String(card(title, `You will join as a ${inv.role}.`, body));
       bindForm(box.querySelector('[data-form="accept"]'), { path: `/api/v1/invitations/${encodeURIComponent(token)}/accept`, busy: 'Joining…' });

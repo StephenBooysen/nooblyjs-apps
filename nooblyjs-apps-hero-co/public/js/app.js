@@ -4,6 +4,7 @@ import { render } from './html.js';
 import { api, ApiError } from './api.js';
 import { start } from './router.js';
 import { connect } from './sse.js';
+import { loginUrl } from './login.js';
 import { applySizes } from './charts.js';
 import { workspaceLayout, publicLayout, adminLayout } from './shell.js';
 import { PAGES, SERVICE_TYPES, notFound } from './pages/index.js';
@@ -55,7 +56,7 @@ async function onRoute(route, url) {
     }
 
     if (!me) {
-      window.location.assign(`/signin?next=${encodeURIComponent(url.pathname + url.search)}`);
+      window.location.assign(loginUrl(url.pathname + url.search));
       return undefined;
     }
 

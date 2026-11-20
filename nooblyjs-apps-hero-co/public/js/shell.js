@@ -1,6 +1,7 @@
 // The three layouts: public (marketing, sign-in), workspace (top bar + sidebar from product.md §5) and admin
 // (operators). Each wraps a page's content.
 import { html } from './html.js';
+import { LOGIN_PAGE } from './login.js';
 
 /** The workspace sidebar (product.md §5), in order. `path` is relative to /w/:workspace. */
 export const WORKSPACE_NAV = [
@@ -82,7 +83,7 @@ export function publicLayout({ me, content }) {
       <a class="nj-brand" href="/">NooblyJS Cloud</a>
       <span class="nj-topbar-spacer"></span>
       <a href="/#product">Product</a><a href="/#docs">Docs</a><a href="/#pricing">Pricing</a>
-      ${home ? html`<a class="btn btn-primary btn-sm" href="${home}">Open dashboard</a>` : html`<a class="btn btn-secondary btn-sm" href="/signin">Sign in</a>`}
+      ${home ? html`<a class="btn btn-primary btn-sm" href="${home}">Open dashboard</a>` : html`<a class="btn btn-secondary btn-sm" href="${LOGIN_PAGE}">Sign in</a>`}
     </header>
     <main id="main" tabindex="-1">${content}</main>
   </div>`;

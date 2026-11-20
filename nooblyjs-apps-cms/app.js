@@ -88,7 +88,7 @@ app.use('/readme', express.static(path.join(__dirname, 'README.md')));
 // Initiate the CMS
 const cms = require('.')(app, server, eventEmitter, serviceRegistry, options);
 
-server.listen(process.env.PORT || 3004, () => {
+server.listen(process.env.PORT || 11011, () => {
   log.info(`Nooblyjs Content Server running on port ${process.env.PORT || 3004}`);
 });
 
