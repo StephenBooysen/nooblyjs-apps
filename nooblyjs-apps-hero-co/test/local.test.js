@@ -110,6 +110,22 @@ test('the proxy: /<workspace>/<service>/… reaches the instance without our coo
   assert.equal((await fetch(`${t.base}/health/live`)).status, 200);
 });
 
+test('a lost server: the proxy hears its instances go unknown and answers 503 for the service, then routes again when it returns', async () => {
+  const infra = t.accelerators.mounted.infrastructure;
+  const [endpoint] = await t.platform().workloads.endpoints('exclusivity-life', 'hello');
+  assert.ok(endpoint, 'hello is running');
+  infra.agents.disconnect(endpoint.server, 'Blip (test).', { retry: true });
+  assert.ok(await until(async () => (await fetch(`${t.base}/exclusivity-life/hello/`)).status === 503));
+  const lost = await fetch(`${t.base}/exclusivity-life/hello/`);
+  assert.equal(lost.headers.get('retry-after'), '30');
+  assert.match(await lost.text(), /no instance answering right now/);
+  // The agent comes back with its credential; the container is still there, so the route is back (502 here only
+  // because nothing stands in for the container on its port).
+  await infra.local.agent.reconnect();
+  assert.ok(await until(async () => (await fetch(`${t.base}/exclusivity-life/hello/`)).status === 502));
+  assert.equal((await t.platform().workloads.endpoints('exclusivity-life', 'hello')).length, 1);
+});
+
 test('a new server fetches install.sh and the agent files without a sign-in; the rest of /infrastructure stays operators only', async () => {
   const script = await fetch(`${t.base}/infrastructure/agent/install.sh`);
   assert.equal(script.status, 200);

@@ -39,7 +39,14 @@ if (args.has('--seed')) {
   process.exit(0);
 }
 
-const server = hero.app.listen(config.port, () => {
+// Express 5 hands a listen failure (such as the port being taken by another copy of this app) to this callback, not
+// to a crash: stop everything, the local agent with it, rather than run without a port.
+const server = hero.app.listen(config.port, async (err) => {
+  if (err) {
+    console.error(`Could not listen on port ${config.port}: ${err.code === 'EADDRINUSE' ? 'something else is using it (another copy of this app?)' : err.message}`);
+    await hero.shutdown();
+    process.exit(1);
+  }
   console.log(`NooblyJS Cloud on ${config.publicUrl} (data in ${config.dataDir})`);
 });
 // Local servers' agents connect to /infrastructure/agent/v1 over a WebSocket (infra spec 8.9).

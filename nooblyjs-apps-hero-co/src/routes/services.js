@@ -284,6 +284,11 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       const groups = (await Promise.all((s.envGroups ?? []).map((id) => records.envGroups.get(s.workspaceId, id)))).filter(Boolean);
       const spec = toWorkloadSpec(updated, { appDomain: config.appDomain, groups });
       ({ operation } = await platform().workloads.update(req.workspace.id, s.workload, { run: spec.run }, { actor: actorOf(req.person) }));
+      // Values travel as references (hero:svc:<id>:<KEY>), so a changed value of an existing key changes nothing the
+      // platform can see: deploy, as Render does when environment changes are saved, so the app gets the new value.
+      if (!operation && updated.status !== 'suspended') {
+        ({ operation } = await platform().workloads.deploy(req.workspace.id, s.workload, { actor: actorOf(req.person), trigger: 'config', message: 'Environment changed' }));
+      }
     }
     await audit({ action: 'service.env-changed', actor: req.person.id, target: req.workspace.id, detail: { service: s.name, keys: env.map((e) => e.key) } });
     res.json({ env: env.map((e) => ({ key: e.key })), redeploying: Boolean(operation) });
@@ -348,7 +353,11 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     for (const s of linked) {
       const groups = (await Promise.all(s.envGroups.map((id) => records.envGroups.get(ws, id)))).filter(Boolean);
       const spec = toWorkloadSpec(s, { appDomain: config.appDomain, groups });
-      await platform().workloads.update(ws, s.workload, { run: spec.run }, { actor: actorOf(req.person) });
+      const { operation } = await platform().workloads.update(ws, s.workload, { run: spec.run }, { actor: actorOf(req.person) });
+      // A changed value keeps its reference: deploy so the service gets it (as on the service's own Environment).
+      if (!operation && s.status !== 'suspended') {
+        await platform().workloads.deploy(ws, s.workload, { actor: actorOf(req.person), trigger: 'config', message: `Environment group ${g.name} changed` });
+      }
     }
     await audit({ action: 'env-group.changed', actor: req.person.id, target: ws, detail: { group: g.name, keys: saved.vars.map((v) => v.key) } });
     res.json({ ...groupView(saved), redeploying: linked.map((s) => s.name) });

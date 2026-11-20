@@ -42,8 +42,9 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {} }
       const s = await records.services.byName(ws, name);
       if (!s || !LOCAL.has(s.region)) return void routes.delete(key(ws, name));
       const endpoints = await platform().workloads.endpoints(ws, s.workload ?? name);
-      if (endpoints.length) routes.set(key(ws, name), { urls: endpoints.map((e) => e.url), next: 0 });
-      else routes.delete(key(ws, name));
+      // A Local network service with nothing answering (deploying, or its server is offline) keeps its route, empty,
+      // so the address answers 503 for the service rather than falling through to our own pages.
+      routes.set(key(ws, name), { urls: endpoints.map((e) => e.url), next: 0 });
     } catch (err) {
       if (err.code === 'not_found') routes.delete(key(ws, name));
       else log.warn?.(`[hero-co] proxy routes for ${ws}/${name}: ${err.message}`);
@@ -51,7 +52,9 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {} }
   }
 
   const onChange = (e) => { if (e?.tenantId && e?.workload) refresh(e.tenantId, e.workload); };
-  const types = ['infrastructure.deploy.succeeded', 'infrastructure.deploy.failed', 'infrastructure.workload.status', 'infrastructure.workload.deleted'];
+  // `endpoints`: where a workload answers changed: a rollout switched to new instances (sent before the old ones are
+  // removed, so no request meets a removed container), or an instance went unknown, came back or moved (infra 8.9).
+  const types = ['infrastructure.workload.endpoints', 'infrastructure.deploy.succeeded', 'infrastructure.deploy.failed', 'infrastructure.workload.status', 'infrastructure.workload.deleted'];
   for (const t of types) eventEmitter.on(t, onChange);
 
   /** Fills the routes from every Local network service (at start). */
@@ -114,6 +117,10 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {} }
     // /ws/name → /ws/name/, so the app's relative links resolve under its prefix.
     if (after === '' || after.startsWith('?')) return res.redirect(308, `${base}/${after}`);
     req.servicePrefix = `${base}/`;
+    if (!route.urls.length) {
+      res.set('Retry-After', '30');
+      return res.status(503).type('text').send('This service has no instance answering right now: it is deploying, or its server is offline. Try again shortly.');
+    }
     return forward(req, res, route, after);
   }
 

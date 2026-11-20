@@ -197,6 +197,15 @@ test('2.6 changing a service\'s variables keeps unsent values and redeploys', as
   await t.idle();
   assert.equal((await t.post(`${WS}/services/blog/env/DATABASE_URL/reveal`, { as: 'stevie', body: { confirm: 'blog' } })).json.value, SECRET);
   assert.equal((await t.get(`${WS}/services/blog/deploys`, { as: 'stevie' })).json.deploys[0].trigger, 'config');
+
+  // Only a value changes (same keys, so the same references): it still deploys, or the app would keep the old value.
+  const before = (await t.get(`${WS}/services/blog/deploys`, { as: 'stevie' })).json.deploys.length;
+  const again = await t.call('PUT', `${WS}/services/blog/env`, { as: 'stevie', body: { env: [{ key: 'DATABASE_URL' }, { key: 'FEATURE_X', value: 'off' }] } });
+  assert.equal(again.json.redeploying, true);
+  await t.idle();
+  const after = (await t.get(`${WS}/services/blog/deploys`, { as: 'stevie' })).json.deploys;
+  assert.equal(after.length, before + 1);
+  assert.deepEqual([after[0].trigger, after[0].message], ['config', 'Environment changed']);
 });
 
 test('another workspace sees nothing, and cannot take a name\'s URL', async () => {
