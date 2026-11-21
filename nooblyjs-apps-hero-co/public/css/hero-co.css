@@ -101,6 +101,7 @@ code { color: var(--nj-ink-2); }
 .nj-main { padding: 32px 40px 64px; min-width: 0; }
 .nj-page-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 32px; }
 .nj-page-head > div:first-child { flex: 1; min-width: 260px; }
+.nj-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .nj-breadcrumb { font-size: 14px; color: var(--nj-muted); font-weight: 600; margin-bottom: 8px; }
 .nj-breadcrumb a { color: var(--nj-muted); }
 

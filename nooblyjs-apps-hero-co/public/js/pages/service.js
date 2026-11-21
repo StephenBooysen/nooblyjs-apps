@@ -1,5 +1,6 @@
 // A service (roadmap 2.7; the full page with resources, instances and live logs is Phase 4): the header with its
-// status, URL and plan; the latest deploy's steps as a progress bar; its build and rollout log in the dark viewer; the
+// status, URL and plan, and the Manual deploy, Restart and Suspend (or Resume) buttons (3.8); the latest deploy's steps
+// as a progress bar; its build and rollout log in the dark viewer; the
 // recent deploys; and the environment variables (keys only, with an audited reveal). Deploy changes arrive over the
 // live channel and redraw the parts they touch.
 import { html } from '../html.js';
@@ -73,6 +74,24 @@ function runtimeLogs() {
   </section>`;
 }
 
+/** The buttons a service has (roadmap 3.8): data stores have none; a static site has nothing running to restart. */
+function actions(svc) {
+  if (['postgres', 'keyvalue'].includes(svc.type)) return '';
+  const suspended = svc.status === 'suspended';
+  return html`<div class="nj-actions" role="group" aria-label="Service actions">
+    <button type="button" class="btn btn-primary" data-action="deploys"${suspended ? ' disabled' : ''}><i class="bi bi-rocket-takeoff" aria-hidden="true"></i> Manual deploy</button>
+    ${svc.type === 'static' ? '' : html`<button type="button" class="btn btn-secondary" data-action="restart"${suspended ? ' disabled' : ''}>Restart</button>`}
+    ${suspended ? html`<button type="button" class="btn btn-secondary" data-action="resume">Resume</button>` : html`<button type="button" class="btn btn-secondary" data-action="suspend">Suspend</button>`}
+  </div>`;
+}
+
+/** What the status means, when it needs saying. */
+function statusNote(svc) {
+  if (svc.status === 'sleeping') return html`<div class="alert alert-info mb-4" role="status"><strong>Sleeping.</strong> It had no requests for ${SLEEP.afterMinutes} minutes, so it stopped. The next request wakes it: ${SLEEP.wakeText}</div>`;
+  if (svc.status === 'suspended') return html`<div class="alert alert-warning mb-4" role="status"><strong>Suspended.</strong> Nothing is running and nothing deploys, not even on a push, until you resume it.</div>`;
+  return '';
+}
+
 function deploysTable(list) {
   return html`<div class="table-responsive"><table class="table">
     <caption class="visually-hidden">Recent deploys</caption>
@@ -107,9 +126,15 @@ export async function servicePage({ workspace, params }) {
         <p class="nj-meta mb-1">${svc.estimate.text}${svc.sleepsWhenIdle ? ` · sleeps after ${SLEEP.afterMinutes} minutes without requests` : ''}</p>
         ${svc.source ? html`<p class="nj-meta mb-0"><i class="bi bi-github" aria-hidden="true"></i> ${svc.source.repo} · ${svc.source.branch}${svc.source.rootDir ? ` · ${svc.source.rootDir}` : ''} · ${svc.autoDeploy ? 'Auto-deploy on push' : 'Manual deploys'}</p>` : html`<p class="nj-meta mb-0">Managed data store. Its own page (connection details, backups) arrives with managed ${svc.typeLabel === 'postgres' ? 'Postgres' : 'Key Value'}.</p>`}
       </div>
+      <div class="d-flex flex-column align-items-end gap-2">
       ${svc.path ? html`<a class="btn btn-secondary" href="${svc.path}" data-reload rel="noopener" target="_blank">${window.location.origin}${svc.path} <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a>`
     : svc.url ? html`<a class="btn btn-secondary" href="${svc.url}" data-reload rel="noopener" target="_blank">${svc.url.replace('https://', '')} <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a>` : svc.internalHost ? html`<span class="nj-meta">Private: <code>${svc.internalHost}</code></span>` : ''}
+      ${actions(svc)}
+      <p class="nj-meta mb-0" data-action-note role="status" aria-live="polite"></p>
       </div>
+      </div>
+      <div data-status-note>${statusNote(svc)}</div>
+      ${svc.webhook && !svc.webhook.ok ? html`<div class="alert alert-warning mb-4" role="alert"><strong>Auto-deploy is not set up.</strong> GitHub did not take the webhook: ${svc.webhook.message} Pushes deploy nothing until it is; Manual deploy still works.</div>` : ''}
 
       <section class="nj-card mb-4" aria-labelledby="deploy-title">
         <h2 class="nj-card-title" id="deploy-title">Latest deploy</h2>
@@ -191,18 +216,43 @@ export async function servicePage({ workspace, params }) {
         });
       }
 
+      const showStatus = (status) => {
+        svc.status = status;
+        root.querySelector('[data-status]').innerHTML = String(statusPill(statusWord(status)));
+        root.querySelector('[data-status-note]').innerHTML = String(statusNote(svc));
+        root.querySelector('.nj-actions')?.replaceWith(...new DOMParser().parseFromString(String(actions(svc)), 'text/html').body.childNodes);
+      };
       const stopDeploys = on('deploy', async (e) => {
         if (e.service !== svc.name) return;
-        if (e.status) root.querySelector('[data-status]').innerHTML = String(statusPill(statusWord(e.status)));
+        if (e.status) showStatus(e.status);
         if (!e.deploy) return;
         if (current && e.deploy.id !== current.id && Date.parse(e.deploy.startedAt ?? 0) < Date.parse(current.startedAt ?? 0)) return;
         current = e.deploy;
         box.innerHTML = String(deployCard(current));
         applySizes(box);
-        if (current.status === 'live') root.querySelector('[data-status]').innerHTML = String(statusPill('Live'));
+        if (current.status === 'live') showStatus('live');
         await refreshLog(current);
         const { deploys } = await api(`${base}/deploys`);
         root.querySelector('[data-deploys]').innerHTML = String(deploysTable(deploys.slice(0, 10)));
+      });
+
+      // Manual deploy, Restart, Suspend, Resume (roadmap 3.8). The status comes back over the live channel.
+      const SAY = { deploys: 'Deploy started.', restart: 'Restarting the instances one at a time.', suspend: 'Suspending: the instances stop.', resume: 'Resuming: the instances start.' };
+      root.addEventListener('click', async (event) => {
+        const button = event.target.closest('[data-action]');
+        if (!button) return;
+        const verb = button.dataset.action;
+        if (verb === 'suspend' && !window.confirm(`Suspend ${svc.name}? Its instances stop and it answers no requests until you resume it.`)) return;
+        const note = root.querySelector('[data-action-note]');
+        button.disabled = true;
+        try {
+          await api(`${base}/${verb}`, { method: 'POST', body: {} });
+          note.textContent = SAY[verb];
+        } catch (err) {
+          note.textContent = err.message;
+        } finally {
+          button.disabled = false;
+        }
       });
 
       root.addEventListener('click', async (event) => {

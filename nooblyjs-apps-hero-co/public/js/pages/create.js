@@ -154,7 +154,7 @@ function summaryAside(type) {
     <hr>
     <div class="nj-summary-total"><span>Estimated</span><strong class="nj-num" data-sum="price">$— / mo</strong></div>
     <p class="nj-meta mb-1">A flat price for the service, for 1 to ${MAX_INSTANCES} instances.</p>
-    ${type.sleeps ? html`<p class="nj-meta">Sleeps after ${SLEEP.afterMinutes} minutes without requests, and wakes on the next one. ${SLEEP.wakeText}</p>` : ''}
+    ${type.sleeps ? html`<p class="nj-meta">In a cloud region it sleeps after ${SLEEP.afterMinutes} minutes without requests, and wakes on the next one. ${SLEEP.wakeText}</p>` : ''}
     <div class="nj-switch-row">
       <span><strong class="d-block">Auto-deploy</strong><span class="nj-meta" data-sum="auto">Deploy on every push to main</span></span>
       <input class="form-check-input nj-switch" type="checkbox" role="switch" name="autoDeploy" id="f-auto" checked aria-label="Auto-deploy on push">

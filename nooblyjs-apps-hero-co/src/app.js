@@ -23,6 +23,7 @@ import { createApi } from './routes/api.js';
 import { createWorkspacesApi } from './routes/workspaces.js';
 import { createPages } from './routes/pages.js';
 import { createGithubConnect } from './routes/github-connect.js';
+import { githubHookRoutes } from './routes/github-hooks.js';
 import { createRecords } from './domain/records.js';
 import { createSecrets } from './domain/secrets.js';
 import { createGithub } from './github/github.js';
@@ -93,10 +94,14 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   app.get('/health/live', (req, res) => res.json({ status: 'ok' }));
 
   // The back office: operators only, except the customers accelerator's public marketing routes.
-  // The one exception under /infrastructure: the agent's install script and files (infra spec 8.9 R2), which a server
-  // being set up fetches without a sign-in. They are the agent's own source, with no secret; the list is the accelerator's.
+  // The exceptions under /infrastructure: the agent's install script and files (infra spec 8.9 R2), which a server
+  // being set up fetches without a sign-in (the agent's own source, with no secret), and the operators' apps' push
+  // webhooks (infra roadmap 6.9), which GitHub and GitLab send signed: the accelerator checks the signature. Both lists
+  // are the accelerator's.
   let infraPublic = new Set();
-  app.use(INFRA_MOUNT, (req, res, next) => (req.method === 'GET' && infraPublic.has(req.path) ? next() : session.requireOperator(req, res, next)));
+  let infraPublicPosts = [];
+  const infraOpen = (req) => (req.method === 'GET' && infraPublic.has(req.path)) || (req.method === 'POST' && infraPublicPosts.some((p) => req.path.startsWith(p)));
+  app.use(INFRA_MOUNT, (req, res, next) => (infraOpen(req) ? next() : session.requireOperator(req, res, next)));
   app.use(CX_BASE, (req, res, next) => (req.originalUrl.startsWith(CX_PUBLIC) ? next() : session.requireOperator(req, res, next)));
 
   const realtime = createRealtime();
@@ -136,6 +141,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     infraHost: changeInfraHost(host.hostFor(path.join(config.dataDir, 'infrastructure'))),
   });
   infraPublic = new Set(accelerators.mounted.infrastructure.publicPaths ?? []);
+  infraPublicPosts = accelerators.mounted.infrastructure.publicPostPrefixes ?? [];
 
   const platform = () => accelerators.mounted.infrastructure.services.platform;
   const deploysFollower = followDeploys({ eventEmitter, records, realtime, platform, log });
@@ -172,6 +178,8 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   app.use('/api/v1', createApi({ express, session, realtime, accelerators: accelerators.describe, about: { name: 'nooblyjs-cloud', version: VERSION } }));
   app.use(express.static(path.join(ROOT, 'public'), { index: false, redirect: false }));
   app.use(createGithubConnect({ express, session, accounts, github, config, audit, log }));
+  // GitHub's push webhook (roadmap 3.8): no sign-in; the HMAC of the body is the proof.
+  app.use(githubHookRoutes({ express, records, github, platform, audit, realtime, log }));
   app.use(createPages({ express, session }));
 
   app.use((req, res) => {

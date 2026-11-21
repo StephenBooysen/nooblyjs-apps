@@ -5,7 +5,7 @@
 //
 // Deploy progress comes back as `infrastructure.deploy.*` events on the shared EventEmitter: followDeploys() keeps our
 // deploy records and the service's status from them and publishes each change to the workspace's live channel.
-import { CREATABLE, planOf, regionOf } from '../../public/js/shared/catalog.js';
+import { CREATABLE, SLEEP, planOf, regionOf } from '../../public/js/shared/catalog.js';
 
 /** Deploy statuses in the order they happen; a record never moves back (events may arrive after a slower write). */
 const RANK = { queued: 0, building: 1, deploying: 2, live: 3, failed: 3, cancelled: 3, superseded: 4 };
@@ -51,18 +51,35 @@ export function toWorkloadSpec(service, { appDomain, groups = [] }) {
     // A Local network service answers on this app's own URL, not on a domain of its own.
     domains: type.publicUrl && !region.local ? [hostFor(service.name, appDomain)] : [],
     autoDeploy: service.autoDeploy ? { branch: service.source.branch } : null,
+    // Idle sleep (roadmap 3.11): a web service in a cloud region, where the ingress wakes it.
+    ...(type.sleeps && !region.local ? { sleep: { afterMin: SLEEP.afterMinutes } } : {}),
   };
 }
 
+/** Whether a service sleeps when idle (the same rule as the spec's `sleep`). */
+export const sleepsWhenIdle = (service) => Boolean(CREATABLE[service.type]?.sleeps && !regionOf(service.region)?.local);
+
+/**
+ * A failed deploy's reason in the customer's words. The platform names its own regions ("Region af-south-1 is full: …");
+ * the customer chose Johannesburg (roadmap 3.10).
+ */
+export function customerReason(reason, service) {
+  if (typeof reason !== 'string') return reason ?? null;
+  const full = /^(?:Region|Site) \S+ is full: (.*)$/.exec(reason);
+  if (!full) return reason;
+  const where = regionOf(service?.region)?.name ?? 'This region';
+  return `${where} is full right now: ${full[1]} Deploy again in a few minutes, or choose a smaller instance type.`;
+}
+
 /** Our deploy record's fields from the platform's deploy record. */
-export function fromPlatformDeploy(d) {
+export function fromPlatformDeploy(d, service) {
   return {
     commit: d.commit ?? null,
     message: d.message ?? null,
     trigger: d.trigger ?? 'manual',
     by: d.by ? { id: d.by.id, name: d.by.name } : null,
     status: PLATFORM_RESULT[d.result] ?? 'queued',
-    reason: d.reason ?? null,
+    reason: customerReason(d.reason ?? null, service),
     startedAt: d.startedAt ?? null,
     endedAt: d.endedAt ?? null,
   };
@@ -101,14 +118,14 @@ export function followDeploys({ eventEmitter, records, realtime, platform, log }
     let patch = { serviceId: service.id, serviceName: service.name, step: p.step ?? prev?.step ?? null, of: p.of ?? prev?.of ?? null };
     if (!prev?.message) {
       const d = await platform().deploys.get(ws, service.name, p.deployId).catch(() => null);
-      if (d) patch = { ...fromPlatformDeploy(d), ...patch };
+      if (d) patch = { ...fromPlatformDeploy(d, service), ...patch };
     }
     // A real build (Local network) finds the commit itself and reports it on a later event.
     if (p.commit && !prev?.commit) patch.commit = p.commit;
     if (type === 'started') patch.status = 'building';
     if (type === 'progress') patch.status = p.status === 'deploying' ? 'deploying' : 'building';
     if (type === 'succeeded') Object.assign(patch, { status: 'live', endedAt: new Date().toISOString(), step: p.of ?? patch.of, });
-    if (type === 'failed') Object.assign(patch, { status: 'failed', reason: p.reason ?? null, endedAt: new Date().toISOString() });
+    if (type === 'failed') Object.assign(patch, { status: 'failed', reason: customerReason(p.reason, service), endedAt: new Date().toISOString() });
     const next = await records.deploys.upsert(ws, p.deployId, mergeDeploy(prev, patch));
     if (type === 'succeeded') {
       if (service.current?.deployId && service.current.deployId !== p.deployId) {

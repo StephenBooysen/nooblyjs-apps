@@ -240,8 +240,9 @@ recent deploys and log lines from the mock-ups. Every count and total on screen 
 - `[BILLING]` Card capture, invoices and dunning come from `nooblyjs-accel-payments` (decided 2026-11-19). Still open:
   the first provider (Stripe or Paystack, payments O2). Plans decided 2026-11-20 (`public/js/shared/catalog.js`): four
   instance types, Starter $0 (the free tier; there is no separate Free plan), Standard $5, Pro $20, Pro Plus $100. The
-  price is flat per service per month for 1 to 10 instances. Web and Private services sleep after 15 minutes without
-  requests and wake on the next one, which keeps the flat price affordable (roadmap 3.11).
+  price is flat per service per month for 1 to 10 instances. Web services sleep after 15 minutes without requests and
+  wake on the next one, which keeps the flat price affordable (roadmap 3.11). Changed 2026-11-21: Private Services do
+  not sleep (nothing sits in front of one to hold a request while it wakes), nor does a service on the Local network.
 - `[GITHUB]` GitHub App (per-repo install, webhooks built in) vs OAuth app + personal tokens (what the infrastructure
   accelerator does today). nooblyjs-core has no GitHub sign-in provider; it can come through the `passport` provider.
 - `[MARKETING]` Whether the operator may send marketing (not just transactional) email to customers in v1.

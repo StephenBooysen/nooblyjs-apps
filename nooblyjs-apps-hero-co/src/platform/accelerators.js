@@ -92,7 +92,10 @@ export async function mountAccelerators({ app, eventEmitter, serviceRegistry, in
       dataDir: path.join(dataDir, 'infrastructure'),
       host: infraHost,
       // Platform hosting (the accelerator's phase 8); environment values are opened by us when a container starts.
-      platform: { enabled: true, resolveSecrets },
+      // Services answer on <name>.<appDomain> through a region's ingress (roadmap 3.5, 3.7).
+      platform: { enabled: true, resolveSecrets, domain: config.appDomain },
+      // Cloud pool VMs connect back to this app, and ingress VMs call its wake hook: only over https (roadmap 3.7).
+      publicUrl: config.publicUrl?.startsWith('https://') ? config.publicUrl : null,
       // The Local network region (infra spec 8.9): site lan-dev, and in development an agent on this machine.
       local: {
         // Tests take the top of the host port range, so they never meet a development instance on this machine.

@@ -99,7 +99,7 @@ test('the shared catalogue: specs with units, no made-up prices, only open regio
   assert.deepEqual(cat.estimate('pro-plus', 10), { usd: 100, text: '$100 / mo' }, 'flat: instances do not change the price');
   assert.deepEqual(cat.estimate('starter'), { usd: 0, text: '$0 / mo' });
   assert.equal(cat.MAX_INSTANCES, 10);
-  assert.deepEqual(Object.entries(cat.CREATABLE).filter(([, t]) => t.sleeps).map(([k]) => k), ['web', 'private']);
+  assert.deepEqual(Object.entries(cat.CREATABLE).filter(([, t]) => t.sleeps).map(([k]) => k), ['web'], 'only a web service has the ingress in front of it to hold a request while it wakes (roadmap 3.11)');
   assert.deepEqual(cat.REGIONS.filter((r) => r.platform).map((r) => r.id), ['local', 'af-south', 'us-east']);
   assert.deepEqual(Object.keys(cat.CREATABLE), ['web', 'private', 'worker', 'static']);
   for (const key of Object.keys(cat.CREATABLE)) assert.ok(CLIENT_TYPES.some((t) => t.key === key), key);

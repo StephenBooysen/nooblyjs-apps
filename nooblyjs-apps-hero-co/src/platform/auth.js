@@ -517,5 +517,68 @@ export function githubMockRoutes(express) {
     res.json({ sha: c.sha, commit: { message: c.message } });
   });
 
+  // Webhooks (roadmap 3.8): a repository's hooks, one per URL as on GitHub (422 for the same URL again).
+  const hooks = new Map();
+  router.post('/api/repos/:owner/:repo/hooks', express.json({ limit: '16kb' }), (req, res) => {
+    const u = signedIn(req, res);
+    if (!u) return;
+    if (!visible(u, req.params.owner, req.params.repo)) return res.status(404).json({ message: 'Not Found' });
+    const full = `${req.params.owner}/${req.params.repo}`;
+    const list = hooks.get(full) ?? [];
+    const url = String(req.body?.config?.url ?? '');
+    if (!/^https?:\/\//.test(url)) return res.status(422).json({ message: 'Validation Failed', errors: [{ message: 'url is not a URL' }] });
+    if (list.some((h) => h.config.url === url)) return res.status(422).json({ message: 'Validation Failed', errors: [{ message: 'Hook already exists on this repository' }] });
+    const hook = { id: 7000 + list.length + hooks.size, events: req.body.events ?? ['push'], active: req.body.active !== false, config: { ...req.body.config } };
+    hooks.set(full, [...list, hook]);
+    res.status(201).json({ ...hook, config: { ...hook.config, secret: '********' } });
+  });
+  router.patch('/api/repos/:owner/:repo/hooks/:id', express.json({ limit: '16kb' }), (req, res) => {
+    const u = signedIn(req, res);
+    if (!u) return;
+    const hook = (hooks.get(`${req.params.owner}/${req.params.repo}`) ?? []).find((h) => String(h.id) === req.params.id);
+    if (!visible(u, req.params.owner, req.params.repo) || !hook) return res.status(404).json({ message: 'Not Found' });
+    Object.assign(hook, { active: req.body?.active ?? hook.active, events: req.body?.events ?? hook.events, config: { ...hook.config, ...(req.body?.config ?? {}) } });
+    res.json({ ...hook, config: { ...hook.config, secret: '********' } });
+  });
+  router.get('/api/repos/:owner/:repo/hooks', (req, res) => {
+    const u = signedIn(req, res);
+    if (!u) return;
+    if (!visible(u, req.params.owner, req.params.repo)) return res.status(404).json({ message: 'Not Found' });
+    res.json((hooks.get(`${req.params.owner}/${req.params.repo}`) ?? []).map((h) => ({ ...h, config: { ...h.config, secret: '********' } })));
+  });
+
+  /**
+   * Development only: "push" to a mock repository. Each of its hooks gets a signed `push` event, as GitHub sends it.
+   * Body { repo: 'owner/name', branch, message }. → { commit, deliveries: [{ url, status }] }
+   */
+  router.post('/push', express.json({ limit: '16kb' }), async (req, res) => {
+    const full = String(req.body?.repo ?? '');
+    const branch = String(req.body?.branch ?? 'main');
+    const message = String(req.body?.message ?? `Update ${branch}`).slice(0, 500);
+    const sha = crypto.createHash('sha1').update(`${full}@${branch}:${message}:${Date.now()}:${crypto.randomUUID()}`).digest('hex');
+    const [owner, name] = full.split('/');
+    const payload = JSON.stringify({
+      ref: `refs/heads/${branch}`, before: '0'.repeat(40), after: sha, deleted: false, created: false,
+      repository: { name, full_name: full, owner: { login: owner } },
+      pusher: { name: owner }, sender: { login: owner },
+      head_commit: { id: sha, message, author: { name: owner } },
+    });
+    const deliveries = [];
+    for (const h of hooks.get(full) ?? []) {
+      if (!h.active || !h.events.includes('push')) continue;
+      const signature = `sha256=${crypto.createHmac('sha256', String(h.config.secret ?? '')).update(payload).digest('hex')}`;
+      try {
+        const r = await fetch(h.config.url, {
+          method: 'POST', body: payload,
+          headers: { 'Content-Type': 'application/json', 'User-Agent': 'GitHub-Hookshot/mock', 'X-GitHub-Event': 'push', 'X-GitHub-Delivery': crypto.randomUUID(), 'X-GitHub-Hook-ID': String(h.id), 'X-Hub-Signature-256': signature },
+        });
+        deliveries.push({ url: h.config.url, status: r.status });
+      } catch (err) {
+        deliveries.push({ url: h.config.url, status: 0, error: err.message });
+      }
+    }
+    res.json({ commit: { sha, message }, deliveries });
+  });
+
   return router;
 }

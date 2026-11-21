@@ -2,8 +2,15 @@
 // App later). The workspace Owner connects once with the `repo read:org` scope; the token is sealed in hero_github.
 // Repositories are cached for a few minutes per workspace; branches and the branch's latest commit are asked for when
 // needed. Without GITHUB_CLIENT_ID (outside production) it talks to the mock at /dev/github.
+//
+// Auto-deploy (roadmap 3.8): each workspace has a webhook secret (random, sealed with the connection); creating a
+// service adds a `push` webhook on its repository pointing at <PUBLIC_URL>/hooks/github/<workspace>, signed with that
+// secret (one URL per workspace, so two workspaces on one repository each have their own hook and secret).
+import crypto from 'node:crypto';
+
 const SCOPE = 'repo read:org';
 const CACHE_MS = 5 * 60_000;
+const HOOK_EVENTS = ['push'];
 
 export class GithubError extends Error {
   constructor(status, message) {
@@ -29,11 +36,18 @@ export function createGithub({ records, secrets, config, fetchImpl = fetch }) {
   const cache = new Map();
   const context = (workspaceId) => `github:${workspaceId}`;
 
-  async function call(token, path) {
+  async function call(token, path, { method = 'GET', body, allow = [] } = {}) {
     const res = await fetchImpl(`${apiBase}${path}`, {
-      headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, 'User-Agent': 'nooblyjs-cloud', 'X-GitHub-Api-Version': '2022-11-28' },
+      method,
+      headers: {
+        Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, 'User-Agent': 'nooblyjs-cloud', 'X-GitHub-Api-Version': '2022-11-28',
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
     });
+    if (allow.includes(res.status)) return { status: res.status, body: await res.json().catch(() => ({})) };
     if (res.status === 401) throw new GithubError(401, 'GitHub no longer accepts this connection. The workspace owner connects it again.');
+    if (res.status === 403) throw new GithubError(403, 'GitHub refused: the connection may not change this repository\'s settings.');
     if (res.status === 404) throw new GithubError(404, 'GitHub has no such repository, or the connection cannot see it.');
     if (!res.ok) throw new GithubError(502, `GitHub answered ${res.status}. Try again in a moment.`);
     return res.json();
@@ -84,7 +98,9 @@ export function createGithub({ records, secrets, config, fetchImpl = fetch }) {
       const user = await call(token, '/user');
       const orgs = await call(token, '/user/orgs');
       cache.delete(workspaceId);
+      const before = await records.github.get(workspaceId);
       const record = await records.github.set(workspaceId, {
+        ...(before?.webhookSecretSealed ? { webhookSecretSealed: before.webhookSecretSealed } : {}),
         login: user.login, organisations: orgs.map((o) => o.login), tokenSealed: secrets.seal(token, context(workspaceId)),
         connectedAt: new Date().toISOString(), connectedBy: person ? { id: person.id, name: person.name } : null,
       });
@@ -101,6 +117,45 @@ export function createGithub({ records, secrets, config, fetchImpl = fetch }) {
       await repo(workspaceId, fullName);
       const list = await call(await tokenOf(workspaceId), `/repos/${fullName}/branches?per_page=100`);
       return list.map((b) => b.name);
+    },
+    /** The workspace's webhook secret (made the first time it is asked for). */
+    async webhookSecret(workspaceId) {
+      const c = await records.github.get(workspaceId);
+      if (!c) throw new GithubError(409, 'Connect GitHub first.');
+      if (c.webhookSecretSealed) return secrets.open(c.webhookSecretSealed, `github-hook:${workspaceId}`);
+      const secret = crypto.randomBytes(32).toString('hex');
+      await records.github.set(workspaceId, { ...c, webhookSecretSealed: secrets.seal(secret, `github-hook:${workspaceId}`) });
+      return secret;
+    },
+    hookUrl: (workspaceId) => `${config.publicUrl}/hooks/github/${encodeURIComponent(workspaceId)}`,
+    /**
+     * Adds the push webhook to a repository. GitHub answers 422 when a hook with the same URL is there already: that
+     * one is given the current secret (it may be from before a reconnect). Resolves { ok: true } or
+     * { ok: false, message } (say, the connection may not add webhooks there).
+     */
+    async ensureHook(workspaceId, fullName) {
+      const secret = await this.webhookSecret(workspaceId);
+      const token = await tokenOf(workspaceId);
+      const hook = { active: true, events: HOOK_EVENTS, config: { url: this.hookUrl(workspaceId), content_type: 'json', secret, insecure_ssl: '0' } };
+      try {
+        const made = await call(token, `/repos/${fullName}/hooks`, { method: 'POST', allow: [422], body: { name: 'web', ...hook } });
+        if (made.status === 422) {
+          const there = (await call(token, `/repos/${fullName}/hooks?per_page=100`)).find((h) => h.config?.url === hook.config.url);
+          if (there) await call(token, `/repos/${fullName}/hooks/${there.id}`, { method: 'PATCH', body: hook });
+        }
+        return { ok: true };
+      } catch (err) {
+        if (!(err instanceof GithubError)) throw err;
+        return { ok: false, message: err.message };
+      }
+    },
+    /** Whether `signature` (X-Hub-Signature-256) is the workspace's HMAC of the raw body. */
+    async verify(workspaceId, rawBody, signature) {
+      const c = await records.github.get(workspaceId);
+      if (!c?.webhookSecretSealed || typeof signature !== 'string' || !signature.startsWith('sha256=')) return false;
+      const want = Buffer.from(`sha256=${crypto.createHmac('sha256', secrets.open(c.webhookSecretSealed, `github-hook:${workspaceId}`)).update(rawBody).digest('hex')}`);
+      const got = Buffer.from(signature);
+      return got.length === want.length && crypto.timingSafeEqual(got, want);
     },
     /** The branch's latest commit: { sha, message }. */
     async latestCommit(workspaceId, fullName, branch) {

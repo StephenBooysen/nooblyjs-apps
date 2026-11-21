@@ -3,8 +3,9 @@
 // so it imports nothing.
 //
 // Prices are flat per service per month, whatever the instance count up to MAX_INSTANCES (decided 2026-11-20; product.md
-// §11). Services that answer requests sleep when idle and wake on the next request, which is what keeps a flat price
-// affordable (SLEEP below; the platform does it from roadmap 3.11).
+// §11). Web services sleep when idle and wake on the next request, which is what keeps a flat price affordable (SLEEP
+// below; roadmap 3.11). The region's ingress holds that request while the service wakes, so only a service behind it
+// sleeps: not a Private Service (nothing in front of it), and not one on the Local network.
 
 /** Instance types: the CPU and memory reserved for each instance. */
 export const PLANS = [
@@ -47,7 +48,7 @@ export const RUNTIMES = [
  */
 export const CREATABLE = {
   web: { kind: 'service', label: 'Web Service', action: 'Deploy web service', port: true, instances: true, publicUrl: true, sleeps: true },
-  private: { kind: 'private', label: 'Private Service', action: 'Deploy private service', port: true, instances: true, publicUrl: false, sleeps: true },
+  private: { kind: 'private', label: 'Private Service', action: 'Deploy private service', port: true, instances: true, publicUrl: false, sleeps: false },
   worker: { kind: 'worker', label: 'Background Worker', action: 'Deploy worker', port: false, instances: true, publicUrl: false, sleeps: false },
   static: { kind: 'static', label: 'Static Site', action: 'Deploy static site', port: false, instances: false, publicUrl: true, sleeps: false },
 };

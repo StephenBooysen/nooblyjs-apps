@@ -108,3 +108,15 @@ export async function startApp(options = {}) {
     },
   };
 }
+
+/** Connects a workspace to the mock GitHub as `login` ('octo-dev' or 'stevie'), the way a browser would. */
+export async function connectGithub(t, as, workspace, login) {
+  const jar = cookieJar();
+  const start = await t.get(`/w/${workspace}/github/connect`, { as, jar });
+  if (start.status !== 302) throw new Error(`connect did not start (${start.status} ${start.location})`);
+  const authorize = new URL(start.location);
+  const user = { 'octo-dev': '1001', stevie: '1002' }[login];
+  const granted = await t.post('/dev/github/login/oauth/authorize', { form: { user, redirect_uri: authorize.searchParams.get('redirect_uri'), state: authorize.searchParams.get('state') } });
+  const back = new URL(granted.location);
+  return t.get(back.pathname + back.search, { as, jar });
+}

@@ -130,19 +130,21 @@ Docker; LAN addresses, no TLS; live logs like Render's). The first server is thi
 
 The items below then bring the same services to a cloud region behind `*.nooblyjs.app`.
 
-- [ ] 3.1 **[infra 3]** Public endpoints (Caddy, Let's Encrypt).
+- [x] 3.1 **[infra 3]** Public endpoints (Caddy, Let's Encrypt). (Infra phase 3 is built and tested on the mock cloud; its exit check needs a cloud account, 3.6.)
 - [ ] 3.2 **[infra 6]** Deploy from Git (clone with a token, health-check gate).
-- [ ] 3.3 **[infra 8.2]** Containers on shared hosts: pools, placement, limits, tenant networks, jobs.
-- [ ] 3.4 **[infra 8.3]** Builds (Node 22, Python 3.12, Go 1.23, Dockerfile) and the registry.
-- [ ] 3.5 **[infra 8.4]** Ingress, wildcard `*.nooblyjs.app`, custom domains, rolling deploys across hosts.
+- [ ] 3.3 **[infra 8.2]** Containers on shared hosts: pools, placement, limits, tenant networks, jobs. (All but one: a tenant's private names across hosts, infra 8.2.8.)
+- [ ] 3.4 **[infra 8.3]** Builds (Node 22, Python 3.12, Go 1.23, Dockerfile) and the registry. (Built and tested on the mock registry; Artifact Registry and ECR come with the adapters, 3.6.)
+- [ ] 3.5 **[infra 8.4]** Ingress, wildcard `*.nooblyjs.app`, custom domains, rolling deploys across hosts. (All but the wildcard certificate, infra 8.4.2: it needs a cloud account, a Caddy with the DNS module, and shared certificate storage.)
 - [ ] 3.6 **[infra 2.8–2.10]** One cloud adapter and account connection for Johannesburg.
 - [ ] 3.7 Operator setup: host pool, builder pool and ingress pool for Johannesburg (through the accelerator's screens); `INFRA_PLATFORM_DOMAIN=nooblyjs.app`.
-- [ ] 3.8 Auto-deploy webhook (`/hooks/github`, HMAC, branch filter) → `workloads.deploy()`; *Manual deploy*, *Restart*, *Suspend* buttons.
-- [ ] 3.9 Private Services: internal host name shown on the service page; Worker: no URL, no port fields.
-- [ ] 3.10 "Region is full" message from `quota` errors on the create flow.
-- [ ] 3.11 **Idle sleep [infra 8.4]**: Web and Private services with no requests for 15 minutes scale to zero; the
+- [x] 3.8 Auto-deploy webhook (`/hooks/github/<workspace>`, HMAC with the workspace's own secret, branch filter, redeliveries deploy once) → `workloads.deploy()`; *Manual deploy*, *Restart*, *Suspend* (and *Resume*) buttons. `test/deploys.test.js`.
+- [x] 3.9 Private Services: internal host name shown on the service page (`<name>.<workspace>.internal:10000`, the platform's); Worker: no URL, no port fields.
+- [x] 3.10 "Region is full" message from `quota` errors on the create flow (under Region on the form; and on a deploy that finds no room, with the region's name).
+- [x] 3.11 **Idle sleep [infra 8.4.8]**: Web services with no requests for 15 minutes scale to zero; the
   ingress holds the next request, wakes the service and forwards it. The service page shows *Sleeping*. Workers, cron
   jobs and static sites never sleep. Plans are a flat price per service for 1 to 10 instances (product.md §11).
+  Changed 2026-11-21: Private Services and Local network services do not sleep either: nothing sits in front of them
+  to hold the request while they wake.
 
 **Exit check:** in one real region, deploy a private Node repo as a 2-instance Web Service; reach it on
 `https://<name>.nooblyjs.app`; push a commit and watch it roll out with zero failed requests; push a failing health

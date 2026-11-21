@@ -40,6 +40,7 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   `people.js`, `realtime.js`.
 - `src/routes/`: `api.js` (`/api/v1`), `workspaces.js` (`/api/v1/workspaces/:workspace/...`, invitations), `pages.js`
   (page URLs answered with `public/index.html`).
+- `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
   (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, components, shell, pages).
 

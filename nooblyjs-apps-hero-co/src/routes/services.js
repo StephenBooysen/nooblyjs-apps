@@ -5,7 +5,7 @@
 // service or group.
 import { CREATABLE, PLANS, REGIONS, RUNTIMES, MAX_INSTANCES, planOf, regionOf, runtimeOf, estimate, specText } from '../../public/js/shared/catalog.js';
 import { serviceView, groupView, githubView } from '../domain/records.js';
-import { toWorkloadSpec, fromPlatformDeploy, mergeDeploy, hostFor, pathFor } from '../platform/workloads.js';
+import { toWorkloadSpec, fromPlatformDeploy, mergeDeploy, hostFor, pathFor, sleepsWhenIdle } from '../platform/workloads.js';
 import { GithubError } from '../github/github.js';
 
 const NAME = /^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$/;
@@ -102,7 +102,9 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       // A Local network service answers on this app's URL (infra 8.9): the path, and the whole URL from PUBLIC_URL.
       ...(regionOf(s.region)?.local && type?.publicUrl ? { path: pathFor(s.workspaceId, s.name), url: `${config.publicUrl}${pathFor(s.workspaceId, s.name)}` } : {}),
       estimate: estimate(s.plan),
-      sleepsWhenIdle: Boolean(type?.sleeps),
+      sleepsWhenIdle: sleepsWhenIdle(s),
+      // A Private Service's name for the workspace's other services (roadmap 3.9; the platform's, infra 8.2 R5).
+      ...(s.type === 'private' ? { internalHost: `${platform().workloads.internalHost(s.workspaceId, { kind: 'private', name: s.workload ?? s.name })}:${s.port ?? 10000}` } : {}),
       envGroups: groups.map((g) => ({ id: g.id, name: g.name })),
       deploys: await records.deploys.list(s.workspaceId, { serviceId: s.id, limit: 10 }),
     };
@@ -209,7 +211,6 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       env: [], envGroups: groups.map((g) => g.id),
       autoDeploy: b.autoDeploy !== false,
       url: type.publicUrl ? (region.local ? `${config.publicUrl}${pathFor(ws, name)}` : `https://${hostFor(name, config.appDomain)}`) : null,
-      internalHost: b.type === 'private' ? `${name}:10000` : null,
       status: 'deploying', current: null, workload: name,
       createdBy: { id: req.person.id, name: req.person.name },
     });
@@ -223,6 +224,7 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       const fields = err.details?.fields ?? {};
       if (err.code === 'conflict' && (fields.domains || /in use/.test(err.message))) return invalid(res, [{ path: 'name', message: `${hostFor(name, config.appDomain)} is taken. Choose another name.` }]);
       if (err.code === 'conflict') return invalid(res, [{ path: 'name', message: `You already have a service called ${name}.` }]);
+      if (err.code === 'quota' && / is full/.test(err.message)) return invalid(res, [{ path: 'region', message: `${region.name} is full right now. Try again in a few minutes, or choose another region.` }]);
       if (err.code === 'quota') return sendError(res, 429, 'quota', 'This workspace has reached its limit of services.');
       if (err.code === 'unavailable') return sendError(res, 503, 'unavailable', 'The platform cannot take new services right now. Try again in a minute.');
       if (err.code === 'invalid') return invalid(res, Object.entries(fields).map(([path, message]) => ({ path: path.startsWith('plan') ? 'plan' : path.startsWith('run.env') ? 'env' : path, message })));
@@ -233,13 +235,61 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     let deploy = null;
     if (first) {
       const prev = await records.deploys.get(ws, first.id);
-      deploy = await records.deploys.upsert(ws, first.id, mergeDeploy(prev, { ...fromPlatformDeploy(first), serviceId: service.id, serviceName: name }));
+      deploy = await records.deploys.upsert(ws, first.id, mergeDeploy(prev, { ...fromPlatformDeploy(first, service), serviceId: service.id, serviceName: name }));
     }
     await audit({ action: 'service.created', actor: req.person.id, target: ws, detail: { service: name, type: b.type, repo: repoLabel, operation: created.operation.id } });
     realtime.publish(ws, 'deploy', { service: name, deploy });
+    // Auto-deploy (roadmap 3.8): the push webhook on the repository. Without it the service still runs; its page says why.
+    if (!fromUrl && service.autoDeploy) {
+      const hook = await github.ensureHook(ws, repo.fullName);
+      await records.services.update(ws, service.id, { webhook: { ok: hook.ok, message: hook.message ?? null, at: new Date().toISOString() } });
+    }
     const saved = await records.services.byName(ws, name);
     res.status(201).json({ service: await fullView(saved), deploy, redirect: `/w/${ws}/services/${name}` });
   }));
+
+  // ---- actions (roadmap 3.8): Manual deploy, Restart, Suspend, Resume -------------------------------------------
+  /** The platform's refusals (a suspended service, nothing running) as the customer's words; anything else is ours. */
+  const platformRefusal = (res, err) => {
+    if (err.code === 'conflict') return sendError(res, 409, 'conflict', err.message), true;
+    if (err.code === 'not_found') return sendError(res, 409, 'conflict', 'This service has not been created on the platform yet.'), true;
+    if (err.code === 'quota') return sendError(res, 429, 'quota', err.message), true;
+    return false;
+  };
+  const action = (verb, done, run) => router.post(`${W}/services/:service/${verb}`, wrap(async (req, res) => {
+    const s = await serviceOr404(req, res);
+    if (!s) return;
+    if (!s.workload) return sendError(res, 409, 'conflict', 'This service has not been created on the platform yet.');
+    try {
+      const out = await run(req, s);
+      await audit({ action: `service.${done}`, actor: req.person.id, target: req.workspace.id, detail: { service: s.name, trigger: 'manual' } });
+      res.status(202).json(out);
+    } catch (err) {
+      if (err instanceof GithubError) return githubFailure(res, err);
+      if (!platformRefusal(res, err)) throw err;
+    }
+  }));
+
+  /** Manual deploy: the branch's latest commit (from GitHub; a public URL's build finds it). */
+  action('deploys', 'deployed', async (req, s) => {
+    const commit = s.source?.provider === 'github' ? await github.latestCommit(req.workspace.id, s.source.repo, s.source.branch) : { sha: undefined, message: undefined };
+    const { operation } = await platform().workloads.deploy(req.workspace.id, s.workload, { actor: actorOf(req.person), trigger: 'manual', commit: commit.sha, message: commit.message ?? 'Manual deploy' });
+    await records.services.update(req.workspace.id, s.id, { status: 'deploying' });
+    realtime.publish(req.workspace.id, 'deploy', { service: s.name, status: 'deploying' });
+    return { started: true, operation: operation.id };
+  });
+  action('restart', 'restarted', async (req, s) => {
+    const { operation } = await platform().workloads.restart(req.workspace.id, s.workload, { actor: actorOf(req.person) });
+    return { started: true, operation: operation.id };
+  });
+  action('suspend', 'suspended', async (req, s) => {
+    const { operation } = await platform().workloads.suspend(req.workspace.id, s.workload, { actor: actorOf(req.person) });
+    return { started: true, operation: operation.id };
+  });
+  action('resume', 'resumed', async (req, s) => {
+    const { operation } = await platform().workloads.resume(req.workspace.id, s.workload, { actor: actorOf(req.person) });
+    return { started: true, operation: operation.id };
+  });
 
   /** The service's console output (Local network services, infra 8.9 R11): lines after a cursor; live ones arrive as 'log' events. */
   router.get(`${W}/services/:service/logs`, wrap(async (req, res) => {
