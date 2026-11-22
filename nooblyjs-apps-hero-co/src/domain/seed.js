@@ -3,6 +3,7 @@
 // the mock GitHub, and the database and cache (records only: the platform runs them from 8.6 and 8.7).
 import { PLANS, REGIONS } from '../../public/js/shared/catalog.js';
 import { fromPlatformDeploy } from '../platform/workloads.js';
+import { platformPlan, storeStatus } from '../routes/datastores.js';
 import { mockTokenFor, MOCK_ORGS } from '../github/mock-data.js';
 
 export const SEED_WORKSPACE = 'exclusivity-life';
@@ -80,12 +81,20 @@ export async function seedRecords({ records, secrets, platform, accounts, reset 
     }
   }
 
-  // The data stores of the story: shown, not run yet.
+  // The data stores of the story (roadmap 6.2, 6.3): a Postgres database and a Key Value store in Johannesburg, on the
+  // platform (the mock cloud there), not linked to anything yet.
   for (const [name, type, plan] of [['database', 'postgres', 'standard'], ['cache', 'keyvalue', 'starter']]) {
     await records.services.create({
       workspaceId: ws, name, type, source: null, build: null, region: 'af-south', plan, instances: 1, env: [], envGroups: [],
-      autoDeploy: false, url: null, internalHost: `${name}:${type === 'postgres' ? 5432 : 6379}`, status: 'live', current: null, workload: null, createdBy: stevie,
+      autoDeploy: false, url: null, internalHost: null, status: 'creating', current: null, workload: null, store: name, createdBy: stevie,
     });
+    const api = type === 'postgres' ? platform().databases : platform().keyvalue;
+    if (!(await api.get(ws, name).catch(() => null))) {
+      await api.create(ws, { name, region: REGIONS.find((r) => r.id === 'af-south').platform, plan: platformPlan(type, plan) }, { actor: { id: stevie.id, name: stevie.name, kind: 'person' } });
+    } else {
+      const s = await records.services.byName(ws, name);
+      await records.services.update(ws, s.id, { status: storeStatus((await api.get(ws, name)).status) });
+    }
   }
   return { services: workloads.length + 2, deploys: deployCount };
 }

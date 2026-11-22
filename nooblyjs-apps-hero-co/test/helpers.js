@@ -90,6 +90,7 @@ export async function startApp(options = {}) {
     get: (url, o) => call('GET', url, o),
     post: (url, o) => call('POST', url, o),
     patch: (url, o) => call('PATCH', url, o),
+    put: (url, o) => call('PUT', url, o),
     del: (url, o) => call('DELETE', url, o),
     outbox,
     /** The link in the newest email to `to` whose subject matches, resolved through the click tracker. */

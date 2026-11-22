@@ -233,13 +233,26 @@ dashboard mock-up.
 
 Decided 2026-11-19: built in the infrastructure accelerator (specs 8.6 and 8.7), not as containers here.
 
-- [ ] 6.1 **[infra 5]** Databases foundation.
-- [ ] 6.2 **[infra 8.6]** Managed Postgres (PITR, replica, HA, per-tenant access).
-- [ ] 6.3 **[infra 8.7]** Managed Key Value (Memorystore / ElastiCache for Valkey).
-- [ ] 6.4 Create forms, detail pages (storage/memory, connections, backups), *Link to service* → `DATABASE_URL` / `REDIS_URL` as secrets.
+- [x] 6.1 **[infra 5]** Databases foundation: data stores are service records of type `postgres` / `keyvalue` naming the
+  platform's database or store (stack.md D13; `test/datastores.test.js`).
+- [ ] 6.2 **[infra 8.6]** Managed Postgres (PITR, replica, HA, per-tenant access). *Local network done (2026-11-22):
+  a database and its own role per Postgres service on the operator's server, reached only through the agent's relay
+  on the workspace's network, daily and on-demand backups (7 kept) and restore into a new database. PITR, replicas and
+  HA wait for the cloud adapters (infra 8.6.2, 8.6.3).*
+- [ ] 6.3 **[infra 8.7]** Managed Key Value (Memorystore / ElastiCache for Valkey). *Local network done (2026-11-22):
+  a Valkey container per store on the workspace's network (password, memory limit, eviction, no persistence).
+  Memorystore and ElastiCache wait for infra 8.7.2, 8.7.3.*
+- [x] 6.4 Create forms, detail pages (storage/memory, connections, backups), *Link to service* → `DATABASE_URL` / `REDIS_URL` as secrets
+  (`test/datastores.test.js`, `test/ui/datastores.spec.js`; the connection string is put in the variable by the
+  platform when the container starts, never stored with the service).
 
 **Exit check:** create Postgres and Key Value, link them to the seeded `api`, connect from it, and confirm no other
 workspace can reach them.
+*Run on the Local network on 2026-11-22 with real Docker and Postgres 18: the seeded `api` (Johannesburg, mock cloud)
+links the seeded `database` and `cache`. A Local network workflow linked to `notes-db` and `notes-cache` connected for
+real (inserted rows as its own role; INCR on Valkey). A container in another workspace, given the full connection
+strings, was dropped by the relay, refused at every other gateway, could not resolve the store's name, and timed out
+on its address.*
 
 ## Phase 7 — Billing
 

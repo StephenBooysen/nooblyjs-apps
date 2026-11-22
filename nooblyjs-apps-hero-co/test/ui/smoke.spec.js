@@ -87,7 +87,7 @@ test('the service picker links each type to its create screen', async ({ page, c
   await page.goto(`${WS}/new`);
   await expect(page.locator('.nj-option')).toHaveCount(9);
   await expect(page.getByText('Beta')).toBeVisible();
-  await page.getByRole('link', { name: /Key Value/ }).click();
+  await page.locator('a.nj-option', { hasText: 'Key Value' }).click();
   await expect(page).toHaveURL(`${baseURL}${WS}/new/keyvalue`);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('New Key Value');
 });

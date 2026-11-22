@@ -32,6 +32,9 @@ export function loadConfig(env = process.env) {
     // machine's Docker, 'mock' an in-process one (tests), 'off' none. Default: 'mock' in tests, 'off' in production,
     // otherwise 'fork' when Docker's socket is here. HERO_LOCAL_AGENT overrides.
     localAgent: localAgentOf(env, production),
+    // The Local network's Postgres server (roadmap 6.2): an admin connection string, such as
+    // postgres://postgres:<password>@127.0.0.1:5432/postgres. Customer databases are made on it, each with its own role.
+    localPostgresUrl: env.HERO_LOCAL_POSTGRES_URL || null,
     // One proxy hop: set TRUST_PROXY=1 behind a load balancer; Codespaces port forwarding is one (TRUST_PROXY=0 turns it off).
     trustProxy: env.TRUST_PROXY !== '0' && (env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true' || env.CODESPACES === 'true'),
     // The development sign-in (/dev/login, X-Dev-Person) and the development people: never in production.

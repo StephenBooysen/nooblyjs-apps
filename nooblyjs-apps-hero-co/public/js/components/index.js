@@ -13,6 +13,8 @@ export const STATUS_TONE = {
   Running: 'live', Starting: 'deploying', Crashed: 'failed', Stopped: 'idle', Unknown: 'idle',
   // A Workflow's task runs (roadmap 5.4).
   Queued: 'idle', Retrying: 'deploying', Cancelled: 'idle',
+  // Postgres and Key Value (roadmap 6.4).
+  Creating: 'deploying', Updating: 'deploying', Deleting: 'idle', Missing: 'failed',
 };
 
 export function statusPill(status) {

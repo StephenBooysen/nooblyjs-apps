@@ -18,6 +18,44 @@ export const PLANS = [
   { key: 'pro-plus', name: 'Pro Plus', cpu: 4, memoryMb: 8192, priceUsd: 100, logDays: 30 },
 ];
 
+/**
+ * Postgres and Key Value plans (roadmap 6.2, 6.3; infra specs 8.6, 8.7). Postgres: connections at once and the storage
+ * its meter measures against; Key Value: memory (the store's limit, keys evicted past it) and clients at once.
+ * Prices are provisional, as the instance types' are.
+ */
+export const DATA_PLANS = {
+  postgres: [
+    { key: 'starter', name: 'Starter', connections: 20, storageMb: 1000, priceUsd: 7 },
+    { key: 'standard', name: 'Standard', connections: 50, storageMb: 10_000, priceUsd: 20 },
+    { key: 'pro', name: 'Pro', connections: 100, storageMb: 50_000, priceUsd: 65 },
+  ],
+  keyvalue: [
+    { key: 'starter', name: 'Starter', memoryMb: 256, connections: 100, priceUsd: 0 },
+    { key: 'standard', name: 'Standard', memoryMb: 1024, connections: 500, priceUsd: 10 },
+    { key: 'pro', name: 'Pro', memoryMb: 4096, connections: 2000, priceUsd: 32 },
+  ],
+};
+/** What a data store links as (Link to service), and its starting values. Backups: daily at `backupTime` UTC, 7 kept. */
+export const DATA_DEFAULTS = {
+  postgres: { plan: 'starter', linkKey: 'DATABASE_URL', backupTime: '03:00', keepBackups: 7 },
+  keyvalue: { plan: 'starter', linkKey: 'REDIS_URL', eviction: 'allkeys-lru' },
+};
+export const EVICTIONS = [
+  { key: 'allkeys-lru', name: 'Least recently used (a cache)' },
+  { key: 'allkeys-lfu', name: 'Least frequently used' },
+  { key: 'volatile-lru', name: 'Least recently used, keys with an expiry only' },
+  { key: 'volatile-ttl', name: 'Nearest expiry first' },
+  { key: 'noeviction', name: 'None: refuse writes when full (a queue)' },
+];
+export const DATA_TYPES = ['postgres', 'keyvalue'];
+export const dataPlanOf = (type, key) => DATA_PLANS[type]?.find((p) => p.key === key) ?? null;
+/** "20 connections · 1 GB storage" / "256 MB memory · 100 clients". */
+export function dataPlanText(type, p) {
+  if (!p) return '';
+  // Storage in decimal GB (as the meters count bytes); memory in binary, as instance types' is.
+  return type === 'postgres' ? `${p.connections} connections · ${p.storageMb >= 1000 ? `${p.storageMb / 1000} GB` : `${p.storageMb} MB`} storage` : `${p.memoryMb >= 1024 ? `${p.memoryMb / 1024} GB` : `${p.memoryMb} MB`} memory · ${p.connections.toLocaleString('en')} clients`;
+}
+
 /** Bandwidth a workspace may send each month before it pays for more (the dashboard's "48 GB of 100"; provisional). */
 export const BANDWIDTH_INCLUDED_GB = 100;
 export const DEFAULT_PLAN = 'standard';

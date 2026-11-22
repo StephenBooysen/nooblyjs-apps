@@ -51,6 +51,10 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
 - `src/routes/sites.js`: a Static Site's files (what it serves, the deploys kept for rollback, this month's requests,
   bandwidth and cache hits), single-page app and publish directory, and Rollback (stack.md D12); `src/routes/proxy.js`
   answers a Local network site from `services.platform.staticSites.respond()`.
+- `src/routes/datastores.js`: Postgres and Key Value (stack.md D13): create, the data store page's facts, reveal,
+  backups and restore, plan, and Link to service (`PUT .../links`); `public/js/pages/datastore.js` draws the create form,
+  the page and the Link to service card. The databases and stores are the platform's; set `HERO_LOCAL_POSTGRES_URL`
+  (an admin connection string, environment only) to offer Postgres on the Local network.
 - `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
   (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, format, components, shell,
