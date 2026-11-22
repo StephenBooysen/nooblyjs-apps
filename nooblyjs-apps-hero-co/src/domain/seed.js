@@ -54,6 +54,7 @@ export async function seedRecords({ records, secrets, platform, accounts, reset 
       url: w.domains?.length ? `https://${w.domains[0]}` : null,
       internalHost: w.kind === 'private' ? `${w.name}:${w.run?.port ?? 10000}` : null,
       status: w.status ?? 'live', current: w.current ? { deployId: w.current.deployId, commit: w.current.commit } : null, workload: w.name,
+      ...(w.kind === 'job' ? { schedule: w.schedule ?? null, command: w.run?.command ?? null } : {}),
       createdBy: stevie, createdAt: w.createdAt ?? new Date().toISOString(),
     });
     // Plain values become sealed variables of ours; links (database, cache) wait for 8.6 and 8.7.

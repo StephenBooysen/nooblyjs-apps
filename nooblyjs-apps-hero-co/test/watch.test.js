@@ -185,4 +185,31 @@ test('4.7 Scaling: the instance type and count go to services.platform.workloads
   assert.deepEqual([m.limits.cpu, m.limits.memoryMb], [3, 6144]);
   const audited = t.host.auditLog.find((r) => r.action === 'service.scaled' && r.detail?.service === 'watched');
   assert.deepEqual([audited.actor, audited.detail.from, audited.detail.to], ['stevie', { plan: 'starter', instances: 2 }, { instances: 3, plan: 'standard' }]);
+
+  // A count alone: one leaves and one joins again; the others are never started again.
+  const three = now.map((c) => c.name);
+  assert.equal((await t.post(`${SVC}/scale`, { as: 'stevie', body: { instances: 2 } })).status, 200);
+  await t.idle();
+  const two = (await containers()).map((c) => c.name);
+  assert.equal(two.length, 2);
+  assert.ok(two.every((n) => three.includes(n)), 'no new container when one leaves');
+  assert.equal((await t.post(`${SVC}/scale`, { as: 'stevie', body: { instances: 3 } })).status, 200);
+  await t.idle();
+  const back = (await containers()).map((c) => c.name);
+  assert.equal(back.length, 3);
+  assert.ok(two.every((n) => back.includes(n)), 'the two running were left alone');
+
+  // A scale that cannot finish (the mock server's 8 GB holds three Standard instances): the platform keeps what ran,
+  // our record follows, and the Scaling tab hears why.
+  const events = [];
+  const stop = t.realtime.subscribe(['exclusivity-life'], (e) => events.push(e));
+  assert.equal((await t.post(`${SVC}/scale`, { as: 'stevie', body: { instances: 4 } })).status, 200);
+  await t.idle();
+  stop();
+  assert.deepEqual((await containers()).map((c) => c.name).sort(), [...back].sort(), 'the three serving were not touched');
+  const svc = (await t.get(SVC, { as: 'stevie' })).json;
+  assert.deepEqual([svc.instances, svc.plan], [3, 'standard'], 'back to what runs');
+  const said = events.find((e) => e.type === 'scale' && e.data.service === 'watched');
+  assert.deepEqual([said?.data.failed, said?.data.instances, said?.data.plan], [true, 3, 'standard']);
+  assert.match(said.data.reason, /full/i);
 });

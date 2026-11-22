@@ -15,6 +15,7 @@ import { serviceView } from '../domain/records.js';
 import { RANGES } from '../telemetry/metrics.js';
 import { LEVELS } from '../telemetry/logs.js';
 import { shortInstance } from '../telemetry/index.js';
+import { describeCron, nextRuns } from '../../public/js/shared/cron.js';
 
 const sendError = (res, status, code, message, details) => res.status(status).json({ error: { code, message, ...(details ? { details } : {}) } });
 const invalid = (res, details) => sendError(res, 422, 'invalid', 'Check the highlighted fields.', details);
@@ -83,8 +84,28 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
     return { cpu: round(plan.cpu * n), memoryMb: plan.memoryMb * n, perInstance: { cpu: plan.cpu, memoryMb: plan.memoryMb }, instances: n };
   }
 
+  /**
+   * A Cron Job's runs for its card: the last one that ended (the platform keeps it on the workload), whether one is
+   * going now, and the next time the schedule fires. Null for other kinds.
+   */
+  async function runFacts(s) {
+    if (s.type !== 'cron') return null;
+    const [w, runs] = s.workload ? await Promise.all([
+      platform().workloads.get(s.workspaceId, s.workload).catch(() => null),
+      platform().jobs.runs(s.workspaceId, s.workload, { limit: 1 }).then((r) => r.runs).catch(() => []),
+    ]) : [null, []];
+    const last = w?.lastRun ?? null;
+    return {
+      last: last ? { status: last.result, exitCode: last.exitCode ?? null, durationMs: last.durationMs ?? null, peakMemoryMb: last.peakMemoryMb ?? null, at: last.at ?? null } : null,
+      running: ['queued', 'running'].includes(runs[0]?.status),
+      next: s.status === 'suspended' ? null : nextRuns(s.schedule ?? '', new Date(), 1)[0]?.toISOString() ?? null,
+      scheduleText: describeCron(s.schedule ?? ''),
+      limitMb: planOf(s.plan)?.memoryMb ?? null,
+    };
+  }
+
   /** A service's card on the dashboard and its row on the Metrics page. */
-  function card(s, lastDeploy) {
+  function card(s, lastDeploy, run = null) {
     const r = reserved(s);
     const now = stores().metrics.current(s.workspaceId, s.name);
     const type = CREATABLE[s.type];
@@ -97,6 +118,7 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
       bandwidth: { perSec: now.bytesPerSec, monthBytes: now.monthBytes },
       sampledAt: now.instances ? now.at : null,
       last: lastDeploy ? { id: lastDeploy.id, status: lastDeploy.status, commit: lastDeploy.commit ?? null, message: lastDeploy.message ?? null, at: lastDeploy.endedAt ?? lastDeploy.startedAt ?? lastDeploy.createdAt } : null,
+      ...(run ? { run } : {}),
     };
   }
 
@@ -112,7 +134,7 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
     const deploys = await records.deploys.list(ws, { limit: 200 });
     const lastOf = new Map();
     for (const d of deploys) if (!lastOf.has(d.serviceId)) lastOf.set(d.serviceId, d);
-    const cards = services.map((s) => card(s, lastOf.get(s.id))).sort((a, b) => a.name.localeCompare(b.name));
+    const cards = (await Promise.all(services.map(async (s) => card(s, lastOf.get(s.id), await runFacts(s))))).sort((a, b) => a.name.localeCompare(b.name));
     const holding = services.filter((s) => HOLDING.has(s.status));
     const allocation = holding.map((s) => ({ service: s.name, cpu: reserved(s).cpu })).filter((a) => a.cpu > 0).sort((a, b) => b.cpu - a.cpu || a.service.localeCompare(b.service));
     const sum = (list, f) => list.reduce((x, c) => x + (f(c) ?? 0), 0);
@@ -154,7 +176,7 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
     const rows = [];
     for (const s of services) {
       const series = await stores().metrics.series(ws, s.name, range);
-      rows.push({ ...card(s, null), step: series.step, points: series.points });
+      rows.push({ ...card(s, null, await runFacts(s)), step: series.step, points: series.points });
     }
     res.json({ range, from: Date.now() - RANGES[range].ms, to: Date.now(), services: rows });
   }));
@@ -243,7 +265,7 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
     const s = await serviceOr404(req, res);
     if (!s) return;
     const type = CREATABLE[s.type];
-    if (!type?.instances) return sendError(res, 409, 'conflict', 'A static site has no instances to scale: it is served from the CDN.');
+    if (!type?.plan) return sendError(res, 409, 'conflict', 'A static site has no instances to scale: it is served from the CDN.');
     if (s.status === 'suspended') return sendError(res, 409, 'conflict', 'Resume the service before you scale it.');
     const b = req.body ?? {};
     const problems = [];
@@ -252,7 +274,8 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
       if (!planOf(b.plan)) problems.push({ path: 'plan', message: `Choose ${PLANS.map((p) => p.name).join(', ')}.` });
       else changes.plan = b.plan;
     }
-    if (b.instances !== undefined && b.instances !== s.instances) {
+    if (b.instances !== undefined && b.instances !== s.instances && !type.instances) problems.push({ path: 'instances', message: `A ${type.label} runs one at a time: choose its instance type only.` });
+    else if (b.instances !== undefined && b.instances !== s.instances) {
       if (!Number.isInteger(b.instances) || b.instances < 1 || b.instances > MAX_INSTANCES) problems.push({ path: 'instances', message: `Choose 1 to ${MAX_INSTANCES} instances.` });
       else changes.instances = b.instances;
     }

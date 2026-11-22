@@ -81,3 +81,34 @@ export function duration(fromIso, toIso) {
 
 /** The left label under a chart for a range: "1 hour ago", "24 hours ago", "7 days ago", "30 days ago". */
 export const RANGE_START = { '1h': '1 hour ago', '24h': '24 hours ago', '7d': '7 days ago', '30d': '30 days ago' };
+
+/** How long a run took, from milliseconds: "under 1 s", "4.2 s", "3 min 12 s". */
+export function msText(ms) {
+  if (ms === null || ms === undefined || !Number.isFinite(ms)) return '—';
+  if (ms < 1000) return 'under 1 s';
+  if (ms < 60_000) return `${num(ms / 1000, ms < 10_000 ? 1 : 0)} s`;
+  const s = Math.round(ms / 1000);
+  return `${Math.floor(s / 60)} min${s % 60 ? ` ${s % 60} s` : ''}`;
+}
+
+/** How long until a time: "in under a minute", "in 12 min", "in 3 hours", "in 2 days". */
+export function until(iso, now = Date.now()) {
+  if (!iso) return '';
+  const s = Math.max(0, (Date.parse(iso) - now) / 1000);
+  if (s < 60) return 'in under a minute';
+  if (s < 3600) return `in ${Math.round(s / 60)} min`;
+  if (s < 86_400) return `in ${Math.round(s / 3600)} hour${Math.round(s / 3600) === 1 ? '' : 's'}`;
+  return `in ${Math.round(s / 86_400)} day${Math.round(s / 86_400) === 1 ? '' : 's'}`;
+}
+
+/** A time in UTC, as schedules are: "02:00 UTC" today (UTC), "Mon 23 Nov, 02:00 UTC" on another day. */
+export function utcText(iso, now = Date.now()) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const p = (n) => String(n).padStart(2, '0');
+  const time = `${p(d.getUTCHours())}:${p(d.getUTCMinutes())} UTC`;
+  if (d.toISOString().slice(0, 10) === new Date(now).toISOString().slice(0, 10)) return time;
+  const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()];
+  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()];
+  return `${day} ${d.getUTCDate()} ${month}, ${time}`;
+}

@@ -4,6 +4,7 @@
 // values are write-only: answers carry keys, and a value comes back only through an audited reveal that names the
 // service or group.
 import { CREATABLE, PLANS, REGIONS, RUNTIMES, MAX_INSTANCES, planOf, regionOf, runtimeOf, estimate, specText } from '../../public/js/shared/catalog.js';
+import { parseCron, describeCron, nextRuns } from '../../public/js/shared/cron.js';
 import { serviceView, groupView, githubView } from '../domain/records.js';
 import { toWorkloadSpec, fromPlatformDeploy, mergeDeploy, hostFor, pathFor, sleepsWhenIdle } from '../platform/workloads.js';
 import { GithubError } from '../github/github.js';
@@ -33,6 +34,23 @@ const sendError = (res, status, code, message, details) => res.status(status).js
 const invalid = (res, details) => sendError(res, 422, 'invalid', 'Check the highlighted fields.', details);
 const text = (v, max) => typeof v === 'string' && v.length <= max;
 const actorOf = (person) => ({ id: person.id, name: person.name, kind: 'person' });
+
+/** A Cron Job's schedule (UTC cron) and command from a body, or problems. → { schedule, command } */
+export function checkCron(b, problems, { partial = false } = {}) {
+  const out = {};
+  if (!partial || b.schedule !== undefined) {
+    const parsed = parseCron(b.schedule);
+    if (parsed.error) problems.push({ path: 'schedule', message: parsed.error });
+    else out.schedule = parsed.expression;
+  }
+  if (!partial || b.command !== undefined) {
+    const command = typeof b.command === 'string' ? b.command.trim() : '';
+    if (!command) problems.push({ path: 'command', message: 'The command each run starts, such as python etl.py.' });
+    else if (command.length > 500 || /[\r\n]/.test(command)) problems.push({ path: 'command', message: 'One line of up to 500 characters.' });
+    else out.command = command;
+  }
+  return out;
+}
 
 /** Checks a list of { key, value } (value may be omitted to keep a stored one when `existing` has the key). */
 function checkVars(list, path, problems, existing = []) {
@@ -103,6 +121,8 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       ...(regionOf(s.region)?.local && type?.publicUrl ? { path: pathFor(s.workspaceId, s.name), url: `${config.publicUrl}${pathFor(s.workspaceId, s.name)}` } : {}),
       estimate: estimate(s.plan),
       sleepsWhenIdle: sleepsWhenIdle(s),
+      // A Cron Job's schedule in words and its next three runs (UTC).
+      ...(s.type === 'cron' ? { scheduleText: describeCron(s.schedule ?? ''), nextRuns: nextRuns(s.schedule ?? '', new Date(), 3).map((d) => d.toISOString()) } : {}),
       // A Private Service's name for the workspace's other services (roadmap 3.9; the platform's, infra 8.2 R5).
       ...(s.type === 'private' ? { internalHost: `${platform().workloads.internalHost(s.workspaceId, { kind: 'private', name: s.workload ?? s.name })}:${s.port ?? 10000}` } : {}),
       envGroups: groups.map((g) => ({ id: g.id, name: g.name })),
@@ -176,6 +196,8 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     const rootDir = typeof b.rootDir === 'string' ? b.rootDir.trim().replace(/^(\.\/)+/, '').replace(/\/+$/, '') : '';
     if (!text(rootDir, 200) || rootDir.startsWith('/') || rootDir.split('/').includes('..')) problems.push({ path: 'rootDir', message: 'A folder inside the repository, such as apps/api.' });
     for (const key of ['buildCommand', 'startCommand']) if (b[key] !== undefined && b[key] !== null && (!text(b[key], 500) || /[\r\n]/.test(b[key]))) problems.push({ path: key, message: 'One line of up to 500 characters.' });
+    // A Cron Job: what each run does, and when (UTC).
+    const cron = type.schedule ? checkCron(b, problems) : null;
     const plan = planOf(b.plan ?? 'standard');
     if (!plan) problems.push({ path: 'plan', message: 'Choose an instance type.' });
     const instances = type.instances ? Number(b.instances ?? 1) : 1;
@@ -208,6 +230,7 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       source: fromUrl ? { provider: 'git', repo: repoLabel, url: gitUrl, branch, rootDir } : { provider: 'github', repo: repo.fullName, branch, rootDir },
       build: { runtime: runtime.key, buildCommand: b.buildCommand || null, startCommand: b.startCommand || null },
       region: region.id, plan: plan.key, instances,
+      ...(cron ? { schedule: cron.schedule, command: cron.command } : {}),
       env: [], envGroups: groups.map((g) => g.id),
       autoDeploy: b.autoDeploy !== false,
       url: type.publicUrl ? (region.local ? `${config.publicUrl}${pathFor(ws, name)}` : `https://${hostFor(name, config.appDomain)}`) : null,

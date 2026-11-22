@@ -42,6 +42,9 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   (page URLs answered with `public/index.html`), `telemetry.js` (dashboard, metrics, instances, logs, scale).
 - `src/telemetry/`: metric history and logs from `services.platform.telemetry` and the proxy, saved under
   `DATA_DIR/telemetry` (stack.md §4.2, §4.3).
+- `src/scheduling/cron.js`: Cron Jobs' minute scheduler (UTC, stack.md D10) and the follower that writes each run's
+  start and result to the service's logs; `src/routes/jobs.js`: runs, Run now and the schedule;
+  `public/js/shared/cron.js`: the cron parser, its words and next runs, shared by the server and the browser.
 - `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
   (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, format, components, shell,

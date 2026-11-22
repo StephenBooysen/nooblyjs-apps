@@ -176,8 +176,9 @@ machine's Docker by hand. Cloud regions draw the same screens and say their char
 - [x] 4.6 Deploys tab and workspace **Deploys** page; workspace **Metrics** and **Logs** pages. `test/watch.test.js`,
   `test/ui/watch.spec.js`.
 - [x] 4.7 Scaling tab: change instance type (no rebuild) and count → `workloads.scale()`, audited `service.scaled`.
-  `test/watch.test.js`. Follow-up: the accelerator rolls every instance on a count change (1 → 2 replaces the one it
-  had); adding or removing instances in place is an infra change.
+  `test/watch.test.js`. Since 2026-11-22 a count alone adds or removes instances and leaves the others running (a new
+  type still replaces them all); a scale that cannot finish (a full site) keeps what ran, puts the record back and
+  says why on the Scaling tab (`infrastructure.workload.scale_failed`).
 - [ ] 4.8 Cloud regions: metrics and logs from the cloud providers' monitoring (infra 8.5 for `aws`/`gcp`/`azure`), then
   the same stores and screens.
 
@@ -191,7 +192,13 @@ bytes matched the load generator's counts; a redeploy under load answered every 
 
 - [ ] 5.1 **[infra 4, 8.8]** Buckets, static sites and the CDN.
 - [ ] 5.2 Static Site form and page: build command, publish directory, bandwidth and cache-hit meters.
-- [ ] 5.3 Cron Job: schedule in core `scheduling` firing `workloads.runJob()`; last run, peak memory, next run.
+- [x] 5.3 Cron Job: a UTC schedule firing `workloads.runJob()` (our own minute scheduler, stack D10); last run, peak
+  memory, next run. `test/cron.test.js`, `test/jobs.test.js`, `test/ui/cron.spec.js`. Create form with the schedule
+  previewed in words; service page with Run now, the schedule (changed from the next run, no rebuild), the runs with
+  their logs, a Logs tab and Scaling by type only; dashboard and Metrics cards. One run at a time: a fire while one is
+  going is skipped and the service's logs say so. Run for real 2026-11-22 on the Local network (every minute: two
+  runs succeeded with 162 MB and 143 MB peaks of 512 MB; a 71 s run exited 3, the fire in its minute was skipped, Run
+  now was refused while it ran).
 - [ ] 5.4 Workflow: core `workflow` for task definitions, retries and concurrency cap; tasks running and queue meters.
 - [ ] 5.5 Create forms and detail pages for each (designs needed).
 
@@ -216,7 +223,7 @@ Built on `nooblyjs-accel-payments`.
 
 - [ ] 7.1 **[pay 0–1]** Payments skeleton, accounts, catalogue, payment methods, `CardForm`.
 - [ ] 7.2 **[pay 2]** Subscriptions, usage, rating, invoices, tax.
-- [ ] 7.3 **[pay 3]** Collection, dunning, refunds, webhooks, Stripe adapter (or **[pay 4.1]** Paystack first; payments O2).
+- [ ] 7.3 **[pay 3]** Collection, dunning, refunds, webhooks, Stripe adapter (Stripe first, decided 2026-11-22; payments O2).
 - [ ] 7.4 Billing account per workspace on sign-up (`ensureAccount`); plan table and meters seeded in the payments catalogue; the Summary's *Estimated / mo* reads its prices.
 - [ ] 7.5 Hourly usage hand-off: `services.platform.usage()` **[infra 8.5.5]** → `pay.billing.recordUsage()`.
 - [ ] 7.6 Free tier enforcement with the *Add a card* prompt (`CardForm`); `pay.account.delinquent` → suspend after the final dunning attempt, with warnings first.

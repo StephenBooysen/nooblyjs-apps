@@ -5,7 +5,7 @@
 //
 // Deploy progress comes back as `infrastructure.deploy.*` events on the shared EventEmitter: followDeploys() keeps our
 // deploy records and the service's status from them and publishes each change to the workspace's live channel.
-import { CREATABLE, SLEEP, planOf, regionOf } from '../../public/js/shared/catalog.js';
+import { CREATABLE, PLANS, SLEEP, planOf, regionOf } from '../../public/js/shared/catalog.js';
 
 /** Deploy statuses in the order they happen; a record never moves back (events may arrive after a slower write). */
 const RANK = { queued: 0, building: 1, deploying: 2, live: 3, failed: 3, cancelled: 3, superseded: 4 };
@@ -44,7 +44,7 @@ export function toWorkloadSpec(service, { appDomain, groups = [] }) {
     region: region.platform,
     source: { repo: service.source.url ?? service.source.repo, branch: service.source.branch, rootDir: service.source.rootDir ?? '', ...(service.source.url ? {} : { gitConnection: service.workspaceId }) },
     build: { runtime: service.build.runtime, buildCommand: service.build.buildCommand || null, startCommand: service.build.startCommand || null },
-    run: { ...(type.port ? { port: service.port ?? 10000 } : {}), env: uniqueEnv },
+    run: { ...(type.port ? { port: service.port ?? 10000 } : {}), ...(type.schedule ? { command: service.command ?? null } : {}), env: uniqueEnv },
     plan: { cpu: plan.cpu, memoryMb: plan.memoryMb },
     instances: type.instances ? service.instances : 1,
     ...(type.port ? { healthCheck: { path: service.healthCheckPath ?? '/' } } : {}),
@@ -53,6 +53,8 @@ export function toWorkloadSpec(service, { appDomain, groups = [] }) {
     autoDeploy: service.autoDeploy ? { branch: service.source.branch } : null,
     // Idle sleep (roadmap 3.11): a web service in a cloud region, where the ingress wakes it.
     ...(type.sleeps && !region.local ? { sleep: { afterMin: SLEEP.afterMinutes } } : {}),
+    // A Cron Job's schedule is kept by us (src/scheduling/cron.js); the platform stores it for its operators' screens.
+    ...(type.schedule ? { schedule: service.schedule ?? null } : {}),
   };
 }
 
@@ -144,7 +146,20 @@ export function followDeploys({ eventEmitter, records, realtime, platform, log }
     realtime.publish(service.workspaceId, 'deploy', { service: service.name, status: p.status });
   }
 
+  /** A scale that failed: the platform kept what ran before, and so does our record; the Scaling tab says why. */
+  async function onScaleFailed(p) {
+    const service = await serviceOf(p);
+    if (!service) return;
+    const plan = PLANS.find((x) => x.cpu === p.plan?.cpu && x.memoryMb === p.plan?.memoryMb);
+    const back = p.reverted ? { instances: p.instances, ...(plan ? { plan: plan.key } : {}) } : {};
+    const updated = Object.keys(back).length ? await records.services.update(service.workspaceId, service.id, back) : service;
+    realtime.publish(service.workspaceId, 'scale', {
+      service: service.name, failed: true, reason: customerReason(p.reason, service), instances: updated.instances, plan: updated.plan,
+    });
+  }
+
   const handlers = {
+    'infrastructure.workload.scale_failed': later(onScaleFailed),
     'infrastructure.deploy.started': later((p) => onDeploy('started', p)),
     'infrastructure.deploy.progress': later((p) => onDeploy('progress', p)),
     'infrastructure.deploy.succeeded': later((p) => onDeploy('succeeded', p)),
