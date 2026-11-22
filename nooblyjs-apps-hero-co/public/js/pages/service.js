@@ -10,6 +10,9 @@
 //
 // A Cron Job (roadmap 5.3) has Run now instead of Restart; its Overview starts with its schedule (in words, the next
 // runs, a form to change it) and its runs (each with its log); its second tab is its Logs; it scales by type only.
+// A Static Site (roadmap 5.2) has no Restart and nothing to scale; its Overview starts with what it serves (the
+// deploy, its files, the Bandwidth and Cache hit rate meters), the deploys it can roll back to at once, its publish
+// directory and single-page-app setting, and how _redirects and _headers work; its metrics are requests and bandwidth.
 // A Workflow (roadmap 5.4) has no Restart either; its Overview starts with its tasks (each with Run, the meters, a form
 // to change them), its task runs (each attempt's log, Cancel while waiting) and how code triggers a task; its second
 // tab is its Logs; it scales by type only.
@@ -21,14 +24,16 @@ import { showErrors } from '../forms.js';
 import { on } from '../sse.js';
 import { applySizes } from '../charts.js';
 import { statusPill, emptyState } from '../components/index.js';
-import { SLEEP, PLANS, MAX_INSTANCES, CREATABLE, planOf, specText, priceText, estimate } from '../shared/catalog.js';
+import { SLEEP, PLANS, MAX_INSTANCES, CREATABLE, STATIC, BANDWIDTH_INCLUDED_GB, planOf, specText, priceText, estimate } from '../shared/catalog.js';
 import { parseCron, describeCron, nextRuns } from '../shared/cron.js';
-import { until, utcText } from '../format.js';
-import { statusWord, resourceCards, instanceTiles, logsPanel, mountLogs, retentionText, deploysTable, runsTable, segmented, selectSegment, throttle, RANGES, taskMeters } from './watch.js';
+import { until, utcText, bytesText, ago } from '../format.js';
+import { statusWord, resourceCards, instanceTiles, logsPanel, mountLogs, retentionText, deploysTable, runsTable, segmented, selectSegment, throttle, RANGES, taskMeters, siteMeters } from './watch.js';
 import { tasksCard, taskRunsTable, triggerCard, bindTasksEditor } from './tasks.js';
 
 export { statusWord };
 const STEPS = ['Clone', 'Build', 'Roll out'];
+/** A deploy's steps: a static site uploads and switches its files; a rollback only switches. */
+const stepsOf = (d, type) => (d.trigger === 'rollback' ? ['Switch'] : type === 'static' ? ['Build', 'Upload', 'Switch'] : STEPS);
 const TYPE_NAME = { postgres: 'Postgres', keyvalue: 'Key Value', cron: 'Cron Job', workflow: 'Workflow' };
 /** Types that run when asked, not all the time: their second tab is their run output, not live resources. */
 const RUNS_ONLY = new Set(['cron', 'workflow']);
@@ -40,9 +45,10 @@ const when = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { day: 'num
 const short = (sha) => (sha ? sha.slice(0, 7) : '—');
 const running = (d) => d && ['queued', 'building', 'deploying'].includes(d.status);
 
-function progress(d) {
+function progress(d, type) {
   if (!d) return '';
-  const of = d.of ?? STEPS.length;
+  const steps = stepsOf(d, type);
+  const of = d.of ?? steps.length;
   const step = d.status === 'live' || d.status === 'superseded' ? of : Math.min(d.step ?? 0, of);
   const pct = Math.round((step / of) * 100);
   const label = d.status === 'failed' ? `Failed at step ${Math.max(1, step)} of ${of}` : d.status === 'live' ? `Live · ${of} of ${of} steps` : `Step ${step} of ${of}`;
@@ -51,18 +57,18 @@ function progress(d) {
     <div class="nj-meter nj-meter-${d.status === 'failed' ? 'failed' : 'requests'}" role="progressbar" aria-label="Deploy progress" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-valuetext="${label}">
       <div class="nj-meter-fill" data-pct="${pct}"></div>
     </div>
-    <ol class="nj-deploy-steps">${STEPS.map((s, i) => html`<li class="${i < step ? 'is-done' : i === step && d.status !== 'failed' ? 'is-now' : ''}">${s}</li>`)}</ol>
+    <ol class="nj-deploy-steps">${steps.map((s, i) => html`<li class="${i < step ? 'is-done' : i === step && d.status !== 'failed' ? 'is-now' : ''}">${s}</li>`)}</ol>
   </div>`;
 }
 
-function deployCard(d) {
+function deployCard(d, type) {
   if (!d) return emptyState({ icon: 'rocket-takeoff', title: 'No deploys yet' });
   return html`<div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
       <div><strong class="nj-mono">${short(d.commit)}</strong> ${d.message ?? ''}
-        <div class="nj-meta">${d.trigger === 'manual' ? 'Started by' : d.trigger === 'config' ? 'Settings changed by' : 'Triggered by'} ${d.by?.name ?? 'a push'} · ${when(d.startedAt)}</div></div>
+        <div class="nj-meta">${d.trigger === 'manual' ? 'Started by' : d.trigger === 'config' ? 'Settings changed by' : d.trigger === 'rollback' ? 'Rolled back by' : 'Triggered by'} ${d.by?.name ?? 'a push'} · ${when(d.startedAt)}</div></div>
       ${statusPill(statusWord(d.status))}
     </div>
-    ${progress(d)}
+    ${progress(d, type)}
     ${d.status === 'failed' && d.reason ? html`<div class="alert alert-danger mt-3 mb-0" role="alert">${d.reason}</div>` : ''}`;
 }
 
@@ -158,6 +164,62 @@ function envSection(svc) {
   </section>`;
 }
 
+/** "1 file" / "12 files" and their size. */
+const filesText = (n, bytes) => `${n.toLocaleString()} file${n === 1 ? '' : 's'} · ${bytesText(bytes)}`;
+
+/**
+ * A Static Site's files (roadmap 5.2): what it serves and since when, its meters, the deploys whose files are kept (each
+ * can be served again at once), and its settings: the publish directory (a new one builds again) and single-page app
+ * (at once).
+ */
+function siteCard(svc, site) {
+  if (!site) return html`<p class="nj-meta mb-0">Loading…</p>`;
+  const suspended = svc.status === 'suspended';
+  const serving = site.serving;
+  const m = site.month ?? { requests: 0, bytes: 0, hitRate: null };
+  return html`<p class="mb-3" data-serving>${serving
+    ? html`Serving <strong class="nj-mono">${short(serving.commit) === '—' ? serving.deployId : short(serving.commit)}</strong> since ${when(serving.since)} (${ago(serving.since)}) · ${filesText(serving.files, serving.bytes)}`
+    : 'Nothing is served yet: the first deploy uploads the files, then the site switches to them.'}</p>
+    <div class="nj-run-row mb-4" data-site-meters>${siteMeters({ monthBytes: m.bytes, includedBytes: BANDWIDTH_INCLUDED_GB * 1e9, requests: m.requests, hitRate: m.hitRate })}</div>
+    <h3 class="nj-subtitle" id="kept-title">Roll back</h3>
+    <p class="nj-meta">The files of the last ${site.keep + 1} deploys are kept. Rolling back serves one of them again at once, without building; the next deploy serves new files as usual.</p>
+    ${site.kept.length ? html`<div class="table-responsive mb-4"><table class="table mb-0" aria-labelledby="kept-title">
+      <thead><tr><th scope="col">Commit</th><th scope="col">Uploaded</th><th scope="col">Files</th><th scope="col"><span class="visually-hidden">Action</span></th></tr></thead>
+      <tbody>${site.kept.map((d) => html`<tr>
+        <td class="nj-mono">${short(d.commit) === '—' ? d.deployId : short(d.commit)}</td>
+        <td class="nj-num">${when(d.at)}</td>
+        <td class="nj-num">${filesText(d.files, d.bytes)}</td>
+        <td class="text-end">${serving?.deployId === d.deployId ? statusPill('Serving') : html`<button type="button" class="btn btn-secondary btn-sm" data-rollback="${d.deployId}"${suspended ? ' disabled' : ''} aria-label="Roll back to ${short(d.commit) === '—' ? d.deployId : short(d.commit)}">Roll back</button>`}</td>
+      </tr>`)}</tbody>
+    </table></div>` : html`<p class="nj-meta mb-4">No deploy's files are kept yet.</p>`}
+    <form data-site-form novalidate aria-labelledby="site-settings-title">
+      <h3 class="nj-subtitle" id="site-settings-title">How it is served</h3>
+      <div class="nj-grid-2">
+        <div><label class="form-label" for="site-publish">Publish directory</label>
+          <input class="form-control nj-mono" id="site-publish" name="publishDir" value="${site.publishDir}" maxlength="200" required autocomplete="off" spellcheck="false" aria-describedby="site-publish-hint publishDir-error"${suspended ? ' disabled' : ''}>
+          <div class="form-text" id="site-publish-hint">The folder the build writes the site to. A new one builds and deploys again.</div>
+          <div class="invalid-feedback" id="publishDir-error" data-for="publishDir"></div></div>
+        <div><div class="form-check mt-md-4">
+          <input class="form-check-input" type="checkbox" id="site-spa" name="spa"${site.spa ? ' checked' : ''} aria-describedby="site-spa-hint"${suspended ? ' disabled' : ''}>
+          <label class="form-check-label" for="site-spa">Single-page app</label>
+          <div class="form-text" id="site-spa-hint">Paths with no file of their own get index.html. Applies at once, without building.</div></div></div>
+      </div>
+      <div class="d-flex align-items-center gap-3 mt-2">
+        <button class="btn btn-primary" type="submit"${suspended ? ' disabled' : ''}>Save</button>
+        <span class="nj-meta" data-site-note role="status" aria-live="polite">${suspended ? 'Resume the site to change it.' : ''}</span>
+      </div>
+    </form>
+    <details class="mt-4">
+      <summary>Redirects, headers and caching</summary>
+      <dl class="nj-help mt-3 mb-0">
+        <div><dt><code>_redirects</code></dt><dd>A file in the publish directory, one rule a line: <code>/old /new 301</code>, <code>/blog/* /posts/:splat</code>, or <code>/app/* /index.html 200</code> to answer with another file. A file at the path wins unless the status ends in <code>!</code>.</dd></div>
+        <div><dt><code>_headers</code></dt><dd>A path, then indented <code>Name: value</code> lines: <code>/*</code> then <code>  X-Frame-Options: DENY</code>. The platform sets cookies and the content security policy itself.</dd></div>
+        <div><dt>Caching</dt><dd>HTML is checked on every visit, so a deploy shows at once. Files with a content hash in the name (<code>app-3f2a91c8.js</code>) are cached for a year; other files for an hour. A missing path gets <code>404.html</code> if there is one.</dd></div>
+        <div><dt>Its address</dt><dd>On the Local network it answers under <code>${svc.path ?? '/workspace/name/'}</code>. Use relative links, or build with <code>$${STATIC.basePathVar}</code> as the base, for example <code>vite build --base $${STATIC.basePathVar}</code>.</dd></div>
+      </dl>
+    </details>`;
+}
+
 /** Scaling (roadmap 4.7): the instance type and how many instances. */
 function scalingSection(svc) {
   const type = CREATABLE[svc.type];
@@ -196,7 +258,8 @@ function settingsSection(svc) {
     ['Type', svc.typeLabel ?? svc.type],
     ['Region', `${svc.regionName} (${svc.region})`],
     ...(svc.source ? [['Repository', svc.source.repo], ['Branch', svc.source.branch], ['Root directory', svc.source.rootDir || 'the repository root'], ['Auto-deploy', svc.autoDeploy ? 'On every push to the branch' : 'Off: manual deploys only']] : []),
-    ...(svc.build ? [['Runtime', svc.runtimeName ?? svc.build.runtime ?? '—'], ['Build command', svc.build.buildCommand || 'the runtime\'s default'], ...(RUNS_ONLY.has(svc.type) ? [] : [['Start command', svc.build.startCommand || 'the runtime\'s default']])] : []),
+    ...(svc.build ? [['Runtime', svc.runtimeName ?? svc.build.runtime ?? '—'], ['Build command', svc.build.buildCommand || 'the runtime\'s default'], ...(RUNS_ONLY.has(svc.type) || svc.type === 'static' ? [] : [['Start command', svc.build.startCommand || 'the runtime\'s default']])] : []),
+    ...(svc.type === 'static' ? [['Publish directory', svc.build?.publishDir ?? STATIC.publishDir], ['Single-page app', svc.spa ? 'Yes: paths with no file get index.html' : 'No']] : []),
     ...(svc.type === 'cron' ? [['Schedule', `${svc.scheduleText || '—'} (${svc.schedule ?? 'none'})`], ['Command', svc.command ?? '—']] : []),
     ...(svc.type === 'workflow' ? [['Tasks', (svc.tasks ?? []).map((t) => t.name).join(', ') || 'none'], ['Runs at once', `Up to ${svc.concurrency}`]] : []),
     ['Address', svc.path ? `${window.location.origin}${svc.path}` : svc.url ?? (svc.internalHost ? `${svc.internalHost} (private network)` : '—')],
@@ -227,6 +290,8 @@ export async function servicePage({ workspace, params }) {
   const tabs = tabsFor(svc);
   const cron = svc.type === 'cron';
   const workflow = svc.type === 'workflow';
+  const isSite = svc.type === 'static';
+  const logLabel = isSite ? 'Build and upload' : 'Build and rollout';
   const runsOnly = RUNS_ONLY.has(svc.type);
   let tab = new URLSearchParams(window.location.search).get('tab');
   if (!tabs.some(([k]) => k === tab)) tab = 'overview';
@@ -270,12 +335,16 @@ export async function servicePage({ workspace, params }) {
           </section>
           <div class="mb-4" data-task-out></div>
           <div data-trigger-box></div>` : ''}
+        ${isSite ? html`<section class="nj-card mb-4" aria-labelledby="site-title">
+          <h2 class="nj-card-title" id="site-title">Site</h2>
+          <div data-site-card>${siteCard(svc, null)}</div>
+        </section>` : ''}
         <section class="nj-card mb-4" aria-labelledby="deploy-title">
           <h2 class="nj-card-title" id="deploy-title">Latest deploy</h2>
-          <p class="nj-meta">${svc.estimate.text}${svc.sleepsWhenIdle ? ` · sleeps after ${SLEEP.afterMinutes} minutes without requests` : ''}${svc.spec ? ` · ${svc.planName} is ${svc.spec} per instance` : ''}</p>
-          <div data-deploy>${deployCard(latest)}</div>
+          <p class="nj-meta">${isSite ? `Free · its bandwidth counts toward the workspace's ${BANDWIDTH_INCLUDED_GB} GB a month` : html`${svc.estimate.text}${svc.sleepsWhenIdle ? ` · sleeps after ${SLEEP.afterMinutes} minutes without requests` : ''}${svc.spec ? ` · ${svc.planName} is ${svc.spec} per instance` : ''}`}</p>
+          <div data-deploy>${deployCard(latest, svc.type)}</div>
         </section>
-        <div class="mb-4" data-log>${buildLog(detail?.log ?? [], running(latest))}</div>
+        <div class="mb-4" data-log>${buildLog(detail?.log ?? [], running(latest), logLabel)}</div>
         <section class="nj-card" aria-labelledby="recent-title">
           <div class="nj-section-head"><h2 class="nj-card-title mb-0" id="recent-title">Recent deploys</h2><button type="button" class="btn btn-link p-0" data-tab="deploys">All deploys</button></div>
           <div data-recent>${deploysTable(svc.deploys.slice(0, 5).map(row), workspace.id, { withService: false })}</div>
@@ -284,17 +353,17 @@ export async function servicePage({ workspace, params }) {
       ${panel('metrics', runsOnly ? logsPanel({ download: true, foot: retentionText(svc.plan) }) : html`
         <div class="nj-section-head"><h2 class="nj-section-title mb-0">Resources</h2>${segmented('Range', RANGES.map((r) => [r, r]), '1h', 'range')}</div>
         <div class="mb-4" data-resources><div class="nj-res-empty">Loading…</div></div>
-        <section class="nj-card mb-4" aria-labelledby="instances-title">
+        ${isSite ? '' : html`<section class="nj-card mb-4" aria-labelledby="instances-title">
           <div class="nj-section-head"><h2 class="nj-card-title mb-0" id="instances-title">Instances</h2>${CREATABLE[svc.type]?.instances ? html`<button type="button" class="btn btn-link p-0" data-tab="scaling">Change instance type or count</button>` : ''}</div>
           <div data-instances><p class="nj-meta mb-0">Loading…</p></div>
-        </section>
+        </section>`}
         ${logsPanel({ download: true, foot: retentionText(svc.plan) })}`)}
 
       ${panel('deploys', html`
         <section class="nj-card mb-4" aria-labelledby="deploys-title">
           <h2 class="nj-card-title" id="deploys-title">Deploys</h2>
           <div data-deploys>${deploysTable(svc.deploys.map(row), workspace.id, { withService: false })}</div>
-          ${svc.deploys.length ? html`<div class="mt-3"><label class="form-label" for="deploy-pick">Build and rollout log of</label>
+          ${svc.deploys.length ? html`<div class="mt-3"><label class="form-label" for="deploy-pick">${logLabel} log of</label>
             <select class="form-select" id="deploy-pick">${svc.deploys.map((d) => html`<option value="${d.id}">${short(d.commit)} · ${statusWord(d.status)} · ${when(d.startedAt)}</option>`)}</select></div>` : ''}
         </section>
         <div data-deploy-log></div>`)}
@@ -352,10 +421,12 @@ export async function servicePage({ workspace, params }) {
         const resBox = root.querySelector('[data-resources]');
         const instBox = root.querySelector('[data-instances]');
         try {
-          const [m, { instances }] = await Promise.all([api(`${base}/metrics?range=${range}`), api(`${base}/instances`)]);
+          const [m, { instances }] = await Promise.all([api(`${base}/metrics?range=${range}`), instBox ? api(`${base}/instances`) : { instances: [] }]);
           resBox.innerHTML = String(resourceCards(m, svc));
-          instBox.innerHTML = String(instanceTiles(instances, svc));
-          applySizes(instBox);
+          if (instBox) {
+            instBox.innerHTML = String(instanceTiles(instances, svc));
+            applySizes(instBox);
+          }
         } catch (err) {
           resBox.innerHTML = String(html`<div class="nj-res-empty">${err.message}</div>`);
         }
@@ -377,7 +448,7 @@ export async function servicePage({ workspace, params }) {
         if (!id || !out) return;
         try {
           const d = await api(`${base}/deploys/${encodeURIComponent(id)}`);
-          out.innerHTML = String(buildLog(d.log, running(d), `Build and rollout of ${short(d.commit)}`));
+          out.innerHTML = String(buildLog(d.log, running(d), `${logLabel} of ${short(d.commit)}`));
         } catch (err) {
           out.textContent = err.message;
         }
@@ -387,7 +458,7 @@ export async function servicePage({ workspace, params }) {
       async function refreshLog(d) {
         try {
           const full = await api(`${base}/deploys/${encodeURIComponent(d.id)}`);
-          logBox.innerHTML = String(buildLog(full.log, running(d)));
+          logBox.innerHTML = String(buildLog(full.log, running(d), logLabel));
           const body = logBox.querySelector('.nj-logs-body');
           body.scrollTop = body.scrollHeight;
         } catch { /* the next event tries again */ }
@@ -398,6 +469,61 @@ export async function servicePage({ workspace, params }) {
         if (cron && tab === 'overview' && runs.some((r) => r.id === shownRun && ['queued', 'running'].includes(r.status))) showRunLog(shownRun);
         if (workflow && tab === 'overview' && taskRuns.some((r) => r.id === shownTask && r.status === 'running')) showTaskRun(shownTask);
       }, 2000);
+
+      // ----- A Static Site's files, rollback and settings -----
+      const siteBox = root.querySelector('[data-site-card]');
+      let siteNote = '';
+      async function refreshSite() {
+        if (!siteBox) return;
+        try {
+          const { site } = await api(`${base}/site`);
+          siteBox.innerHTML = String(siteCard(svc, site));
+          applySizes(siteBox);
+          if (siteNote) siteBox.querySelector('[data-site-note]').textContent = siteNote;
+        } catch (err) {
+          siteBox.textContent = err.message;
+        }
+      }
+      if (isSite) {
+        refreshSite();
+        const liveSite = throttle(refreshSite, 3000);
+        stops.push(on('metrics', (e) => { if (e.service === svc.name && tab === 'overview') liveSite(); }), liveSite.cancel);
+        stops.push(on('site', (e) => { if (e.service === svc.name) liveSite(); }));
+        siteBox.addEventListener('click', async (event) => {
+          const b = event.target.closest('[data-rollback]');
+          if (!b) return;
+          b.disabled = true;
+          const note = siteBox.querySelector('[data-site-note]');
+          try {
+            const { deploy } = await api(`${base}/rollback`, { method: 'POST', body: { deploy: b.dataset.rollback } });
+            siteNote = `Rolled back: serving ${deploy.commit ? short(deploy.commit) : b.dataset.rollback} again.`;
+            await refreshSite();
+          } catch (err) {
+            b.disabled = false;
+            if (note) note.textContent = err.message;
+          }
+        });
+        // The form is drawn again with the card, so its submit is caught on the card.
+        siteBox.addEventListener('submit', async (event) => {
+          const form = event.target.closest('[data-site-form]');
+          if (!form) return;
+          event.preventDefault();
+          const note = form.querySelector('[data-site-note]');
+          const button = form.querySelector('button[type="submit"]');
+          button.disabled = true;
+          note.textContent = 'Saving…';
+          try {
+            const r = await api(`${base}/site`, { method: 'PATCH', body: { publishDir: form.publishDir.value.trim(), spa: form.spa.checked } });
+            siteNote = r.operation ? 'Saved. A new deploy builds with the new publish directory.' : 'Saved. It applies to the next request.';
+            await refreshSite();
+          } catch (err) {
+            button.disabled = false;
+            note.textContent = '';
+            if (err.status === 422) showErrors(form, err);
+            else note.textContent = err.message;
+          }
+        });
+      }
 
       // ----- A Workflow's tasks, runs and trigger -----
       let taskRuns = [];
@@ -644,8 +770,9 @@ export async function servicePage({ workspace, params }) {
         if (!e.deploy) return;
         if (current && e.deploy.id !== current.id && Date.parse(e.deploy.startedAt ?? 0) < Date.parse(current.startedAt ?? 0)) return;
         current = e.deploy;
-        box.innerHTML = String(deployCard(current));
+        box.innerHTML = String(deployCard(current, svc.type));
         applySizes(box);
+        if (isSite && ['live', 'failed'].includes(current.status)) refreshSite();
         if (current.status === 'live') {
           svc.current ??= { deployId: current.id, commit: current.commit ?? null };
           showStatus('live');

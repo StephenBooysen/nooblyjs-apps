@@ -3,7 +3,7 @@
 // walks them. Owners and Members create and deploy; only the Owner connects GitHub (product.md §7). Environment
 // values are write-only: answers carry keys, and a value comes back only through an audited reveal that names the
 // service or group.
-import { CREATABLE, PLANS, REGIONS, RUNTIMES, MAX_INSTANCES, WORKFLOW, TASK_NAME, planOf, regionOf, runtimeOf, estimate, specText } from '../../public/js/shared/catalog.js';
+import { CREATABLE, PLANS, REGIONS, RUNTIMES, MAX_INSTANCES, WORKFLOW, TASK_NAME, STATIC, isPublishDir, planOf, regionOf, runtimeOf, estimate, specText } from '../../public/js/shared/catalog.js';
 import { parseCron, describeCron, nextRuns } from '../../public/js/shared/cron.js';
 import { serviceView, groupView, githubView } from '../domain/records.js';
 import { toWorkloadSpec, fromPlatformDeploy, mergeDeploy, hostFor, pathFor, sleepsWhenIdle } from '../platform/workloads.js';
@@ -230,6 +230,10 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     // A Cron Job: what each run does, and when (UTC). A Workflow: its tasks, and how many run at once.
     const cron = type.schedule ? checkCron(b, problems) : null;
     const workflow = type.tasks ? checkTasks(b, problems) : null;
+    // A Static Site: the folder its build writes, and whether paths without a file get index.html (roadmap 5.2).
+    const publishDir = typeof b.publishDir === 'string' ? b.publishDir.trim().replace(/^(\.\/)+(?=.)/, '').replace(/(.)\/+$/, '$1') : STATIC.publishDir;
+    if (b.type === 'static' && !isPublishDir(publishDir)) problems.push({ path: 'publishDir', message: 'A folder inside the build, such as dist or build/out, or . for all of it.' });
+    if (b.type === 'static' && b.spa !== undefined && typeof b.spa !== 'boolean') problems.push({ path: 'spa', message: 'Yes or no.' });
     const plan = planOf(b.plan ?? 'standard');
     if (!plan) problems.push({ path: 'plan', message: 'Choose an instance type.' });
     const instances = type.instances ? Number(b.instances ?? 1) : 1;
@@ -260,7 +264,8 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     const service = await records.services.create({
       workspaceId: ws, name, type: b.type,
       source: fromUrl ? { provider: 'git', repo: repoLabel, url: gitUrl, branch, rootDir } : { provider: 'github', repo: repo.fullName, branch, rootDir },
-      build: { runtime: runtime.key, buildCommand: b.buildCommand || null, startCommand: b.startCommand || null },
+      build: { runtime: runtime.key, buildCommand: b.buildCommand || null, startCommand: b.startCommand || null, ...(b.type === 'static' ? { publishDir } : {}) },
+      ...(b.type === 'static' ? { spa: b.spa === true } : {}),
       region: region.id, plan: plan.key, instances,
       ...(cron ? { schedule: cron.schedule, command: cron.command } : {}),
       ...(workflow ? { tasks: workflow.tasks, concurrency: workflow.concurrency } : {}),

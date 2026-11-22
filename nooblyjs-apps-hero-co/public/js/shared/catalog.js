@@ -66,6 +66,13 @@ export const CREATABLE = {
   cron: { kind: 'job', label: 'Cron Job', action: 'Create cron job', port: false, plan: true, instances: false, publicUrl: false, sleeps: false, schedule: true },
   workflow: { kind: 'job', label: 'Workflow', action: 'Create workflow', port: false, plan: true, instances: false, publicUrl: false, sleeps: false, tasks: true },
 };
+/**
+ * A Static Site's starting values (roadmap 5.2; infra spec 8.8). `publishDir`: the folder the build writes the site to.
+ * On the Local network a site answers under /<workspace>/<name>/, so its build gets that path as `basePathVar`.
+ */
+export const STATIC = { publishDir: 'dist', basePathVar: 'BASE_PATH', keep: 5 };
+/** Whether a publish directory is one: a folder inside the build (no leading /, no .., no trailing /), or . for all. */
+export const isPublishDir = (v) => typeof v === 'string' && v.length <= 200 && (v === '.' || (/^[A-Za-z0-9._][A-Za-z0-9._\/-]*$/.test(v) && !v.endsWith('/') && !v.split('/').some((s) => s === '' || s === '.' || s === '..')));
 /** A run's command and schedule as the create form starts them. */
 export const CRON_DEFAULTS = { schedule: '0 2 * * *', plan: 'starter' };
 

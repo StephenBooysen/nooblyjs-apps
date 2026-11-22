@@ -8,7 +8,7 @@ import { html } from '../html.js';
 import { api } from '../api.js';
 import { showErrors } from '../forms.js';
 import { stepper, emptyState } from '../components/index.js';
-import { CREATABLE, CRON_DEFAULTS, WORKFLOW, PLANS, RUNTIMES, MAX_INSTANCES, SLEEP, planOf, estimate, specText, priceText } from '../shared/catalog.js';
+import { CREATABLE, CRON_DEFAULTS, WORKFLOW, STATIC, BANDWIDTH_INCLUDED_GB, PLANS, RUNTIMES, MAX_INSTANCES, SLEEP, planOf, estimate, specText, priceText } from '../shared/catalog.js';
 import { parseCron, describeCron, nextRuns, CRON_HINT } from '../shared/cron.js';
 import { until, utcText } from '../format.js';
 import { tasksEditor, bindTasksEditor } from './tasks.js';
@@ -103,10 +103,17 @@ function buildFieldset({ catalog, type, firstRepo }) {
     <div class="nj-grid-2">
       <div><label class="form-label" for="f-build">Build command <span class="nj-meta">· optional</span></label>
         <input class="form-control nj-mono" id="f-build" name="buildCommand" placeholder="Default: ${RUNTIMES[0].defaultBuild}" autocomplete="off" spellcheck="false" aria-describedby="commands-hint buildCommand-error">${feedback('buildCommand')}</div>
+      ${type.key === 'static' ? html`<div><label class="form-label" for="f-publish">Publish directory</label>
+        <input class="form-control nj-mono" id="f-publish" name="publishDir" value="${STATIC.publishDir}" required maxlength="200" autocomplete="off" spellcheck="false" aria-describedby="publish-hint publishDir-error">
+        <div class="form-text" id="publish-hint">The folder your build writes the site to, such as dist, build or public. Use . when the repo is the site.</div>${feedback('publishDir')}</div>` : ''}
       ${type.key === 'static' || type.schedule || type.tasks ? '' : html`<div><label class="form-label" for="f-start">Start command <span class="nj-meta">· optional</span></label>
         <input class="form-control nj-mono" id="f-start" name="startCommand" placeholder="Default: ${RUNTIMES[0].defaultStart}" autocomplete="off" spellcheck="false" aria-describedby="commands-hint startCommand-error">${feedback('startCommand')}</div>`}
     </div>
-    <div class="form-text" id="commands-hint">${type.schedule || type.tasks ? 'Leave it empty to use the runtime\'s default, shown in grey.' : 'Leave them empty to use the runtime\'s defaults, shown in grey.'}</div>
+    <div class="form-text" id="commands-hint">${type.key === 'static' ? html`Leave the build command empty to use the runtime's default, shown in grey. On the Local network the site answers under a path, <span class="nj-mono">/workspace/name/</span>: the build gets it as <span class="nj-mono">${STATIC.basePathVar}</span> (for example <span class="nj-mono">vite build --base $${STATIC.basePathVar}</span>), or use relative links.` : type.schedule || type.tasks ? 'Leave it empty to use the runtime\'s default, shown in grey.' : 'Leave them empty to use the runtime\'s defaults, shown in grey.'}</div>
+    ${type.key === 'static' ? html`<div class="form-check">
+      <input class="form-check-input" type="checkbox" id="f-spa" name="spa" aria-describedby="spa-hint">
+      <label class="form-check-label" for="f-spa">Single-page app</label>
+      <div class="form-text" id="spa-hint">Paths with no file of their own get index.html, for routing in the browser. Paths that look like files (logo.png) still get 404. You can change this later without rebuilding.</div></div>` : ''}
     ${type.schedule ? html`<div class="nj-grid-2">
       <div><label class="form-label" for="f-schedule">Schedule (UTC)</label>
         <input class="form-control nj-mono" id="f-schedule" name="schedule" value="${CRON_DEFAULTS.schedule}" required autocomplete="off" spellcheck="false" aria-describedby="schedule-preview schedule-hint schedule-error">
@@ -184,7 +191,7 @@ function summaryAside(type) {
     </dl>
     <hr>
     <div class="nj-summary-total"><span>Estimated</span><strong class="nj-num" data-sum="price">$— / mo</strong></div>
-    <p class="nj-meta mb-1">${type.schedule ? 'A flat price for the cron job, however often it runs.' : type.tasks ? 'A flat price for the workflow, however many tasks it runs.' : `A flat price for the service, for 1 to ${MAX_INSTANCES} instances.`}</p>
+    <p class="nj-meta mb-1">${type.key === 'static' ? `Static sites are free. Their bandwidth counts toward the workspace's ${BANDWIDTH_INCLUDED_GB} GB a month.` : type.schedule ? 'A flat price for the cron job, however often it runs.' : type.tasks ? 'A flat price for the workflow, however many tasks it runs.' : `A flat price for the service, for 1 to ${MAX_INSTANCES} instances.`}</p>
     ${type.sleeps ? html`<p class="nj-meta">In a cloud region it sleeps after ${SLEEP.afterMinutes} minutes without requests, and wakes on the next one. ${SLEEP.wakeText}</p>` : ''}
     <div class="nj-switch-row">
       <span><strong class="d-block">Auto-deploy</strong><span class="nj-meta" data-sum="auto">Deploy on every push to main</span></span>
@@ -298,8 +305,7 @@ export async function createServicePage({ workspace, typeInfo, url }) {
           const named = [...form.querySelectorAll('[data-task-row] input[name$=".name"]')].map((el) => el.value.trim()).filter(Boolean);
           set('tasks', named.length ? named.join(', ') : '—');
         }
-        const est = estimate(plan?.key);
-        set('price', est.text);
+        set('price', type.plan ? estimate(plan?.key).text : '$0 / mo');
         set('auto', $('#f-auto').checked ? `Deploy on every push to ${branch}` : 'Deploy only when you ask');
         // A Local network service answers at <this site>/<workspace>/<name>/; elsewhere at <name>.<app domain>.
         const url = form.querySelector('[data-url-full]');
@@ -407,6 +413,7 @@ export async function createServicePage({ workspace, typeInfo, url }) {
           rootDir: $('#f-root').value,
           buildCommand: $('#f-build').value.trim() || null,
           ...(type.key === 'static' || type.schedule || type.tasks ? {} : { startCommand: $('#f-start').value.trim() || null }),
+          ...(type.key === 'static' ? { publishDir: $('#f-publish').value.trim(), spa: $('#f-spa').checked } : {}),
           ...(type.schedule ? { schedule: $('#f-schedule').value, command: $('#f-command').value.trim() } : {}),
           ...(tasksEdit ? { tasks: tasksEdit.read(), concurrency: tasksEdit.concurrency() } : {}),
           plan: form.querySelector('input[name="plan"]:checked')?.value ?? 'standard',

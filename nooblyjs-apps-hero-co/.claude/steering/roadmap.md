@@ -190,8 +190,23 @@ bytes matched the load generator's counts; a redeploy under load answered every 
 
 ## Phase 5 — Remaining app types: Static Site, Cron Job, Workflow
 
-- [ ] 5.1 **[infra 4, 8.8]** Buckets, static sites and the CDN.
-- [ ] 5.2 Static Site form and page: build command, publish directory, bandwidth and cache-hit meters.
+- [x] 5.1 **[infra 4, 8.8]** Buckets, static sites and the CDN. Where the platform serves sites itself (infra 8.8.1,
+  8.8.2, 8.8.5; stack D12): the build runs once, the publish directory is copied out of the image and stored by
+  content hash, and the site switches to a deploy in one write; the last 6 deploys' files are kept for rollback. A
+  Local network site answers at `<base URL>/<workspace>/<site>/` through our proxy (sandboxed, cookies kept out) with
+  the platform's cache headers, ETags, `_redirects`, `_headers`, single-page-app fallback and `404.html`; its build gets
+  that path as `BASE_PATH`. The cloud CDN adapters (infra 8.8.3) and custom domains (8.8.4) are not built.
+  `test/static.test.js`.
+- [x] 5.2 Static Site form and page: build command, publish directory, bandwidth and cache-hit meters.
+  `test/static.test.js`, `test/ui/static.spec.js`. Create form with the publish directory, single-page app, no start
+  command or instances, free; service page with what it serves (deploy, files, size, since when), Bandwidth this month
+  (of the workspace's 100 GB) and Cache hit rate meters, the deploys kept with Roll back (at once, no build), the publish
+  directory (a new one builds again) and single-page app (at once), and how redirects, headers and caching work;
+  requests and bandwidth on Metrics; the same meters on the dashboard and Metrics cards. Run for real 2026-11-22 on the
+  Local network with `render-examples/create-react-app` (`PUBLIC_URL=$BASE_PATH npm run build`, publish directory
+  `build`): built in 4 min 19 s, 10 files (506 KB) uploaded; HTML `no-cache`, hashed JS a year, a 304 for a known ETag,
+  single-page routes 200, `missing.png` 404; a second deploy served 200 on every check while it built and switched;
+  rollback to the first deploy took 153 ms; no container was left running.
 - [x] 5.3 Cron Job: a UTC schedule firing `workloads.runJob()` (our own minute scheduler, stack D10); last run, peak
   memory, next run. `test/cron.test.js`, `test/jobs.test.js`, `test/ui/cron.spec.js`. Create form with the schedule
   previewed in words; service page with Run now, the schedule (changed from the next run, no rebuild), the runs with

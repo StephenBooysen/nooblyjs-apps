@@ -85,16 +85,18 @@ export function resourceCards(m, svc) {
     : `Resource charts for ${svc.regionName} arrive with cloud monitoring (roadmap Phase 4, cloud). Services in the Local network region show them now.`;
   const series = (key) => sampled.map((p) => ({ t: p.t, value: p[key] }));
   const [memV, memU] = memoryParts(cur.memoryMb);
-  const counts = svc.type === 'web' && svc.local;
-  const reqNote = svc.type === 'web' ? 'Requests are counted at its public address. Cloud regions count them with the load balancer, later.' : 'Not a web service: it answers no public HTTP requests.';
+  const site = svc.type === 'static';
+  const counts = (svc.type === 'web' || site) && svc.local;
+  const reqNote = site ? 'Requests to a static site are counted on the Local network now. Cloud regions count them at the CDN, later.' : svc.type === 'web' ? 'Requests are counted at its public address. Cloud regions count them with the load balancer, later.' : 'Not a web service: it answers no public HTTP requests.';
   const [rateV, rateU] = rateParts(cur.bytesPerSec);
   const cards = [
-    resCard({
+    // A static site runs nothing: it has requests and bandwidth only.
+    site ? '' : resCard({
       label: 'CPU', range, aside: lim.cpu ? `Limit ${cpuText(lim.cpu)} vCPU` : 'No limit',
       value: bigValue(cur.cpu === null ? '—' : cpuText(cur.cpu), 'vCPU', cur.cpu === null || !lim.cpu ? null : pctOf(cur.cpu, lim.cpu)),
       chart: sampled.length ? html`${raw(areaChart(series('cpu'), { metric: 'cpu', limit: lim.cpu || undefined, label: `CPU over the last ${range}, in vCPU, limit ${lim.cpu} vCPU` }))}` : nothing(noSamples),
     }),
-    resCard({
+    site ? '' : resCard({
       label: 'Memory', range, aside: lim.memoryMb ? `Limit ${memoryText(lim.memoryMb)}` : 'No limit',
       value: bigValue(memV, memU, cur.memoryMb === null || !lim.memoryMb ? null : pctOf(cur.memoryMb, lim.memoryMb)),
       chart: sampled.length ? html`${raw(areaChart(series('mem'), { metric: 'memory', limit: lim.memoryMb || undefined, label: `Memory over the last ${range}, in MB, limit ${lim.memoryMb} MB` }))}` : nothing(noSamples),
@@ -312,6 +314,18 @@ function statMeter({ label, value, unit, caption, pct, metric }) {
 const LATER = { postgres: 'Managed Postgres: storage and connections arrive with its own page.', keyvalue: 'Managed Key Value: memory and connections arrive with its own page.' };
 
 /**
+ * A Static Site's meters (product.md §6.4; roadmap 5.2): its bandwidth this month against the workspace's included
+ * bandwidth, and the share of this month's requests the cache answered.
+ */
+export function siteMeters(site) {
+  const rate = site.hitRate === null || site.hitRate === undefined ? null : Math.round(site.hitRate * 1000) / 10;
+  return [
+    meter({ label: 'Bandwidth this month', value: `${bytesText(site.monthBytes)} of ${bytesText(site.includedBytes)}`, pct: pctOf(site.monthBytes, site.includedBytes), metric: 'bandwidth' }),
+    meter({ label: 'Cache hit rate', value: rate === null ? 'No requests this month' : `${rate}% of ${countText(site.requests)} request${site.requests === 1 ? '' : 's'}`, pct: rate ?? 0, metric: 'requests' }),
+  ];
+}
+
+/**
  * A Workflow's meters (product.md §6.4; roadmap 5.4): task runs going against how many may run at once, runs waiting
  * against the queue's limit, and the last run that ended.
  */
@@ -363,7 +377,7 @@ export function runsTable(runs, limitMb) {
 
 function serviceCard(c, ws) {
   const sub = c.instances ? `${c.typeLabel} · ${c.instances} × ${c.planName ?? c.plan} · ${c.regionName}` : c.run ? `${c.typeLabel} · ${c.run.scheduleText || 'no schedule'} · ${c.regionName}` : c.tasks ? `${c.typeLabel} · ${c.tasks.tasks} task${c.tasks.tasks === 1 ? '' : 's'} · ${c.regionName}` : `${c.typeLabel} · ${c.regionName}`;
-  const meters = c.run ? runMeters(c.run) : c.tasks ? taskMeters(c.tasks) : LATER[c.type] ? html`<p class="nj-meta mb-0">${LATER[c.type]}</p>` : c.cpu.limit
+  const meters = c.run ? runMeters(c.run) : c.tasks ? taskMeters(c.tasks) : c.site ? siteMeters(c.site) : LATER[c.type] ? html`<p class="nj-meta mb-0">${LATER[c.type]}</p>` : c.cpu.limit
     ? [
       meter({ label: 'CPU', value: c.cpu.used === null ? `No samples · ${cpuText(c.cpu.limit)} vCPU` : `${cpuText(c.cpu.used)} of ${cpuText(c.cpu.limit)} vCPU`, pct: pctOf(c.cpu.used, c.cpu.limit), metric: 'cpu' }),
       meter({ label: 'Memory', value: c.memory.usedMb === null ? `No samples · ${memoryText(c.memory.limitMb)}` : `${memoryText(c.memory.usedMb)} of ${memoryText(c.memory.limitMb)}`, pct: pctOf(c.memory.usedMb, c.memory.limitMb), metric: 'memory' }),
@@ -521,7 +535,7 @@ function metricsRows(m, ws) {
     const chart = (label, metric, pts, limit, text) => html`<div class="nj-mini-chart"><p class="nj-meta">${label} · ${text}</p>${pts.length ? raw(areaChart(pts, { metric, limit, height: 90, label: `${s.name} ${label} over the last ${m.range}` })) : html`<div class="nj-res-empty">No samples</div>`}</div>`;
     return html`<section class="nj-card mb-3" aria-labelledby="m-${s.name}">
       <div class="nj-section-head"><div><h2 class="nj-card-title mb-0" id="m-${s.name}"><a href="/w/${ws}/services/${s.name}?tab=metrics">${s.name}</a></h2><span class="nj-meta">${s.typeLabel}${s.instances ? ` · ${s.instances} × ${s.planName}` : ''} · ${s.regionName}</span></div>${statusPill(statusWord(s.status))}</div>
-      ${s.run ? html`<div class="nj-run-row">${runMeters(s.run)}</div>` : s.tasks ? html`<div class="nj-run-row">${taskMeters(s.tasks)}</div>` : !sampled.length && !s.points.some((p) => p.req) ? html`<p class="nj-meta mb-0">${LATER[s.type] ?? (s.region === 'local' ? `No samples in the last ${m.range} yet: they arrive every 10 seconds while an instance runs.` : `Charts for ${s.regionName} arrive with cloud monitoring. Services in the Local network region have them now.`)}</p>` : html`<div class="nj-mini-charts">
+      ${s.run ? html`<div class="nj-run-row">${runMeters(s.run)}</div>` : s.tasks ? html`<div class="nj-run-row">${taskMeters(s.tasks)}</div>` : s.site ? html`<div class="nj-run-row">${siteMeters(s.site)}</div>` : !sampled.length && !s.points.some((p) => p.req) ? html`<p class="nj-meta mb-0">${LATER[s.type] ?? (s.region === 'local' ? `No samples in the last ${m.range} yet: they arrive every 10 seconds while an instance runs.` : `Charts for ${s.regionName} arrive with cloud monitoring. Services in the Local network region have them now.`)}</p>` : html`<div class="nj-mini-charts">
         ${chart('CPU', 'cpu', sampled.map((p) => ({ t: p.t, value: p.cpu })), s.cpu.limit || undefined, s.cpu.used === null ? 'no samples now' : `${cpuText(s.cpu.used)} of ${cpuText(s.cpu.limit)} vCPU now`)}
         ${chart('Memory', 'memory', sampled.map((p) => ({ t: p.t, value: p.mem })), s.memory.limitMb || undefined, s.memory.usedMb === null ? 'no samples now' : `${memoryText(s.memory.usedMb)} of ${memoryText(s.memory.limitMb)} now`)}
         ${chart('Requests', 'requests', s.points.some((p) => p.req) ? s.points.map((p) => ({ t: p.t, value: p.reqPerMin })) : [], undefined, `${countText(s.requests.perMin)} / min now`)}
