@@ -488,3 +488,13 @@ label.nj-repo:has(input:focus-visible) { outline: 2px solid var(--nj-accent); ou
 .nj-subtitle { font-size: 15px; font-weight: 700; color: var(--nj-ink); margin: 0 0 4px; }
 [data-site-card] details > summary { cursor: pointer; font-weight: 600; color: var(--nj-ink); }
 [data-site-card] .table td { vertical-align: middle; }
+
+/* ---------- Phase 6: Postgres and Key Value ---------- */
+.nj-store-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.nj-kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 16px; margin: 0; }
+.nj-kv dt { font-weight: 600; color: var(--nj-ink); }
+.nj-kv dd { margin: 0; overflow-wrap: anywhere; }
+.nj-link-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+@media (max-width: 860px) {
+  .nj-store-grid, .nj-link-form { grid-template-columns: 1fr; }
+}

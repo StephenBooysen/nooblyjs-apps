@@ -53,3 +53,19 @@ custom domains waiting for DNS.
 3. Leave it for 15 minutes: it shows *Sleeping*; open its URL: it wakes and answers.
 
 To take a host out of service, **Drain** it: its instances move to the pool's other hosts, then the VM is deleted.
+
+## 6. Postgres and Key Value on the Local network (roadmap 6.2, 6.3)
+
+The Local network's databases live on one Postgres server the operator runs (14 or later; `pg_dump` and `pg_restore`
+on this machine for backups). Give the app an admin login to it, from the environment only:
+
+```bash
+HERO_LOCAL_POSTGRES_URL='postgres://postgres:<password>@127.0.0.1:5432/postgres' npm start
+```
+
+The start-up log says whether it answers (`local Postgres 127.0.0.1:5432 answers (18.x)`). Each customer database is a
+database named `nb_<name>_<hash>` with a login role of the same name that owns it; nobody else may connect to it.
+Containers reach the server only through the agent's relay on their workspace's Docker network (the agent is started
+with `--relay-target 127.0.0.1:5432`; the development agent is). Backups go to the infrastructure data folder
+(`platform-databases/<workspace>/<name>/backups`). Key Value stores need nothing set up: each is a `valkey/valkey`
+container, pulled from Docker Hub the first time.

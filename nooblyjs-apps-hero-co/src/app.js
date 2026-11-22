@@ -28,6 +28,7 @@ import { createRecords } from './domain/records.js';
 import { createSecrets } from './domain/secrets.js';
 import { createGithub } from './github/github.js';
 import { followDeploys } from './platform/workloads.js';
+import { followDataStores } from './routes/datastores.js';
 import { createTelemetry } from './telemetry/index.js';
 import { createCron } from './scheduling/cron.js';
 import { createTasks } from './scheduling/tasks.js';
@@ -156,6 +157,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
 
   const platform = () => accelerators.mounted.infrastructure.services.platform;
   const deploysFollower = followDeploys({ eventEmitter, records, realtime, platform, log });
+  const dataFollower = followDataStores({ eventEmitter, records, realtime, log });
   // Metrics and logs of services (roadmap 4.1–4.3): kept, and passed to the workspace's live channel.
   const telemetry = createTelemetry({
     serviceRegistry, eventEmitter, platform, records, realtime, log, dataDir: config.dataDir,
@@ -266,6 +268,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
       cron.stop();
       tasks.stop();
       deploysFollower.stop();
+      dataFollower.stop();
       proxy.stop();
       await telemetry.stop();
       await accelerators.shutdown();

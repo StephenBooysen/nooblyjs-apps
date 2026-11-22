@@ -6,6 +6,7 @@ import { emptyState, optionCard, statusPill, stepper } from '../components/index
 import { signUpPage, forgotPasswordPage, resetPasswordPage, verifyEmailPage, invitePage } from './account.js';
 import { settingsPage } from './settings.js';
 import { createServicePage, comingTypePage } from './create.js';
+import { createDataStorePage } from './datastore.js';
 import { servicePage } from './service.js';
 import { dashboardPage, deploysPage, metricsPage, logsPage } from './watch.js';
 import { envGroupsPage } from './env-groups.js';
@@ -55,13 +56,14 @@ export const PAGES = {
           <div><dt>Only your other services call it</dt><dd>A <a href="/w/${workspace.id}/new/private">Private Service</a>: it has no public URL.</dd></div>
           <div><dt>It works through a queue and never answers requests</dt><dd>A <a href="/w/${workspace.id}/new/worker">Background Worker</a>.</dd></div>
           <div><dt>It runs on a schedule, then stops</dt><dd>A Cron Job (coming soon).</dd></div>
-          <div><dt>You need somewhere to keep data</dt><dd>Postgres for records, Key Value for a cache or queue (both coming soon).</dd></div>
+          <div><dt>You need somewhere to keep data</dt><dd><a href="/w/${workspace.id}/new/postgres">Postgres</a> for records, <a href="/w/${workspace.id}/new/keyvalue">Key Value</a> for a cache or queue.</dd></div>
         </dl>
       </section>`,
   }),
 
   'new-service-type': (ctx) => {
     const typeInfo = typeOf(ctx.params.type);
+    if (['postgres', 'keyvalue'].includes(typeInfo.key)) return createDataStorePage({ ...ctx, typeInfo });
     return CREATABLE[typeInfo.key] ? createServicePage({ ...ctx, typeInfo }) : comingTypePage({ ...ctx, typeInfo });
   },
 

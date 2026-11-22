@@ -102,6 +102,9 @@ export async function mountAccelerators({ app, eventEmitter, serviceRegistry, in
         site: { id: 'lan-dev', name: 'Local network', bind: '127.0.0.1', ...(config.localAgent === 'mock' ? { ports: { min: 29000, max: 29999 } } : {}) },
         agent: config.localAgent === 'off' ? null : config.localAgent,
         controller: `http://127.0.0.1:${config.port}`,
+        // Postgres for the Local network (roadmap 6.2; infra 8.6): an admin URL from HERO_LOCAL_POSTGRES_URL (never in
+        // a file of ours), or a stand-in with the mock agent (tests).
+        ...(config.localAgent === 'mock' ? { postgres: { engine: infrastructureModule.createMockPostgres() } } : config.localPostgresUrl ? { postgres: { url: config.localPostgresUrl } } : {}),
       },
       ...(mockStepMs === undefined ? {} : { mockStepMs }),
       ...(jobCheckMs === undefined ? {} : { jobCheckMs }),

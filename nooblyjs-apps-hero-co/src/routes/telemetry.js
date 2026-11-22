@@ -88,7 +88,22 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
    * A Cron Job's runs for its card: the last one that ended (the platform keeps it on the workload), whether one is
    * going now, and the next time the schedule fires. Null for other kinds.
    */
+  /**
+   * A Postgres or Key Value service's meters (roadmap 6.4): storage and connections, or memory and clients, now.
+   * → { storage?, memory?, connections } or null while it is not up.
+   */
+  async function storeFacts(s) {
+    const api = s.type === 'postgres' ? platform().databases : s.type === 'keyvalue' ? platform().keyvalue : null;
+    if (!api || !['live'].includes(s.status)) return null;
+    const st = await api.stats(s.workspaceId, s.store ?? s.name).catch(() => null);
+    if (!st) return null;
+    return s.type === 'postgres'
+      ? { storage: { bytes: st.bytes, limitBytes: st.limitBytes }, connections: { used: st.connections, limit: st.limitConnections } }
+      : { memory: { usedMb: st.memoryUsedMb, limitMb: st.memoryMb }, connections: { used: null, limit: st.connections } };
+  }
+
   async function runFacts(s) {
+    if (['postgres', 'keyvalue'].includes(s.type)) return storeFacts(s);
     if (s.type === 'workflow') return taskFacts(s);
     if (s.type !== 'cron') return null;
     const [w, runs] = s.workload ? await Promise.all([
@@ -136,7 +151,7 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
       bandwidth: { perSec: now.bytesPerSec, monthBytes: now.monthBytes },
       sampledAt: now.instances ? now.at : null,
       last: lastDeploy ? { id: lastDeploy.id, status: lastDeploy.status, commit: lastDeploy.commit ?? null, message: lastDeploy.message ?? null, at: lastDeploy.endedAt ?? lastDeploy.startedAt ?? lastDeploy.createdAt } : null,
-      ...(run ? (s.type === 'workflow' ? { tasks: run } : { run }) : {}),
+      ...(run ? (s.type === 'workflow' ? { tasks: run } : ['postgres', 'keyvalue'].includes(s.type) ? { store: run } : { run }) : {}),
       // A Static Site's meters (product.md §6.4): its bandwidth this month against the workspace's included bandwidth,
       // and how many requests the cache answered (from memory, or a 304 for a file the browser has).
       ...(s.type === 'static' ? { site: { monthBytes: now.monthBytes, includedBytes: BANDWIDTH_INCLUDED_GB * 1e9, requests: now.monthRequests, hits: now.monthHits, hitRate: now.monthRequests ? round(now.monthHits / now.monthRequests, 4) : null } } : {}),

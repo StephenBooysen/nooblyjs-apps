@@ -29,8 +29,11 @@ export function toWorkloadSpec(service, { appDomain, groups = [] }) {
   const type = CREATABLE[service.type];
   if (!type) throw new Error(`A ${service.type} service cannot run on the platform yet.`);
   const plan = planOf(service.plan);
-  const own = new Set((service.env ?? []).map((e) => e.key));
+  // Linked data stores (roadmap 6.4): the platform puts each one's connection string in its variable at start.
+  const links = (service.links ?? []).map((l) => ({ key: l.key, link: l.type === 'keyvalue' ? { keyvalue: l.store } : { database: l.store } }));
+  const own = new Set([...(service.env ?? []).map((e) => e.key), ...links.map((l) => l.key)]);
   const env = [
+    ...links,
     ...(service.env ?? []).map((e) => ({ key: e.key, secretRef: secretRefFor(service, e.key) })),
     ...groups.flatMap((g) => (g.vars ?? []).filter((v) => !own.has(v.key)).map((v) => ({ key: v.key, secretRef: groupRefFor(g, v.key) }))),
   ];

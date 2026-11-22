@@ -29,6 +29,7 @@ import { parseCron, describeCron, nextRuns } from '../shared/cron.js';
 import { until, utcText, bytesText, ago } from '../format.js';
 import { statusWord, resourceCards, instanceTiles, logsPanel, mountLogs, retentionText, deploysTable, runsTable, segmented, selectSegment, throttle, RANGES, taskMeters, siteMeters } from './watch.js';
 import { tasksCard, taskRunsTable, triggerCard, bindTasksEditor } from './tasks.js';
+import { dataStorePage, linksCard, bindLinks } from './datastore.js';
 
 export { statusWord };
 const STEPS = ['Clone', 'Build', 'Roll out'];
@@ -285,6 +286,10 @@ export async function servicePage({ workspace, params }) {
       content: emptyState({ icon: 'signpost-split', title: `There is no service called ${params.service}`, action: html`<a class="btn btn-secondary" href="/w/${workspace.id}">Back to Production</a>` }),
     };
   }
+  // Postgres and Key Value have a page of their own (roadmap 6.4).
+  if (['postgres', 'keyvalue'].includes(svc.type)) return dataStorePage({ workspace, svc, base });
+  // The workspace's data stores, for Link to service on the Environment tab.
+  const stores = (await api(`/api/v1/workspaces/${ws}/services`)).services.filter((s) => ['postgres', 'keyvalue'].includes(s.type));
   const latest = svc.deploys[0] ?? null;
   const detail = latest ? await api(`${base}/deploys/${encodeURIComponent(latest.id)}`) : null;
   const tabs = tabsFor(svc);
@@ -368,7 +373,7 @@ export async function servicePage({ workspace, params }) {
         </section>
         <div data-deploy-log></div>`)}
 
-      ${panel('environment', envSection(svc))}
+      ${panel('environment', html`${envSection(svc)}${CREATABLE[svc.type] && svc.type !== 'static' ? linksCard(svc, stores) : ''}`)}
       ${panel('scaling', scalingSection(svc))}
       ${panel('settings', settingsSection(svc))}`,
 
@@ -890,6 +895,8 @@ export async function servicePage({ workspace, params }) {
           window.alert(err.details?.[0]?.message ?? err.message);
         }
       });
+
+      bindLinks(root.querySelector('#panel-environment'), { svc, base, stores });
 
       loaded.add(tab);
       if (tab !== 'overview') {
