@@ -48,6 +48,9 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
 - `src/scheduling/tasks.js`: Workflows' queue (stack.md D11): each task run a one-off container up to the concurrency,
   retries with backoff, cancel, the follower; `src/routes/tasks.js`: tasks, runs, the trigger key, and
   `/api/v1/tasks/...` (bearer key, mounted ahead of sessions); `public/js/pages/tasks.js`: task rows, tables, trigger card.
+- `src/routes/sites.js`: a Static Site's files (what it serves, the deploys kept for rollback, this month's requests,
+  bandwidth and cache hits), single-page app and publish directory, and Rollback (stack.md D12); `src/routes/proxy.js`
+  answers a Local network site from `services.platform.staticSites.respond()`.
 - `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
   (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, format, components, shell,

@@ -8,6 +8,7 @@ import { DEFAULT_REGION } from '../platform/accounts.js';
 import { addServiceRoutes } from './services.js';
 import { addJobRoutes } from './jobs.js';
 import { addTaskRoutes } from './tasks.js';
+import { addSiteRoutes } from './sites.js';
 import { addTelemetryRoutes } from './telemetry.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -126,6 +127,7 @@ export function createWorkspacesApi({ express, session, accounts, link, config, 
   addTelemetryRoutes(router, { records, platform, telemetry, audit, realtime, W });
   addJobRoutes(router, { records, platform, telemetry, audit, realtime, W });
   addTaskRoutes(router, { records, platform, tasks: () => tasks, audit, realtime, config, W });
+  addSiteRoutes(router, { records, platform, telemetry, audit, realtime, W });
 
   // ---- invitation links ------------------------------------------------------------
 

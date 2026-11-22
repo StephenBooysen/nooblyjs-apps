@@ -5,7 +5,7 @@
 //   - 10 s points for the last hour (memory only: a restart leaves a gap),
 //   - 1 minute roll-ups for 24 hours and 1 hour roll-ups for 30 days, saved through core `filing` as
 //     metrics/<workspace>/<service>.json every minute and at shutdown,
-//   - month totals of requests and bytes out (the dashboard's "Bandwidth this month"),
+//   - month totals of requests, bytes out and, for static sites, cache hits ("Bandwidth this month", "Cache hit rate"),
 //   - each instance's latest sample (the instance tiles).
 //
 // nooblyjs-core's `measuring` keeps raw values in memory with no roll-ups, retention or persistence, so it is not used
@@ -87,8 +87,8 @@ export function createMetrics({ filing = null, now = () => Date.now(), log = {} 
     s.minute = merge(s.minute, saved.minute ?? []);
     s.hour = merge(s.hour, saved.hour ?? []);
     for (const [m, v] of Object.entries(saved.months ?? {})) {
-      const cur = s.months[m] ?? { req: 0, bytes: 0 };
-      s.months[m] = { req: cur.req + (v.req ?? 0), bytes: cur.bytes + (v.bytes ?? 0) };
+      const cur = s.months[m] ?? { req: 0, bytes: 0, hits: 0 };
+      s.months[m] = { req: cur.req + (v.req ?? 0), bytes: cur.bytes + (v.bytes ?? 0), hits: (cur.hits ?? 0) + (v.hits ?? 0) };
     }
     s.rolled.minute = Math.max(s.rolled.minute, saved.rolled?.minute ?? 0);
     s.rolled.hour = Math.max(s.rolled.hour, saved.rolled?.hour ?? 0);
@@ -144,8 +144,8 @@ export function createMetrics({ filing = null, now = () => Date.now(), log = {} 
       });
     },
 
-    /** One request through the proxy: its status and the bytes sent back. */
-    request(ws, svc, { status = 200, bytes = 0, at } = {}) {
+    /** One request through the proxy: its status, the bytes sent back and (a static site) whether the cache answered. */
+    request(ws, svc, { status = 200, bytes = 0, hit = false, at } = {}) {
       const s = stateOf(ws, svc);
       const t = at ?? now();
       const b = bucket(s, t);
@@ -153,8 +153,8 @@ export function createMetrics({ filing = null, now = () => Date.now(), log = {} 
       if (status >= 500) b.err += 1;
       b.bytes += bytes;
       const m = monthOf(t);
-      const cur = s.months[m] ?? { req: 0, bytes: 0 };
-      s.months[m] = { req: cur.req + 1, bytes: cur.bytes + bytes };
+      const cur = s.months[m] ?? { req: 0, bytes: 0, hits: 0 };
+      s.months[m] = { req: cur.req + 1, bytes: cur.bytes + bytes, hits: (cur.hits ?? 0) + (hit ? 1 : 0) };
       s.dirty = true;
     },
 
@@ -209,7 +209,7 @@ export function createMetrics({ filing = null, now = () => Date.now(), log = {} 
       const t = now();
       const live = [...s.instances].filter(([, i]) => Date.parse(i.at) >= t - INSTANCE_STALE_MS);
       const lastMinute = [...s.raw.values()].filter((b) => b.t >= t - 60_000);
-      const month = s.months[monthOf(t)] ?? { req: 0, bytes: 0 };
+      const month = s.months[monthOf(t)] ?? { req: 0, bytes: 0, hits: 0 };
       return {
         at: new Date(t).toISOString(),
         instances: live.length,
@@ -221,6 +221,7 @@ export function createMetrics({ filing = null, now = () => Date.now(), log = {} 
         bytesPerSec: round(lastMinute.reduce((x, b) => x + b.bytes, 0) / 60, 1),
         monthRequests: month.req,
         monthBytes: month.bytes,
+        monthHits: month.hits ?? 0,
       };
     },
 

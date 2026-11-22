@@ -137,6 +137,9 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
       sampledAt: now.instances ? now.at : null,
       last: lastDeploy ? { id: lastDeploy.id, status: lastDeploy.status, commit: lastDeploy.commit ?? null, message: lastDeploy.message ?? null, at: lastDeploy.endedAt ?? lastDeploy.startedAt ?? lastDeploy.createdAt } : null,
       ...(run ? (s.type === 'workflow' ? { tasks: run } : { run }) : {}),
+      // A Static Site's meters (product.md §6.4): its bandwidth this month against the workspace's included bandwidth,
+      // and how many requests the cache answered (from memory, or a 304 for a file the browser has).
+      ...(s.type === 'static' ? { site: { monthBytes: now.monthBytes, includedBytes: BANDWIDTH_INCLUDED_GB * 1e9, requests: now.monthRequests, hits: now.monthHits, hitRate: now.monthRequests ? round(now.monthHits / now.monthRequests, 4) : null } } : {}),
     };
   }
 

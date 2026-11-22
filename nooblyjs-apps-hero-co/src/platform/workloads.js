@@ -5,7 +5,7 @@
 //
 // Deploy progress comes back as `infrastructure.deploy.*` events on the shared EventEmitter: followDeploys() keeps our
 // deploy records and the service's status from them and publishes each change to the workspace's live channel.
-import { CREATABLE, PLANS, SLEEP, WORKFLOW, planOf, regionOf } from '../../public/js/shared/catalog.js';
+import { CREATABLE, PLANS, SLEEP, STATIC, WORKFLOW, planOf, regionOf } from '../../public/js/shared/catalog.js';
 
 /** Deploy statuses in the order they happen; a record never moves back (events may arrive after a slower write). */
 const RANK = { queued: 0, building: 1, deploying: 2, live: 3, failed: 3, cancelled: 3, superseded: 4 };
@@ -36,14 +36,22 @@ export function toWorkloadSpec(service, { appDomain, groups = [] }) {
   ];
   // A key in two linked groups: the first group linked wins.
   const seen = new Set();
-  const uniqueEnv = env.filter((e) => (seen.has(e.key) ? false : seen.add(e.key)));
+  let uniqueEnv = env.filter((e) => (seen.has(e.key) ? false : seen.add(e.key)));
   const region = regionOf(service.region);
+  const site = service.type === 'static';
+  if (site) {
+    // A static site's variables are for its build (nothing runs after it). On the Local network it answers under
+    // /<workspace>/<name>/, which its build gets as BASE_PATH unless the service sets its own.
+    uniqueEnv = uniqueEnv.map((e) => ({ ...e, build: true }));
+    if (region.local && !seen.has(STATIC.basePathVar)) uniqueEnv.push({ key: STATIC.basePathVar, value: pathFor(service.workspaceId, service.name), build: true });
+  }
   return {
     name: service.name,
     kind: type.kind,
     region: region.platform,
     source: { repo: service.source.url ?? service.source.repo, branch: service.source.branch, rootDir: service.source.rootDir ?? '', ...(service.source.url ? {} : { gitConnection: service.workspaceId }) },
-    build: { runtime: service.build.runtime, buildCommand: service.build.buildCommand || null, startCommand: service.build.startCommand || null },
+    build: { runtime: service.build.runtime, buildCommand: service.build.buildCommand || null, startCommand: site ? null : service.build.startCommand || null, ...(site ? { publishDir: service.build.publishDir ?? STATIC.publishDir } : {}) },
+    ...(site ? { site: { spa: service.spa === true } } : {}),
     run: { ...(type.port ? { port: service.port ?? 10000 } : {}), ...(type.schedule ? { command: service.command ?? null } : {}), env: uniqueEnv },
     plan: { cpu: plan.cpu, memoryMb: plan.memoryMb },
     instances: type.instances ? service.instances : 1,
@@ -126,7 +134,8 @@ export function followDeploys({ eventEmitter, records, realtime, platform, log }
     }
     // A real build (Local network) finds the commit itself and reports it on a later event.
     if (p.commit && !prev?.commit) patch.commit = p.commit;
-    if (type === 'started') patch.status = 'building';
+    // The first deploy's record is written before its build starts: the start is when this event says so.
+    if (type === 'started') Object.assign(patch, { status: 'building', ...(prev?.startedAt ? {} : { startedAt: new Date().toISOString() }) });
     if (type === 'progress') patch.status = p.status === 'deploying' ? 'deploying' : 'building';
     if (type === 'succeeded') Object.assign(patch, { status: 'live', endedAt: new Date().toISOString(), step: p.of ?? patch.of, });
     if (type === 'failed') Object.assign(patch, { status: 'failed', reason: customerReason(p.reason, service), endedAt: new Date().toISOString() });

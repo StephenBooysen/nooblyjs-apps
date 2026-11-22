@@ -10,6 +10,10 @@
 //     opaque origin: their scripts cannot read our cookies or call our API as the viewer;
 //   - our own security headers (helmet's CSP for this app) are taken off their answers and replaced by that sandbox.
 // The price: apps cannot use cookies or localStorage on this URL yet. A separate apps origin (or a domain) lifts that.
+//
+// A Static Site (roadmap 5.1; infra spec 8.8) has no containers: its files are the platform's, answered by
+// services.platform.staticSites.respond() with their cache headers, ETags, redirects and _headers, under the same
+// sandbox. A redirect to one of its own paths stays under its prefix; whether the cache answered is counted.
 import http from 'node:http';
 import { REGIONS } from '../../public/js/shared/catalog.js';
 
@@ -43,6 +47,7 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {}, 
     try {
       const s = await records.services.byName(ws, name);
       if (!s || !LOCAL.has(s.region)) return void routes.delete(key(ws, name));
+      if (s.type === 'static') return void routes.set(key(ws, name), { site: s.workload ?? name, urls: [], next: 0 });
       const endpoints = await platform().workloads.endpoints(ws, s.workload ?? name);
       // A Local network service with nothing answering (deploying, or its server is offline) keeps its route, empty,
       // so the address answers 503 for the service rather than falling through to our own pages.
@@ -108,6 +113,34 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {}, 
     else req.pipe(upstream);
   }
 
+  /** A static site's answer: the platform's status, headers and body, with our sandbox and its paths under the prefix. */
+  async function serveSite(req, res, ws, route, rest) {
+    const q = rest.indexOf('?');
+    const path = q < 0 ? rest : rest.slice(0, q);
+    const query = q < 0 ? '' : rest.slice(q + 1);
+    let r;
+    try {
+      r = await platform().staticSites.respond(ws, route.site, { method: req.method, path, query, headers: { 'if-none-match': req.headers['if-none-match'] } });
+    } catch (err) {
+      log.warn?.(`[hero-co] ${req.servicePrefix} site: ${err.message}`);
+      return res.status(502).type('text').send('This site cannot be served right now. Try again shortly.');
+    }
+    for (const name of res.getHeaderNames()) res.removeHeader(name);
+    for (const [k, v] of Object.entries(r.headers ?? {})) {
+      if (k === 'set-cookie' || k === 'content-security-policy' || k === 'content-security-policy-report-only') continue;
+      res.setHeader(k, v);
+    }
+    const loc = r.headers?.location;
+    if (typeof loc === 'string' && loc.startsWith('/') && !loc.startsWith('//')) res.setHeader('location', `${req.servicePrefix.replace(/\/$/, '')}${loc}`);
+    res.setHeader('content-security-policy', SANDBOX);
+    res.setHeader('x-content-type-options', 'nosniff');
+    res.setHeader('referrer-policy', 'same-origin');
+    res.heroHit = r.hit === true;
+    res.heroBytes = r.body?.length ?? 0;
+    res.statusCode = r.status;
+    res.end(r.body ?? undefined);
+  }
+
   /** Express middleware: answers /<workspace>/<service>[/…] for a running Local network service; anything else passes. */
   function middleware(req, res, next) {
     const [, ws, name] = req.path.split('/');
@@ -125,11 +158,12 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {}, 
       if (told) return;
       told = true;
       try {
-        onRequest(ws, name, { status: res.statusCode, bytes: res.heroBytes ?? Number(res.getHeader('content-length') ?? 0) });
+        onRequest(ws, name, { status: res.statusCode, bytes: res.heroBytes ?? Number(res.getHeader('content-length') ?? 0), hit: res.heroHit === true });
       } catch { /* counting never breaks a request */ }
     };
     res.on('finish', tell);
     res.on('close', tell);
+    if (route.site) return serveSite(req, res, ws, route, after);
     if (!route.urls.length) {
       res.set('Retry-After', '30');
       return res.status(503).type('text').send('This service has no instance answering right now: it is deploying, or its server is offline. Try again shortly.');

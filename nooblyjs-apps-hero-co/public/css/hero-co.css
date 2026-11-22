@@ -483,3 +483,8 @@ label.nj-repo:has(input:focus-visible) { outline: 2px solid var(--nj-accent); ou
   .nj-task-row { grid-template-columns: minmax(0, 1fr) 72px auto; }
   .nj-task-row > input:nth-of-type(1) { grid-column: 1 / -1; }
 }
+
+/* ---------- Phase 5.2: Static Sites ---------- */
+.nj-subtitle { font-size: 15px; font-weight: 700; color: var(--nj-ink); margin: 0 0 4px; }
+[data-site-card] details > summary { cursor: pointer; font-weight: 600; color: var(--nj-ink); }
+[data-site-card] .table td { vertical-align: middle; }

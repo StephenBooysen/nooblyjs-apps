@@ -57,7 +57,8 @@ export async function seedRecords({ records, secrets, platform, accounts, reset 
     const svc = await records.services.create({
       workspaceId: ws, name: w.name, type,
       source: { provider: 'github', repo: w.source?.repo ?? null, branch: w.source?.branch ?? 'main', rootDir: w.source?.rootDir ?? '' },
-      build: { runtime: w.build?.runtime ?? 'node22', buildCommand: w.build?.buildCommand ?? null, startCommand: w.build?.startCommand ?? null },
+      build: { runtime: w.build?.runtime ?? 'node22', buildCommand: w.build?.buildCommand ?? null, startCommand: w.build?.startCommand ?? null, ...(type === 'static' ? { publishDir: w.build?.publishDir ?? 'dist' } : {}) },
+      ...(type === 'static' ? { spa: w.site?.spa === true } : {}),
       region: REGIONS.find((r) => r.platform === w.region)?.id ?? 'af-south',
       plan: planFor(w.plan), instances: w.instances ?? 1,
       envGroups: [], autoDeploy: Boolean(w.autoDeploy),
