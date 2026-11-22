@@ -7,13 +7,19 @@
 // below; roadmap 3.11). The region's ingress holds that request while the service wakes, so only a service behind it
 // sleeps: not a Private Service (nothing in front of it), and not one on the Local network.
 
-/** Instance types: the CPU and memory reserved for each instance. */
+/**
+ * Instance types: the CPU and memory reserved for each instance, and how many days of a service's logs are kept
+ * (product.md §6.5 fixes Standard at 7; the others are provisional, decided 2026-11-21).
+ */
 export const PLANS = [
-  { key: 'starter', name: 'Starter', cpu: 0.5, memoryMb: 512, priceUsd: 0 },
-  { key: 'standard', name: 'Standard', cpu: 1, memoryMb: 2048, priceUsd: 5 },
-  { key: 'pro', name: 'Pro', cpu: 2, memoryMb: 4096, priceUsd: 20 },
-  { key: 'pro-plus', name: 'Pro Plus', cpu: 4, memoryMb: 8192, priceUsd: 100 },
+  { key: 'starter', name: 'Starter', cpu: 0.5, memoryMb: 512, priceUsd: 0, logDays: 3 },
+  { key: 'standard', name: 'Standard', cpu: 1, memoryMb: 2048, priceUsd: 5, logDays: 7 },
+  { key: 'pro', name: 'Pro', cpu: 2, memoryMb: 4096, priceUsd: 20, logDays: 14 },
+  { key: 'pro-plus', name: 'Pro Plus', cpu: 4, memoryMb: 8192, priceUsd: 100, logDays: 30 },
 ];
+
+/** Bandwidth a workspace may send each month before it pays for more (the dashboard's "48 GB of 100"; provisional). */
+export const BANDWIDTH_INCLUDED_GB = 100;
 export const DEFAULT_PLAN = 'standard';
 export const MAX_INSTANCES = 10;
 
@@ -34,11 +40,15 @@ export const REGIONS = [
 ];
 
 /** Runtimes, in the mock-up's order, with the accelerator's names (spec 8.1 build.runtime). */
+/**
+ * Runtimes, and what each does when the Build or Start command is left empty (the infrastructure agent's templates:
+ * nooblyjs-accl-infrastructure agent/docker.js DEFAULTS). The create form shows these as placeholders.
+ */
 export const RUNTIMES = [
-  { key: 'node22', name: 'Node.js 22' },
-  { key: 'dockerfile', name: 'Docker (Dockerfile in repo)' },
-  { key: 'python312', name: 'Python 3.12' },
-  { key: 'go123', name: 'Go 1.23' },
+  { key: 'node22', name: 'Node.js 22', defaultBuild: 'npm ci (or npm install), then npm run build if it has one', defaultStart: 'npm start' },
+  { key: 'dockerfile', name: 'Docker (Dockerfile in repo)', defaultBuild: 'the Dockerfile builds it', defaultStart: 'the Dockerfile\'s CMD' },
+  { key: 'python312', name: 'Python 3.12', defaultBuild: 'pip install -r requirements.txt', defaultStart: 'gunicorn app:app, or python app.py' },
+  { key: 'go123', name: 'Go 1.23', defaultBuild: 'go build', defaultStart: 'the built program' },
 ];
 
 /**

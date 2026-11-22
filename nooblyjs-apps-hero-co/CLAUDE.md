@@ -39,10 +39,13 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   host contract), `accelerators.js` (customers at `/admin`, payments when built, infrastructure at `/infrastructure`),
   `people.js`, `realtime.js`.
 - `src/routes/`: `api.js` (`/api/v1`), `workspaces.js` (`/api/v1/workspaces/:workspace/...`, invitations), `pages.js`
-  (page URLs answered with `public/index.html`).
+  (page URLs answered with `public/index.html`), `telemetry.js` (dashboard, metrics, instances, logs, scale).
+- `src/telemetry/`: metric history and logs from `services.platform.telemetry` and the proxy, saved under
+  `DATA_DIR/telemetry` (stack.md §4.2, §4.3).
 - `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
-  (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, components, shell, pages).
+  (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, format, components, shell,
+  pages; `pages/watch.js` draws the dashboard, Deploys, Metrics and Logs screens and the shared log viewer).
 
 ## Rules
 

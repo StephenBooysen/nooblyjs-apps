@@ -291,20 +291,6 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     return { started: true, operation: operation.id };
   });
 
-  /** The service's console output (Local network services, infra 8.9 R11): lines after a cursor; live ones arrive as 'log' events. */
-  router.get(`${W}/services/:service/logs`, wrap(async (req, res) => {
-    const s = await serviceOr404(req, res);
-    if (!s) return;
-    const after = Math.max(0, Number.parseInt(req.query.after ?? '0', 10) || 0);
-    try {
-      const { lines, cursor } = await platform().logs.tail(req.workspace.id, s.workload ?? s.name, { after, limit: 500 });
-      res.json({ lines: lines.map((l) => ({ seq: l.seq, at: l.at, out: l.out, line: l.line, instance: l.instance ? l.instance.slice(-6) : null })), cursor });
-    } catch (err) {
-      if (err.code === 'not_found') return res.json({ lines: [], cursor: 0 });
-      throw err;
-    }
-  }));
-
   router.get(`${W}/services/:service/deploys`, wrap(async (req, res) => {
     const s = await serviceOr404(req, res);
     if (s) res.json({ deploys: await records.deploys.list(req.workspace.id, { serviceId: s.id, limit: 50 }) });

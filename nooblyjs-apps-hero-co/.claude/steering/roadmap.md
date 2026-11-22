@@ -155,16 +155,37 @@ workspace's web service and from nowhere else.
 
 Goal: the two "watch it" screens, with real numbers.
 
-- [ ] 4.1 **[infra 8.5]** Workload telemetry: per-instance metrics and log streaming to the launcher.
-- [ ] 4.2 Metric history: `telemetry.subscribe({ onMetrics })` → `measuring` → roll-ups; payloads always `{ value, unit, limit }`.
-- [ ] 4.3 Log storage (stack §4.3): live tail over SSE, daily NDJSON in `filing`, retention sweep by plan, search index.
-- [ ] 4.4 **Environment dashboard** (*Production dashboard* mock-up): four stat tiles, CPU allocated by service, services list with type-specific meters, recent deploys.
-- [ ] 4.5 **Service detail** (*api service* mock-up): header and actions, tabs, Resources chart with metric switcher and range, instance tiles, dark log viewer (live/paused, level filter, search, empty state, retention footer).
-- [ ] 4.6 Deploys tab and workspace **Deploys** page; workspace **Metrics** and **Logs** pages.
-- [ ] 4.7 Scaling tab: change instance type (no rebuild) and count → `workloads.scale()`.
+Done 2026-11-22 for the **Local network** region (the user asked for it first), on the mock agent in tests and on this
+machine's Docker by hand. Cloud regions draw the same screens and say their charts *arrive with cloud monitoring*:
+**4.8** below carries that.
+
+- [x] 4.1 **[infra 8.5]** Workload telemetry: per-instance metrics and log streaming to the launcher. Infra
+  `test/local-telemetry.test.js`, `test/agent-docker.test.js` (real Docker: crash → restart → follow again, real exit
+  code); `services.platform.workloads.instances()` for the tiles.
+- [x] 4.2 Metric history: `telemetry.subscribe({ onMetrics })` → `src/telemetry/metrics.js` (raw 10 s for 1 h, minute
+  for 24 h, hour for 30 days, saved through `filing`); requests and bytes counted by the proxy; payloads carry their
+  limits. `test/telemetry.test.js`, `test/watch.test.js`.
+- [x] 4.3 Log storage (stack §4.3): live tail over SSE, minute chunks of NDJSON in `filing`, retention sweep by plan,
+  search by scanning the window (no index: see D9). Build lines join as level `build`; download as text.
+  `test/telemetry.test.js`, `test/watch.test.js`.
+- [x] 4.4 **Environment dashboard** (*Production dashboard* mock-up): four stat tiles, CPU allocated by service, services
+  list with type-specific meters, recent deploys. `GET …/dashboard`; `test/watch.test.js`, `test/ui/watch.spec.js`.
+- [x] 4.5 **Service detail** (*api service* mock-up): header and actions, tabs (`?tab=`, arrow keys), Resources charts
+  with range, instance tiles, dark log viewer (live/paused, level filter, search, empty state, retention footer).
+  `test/ui/watch.spec.js`.
+- [x] 4.6 Deploys tab and workspace **Deploys** page; workspace **Metrics** and **Logs** pages. `test/watch.test.js`,
+  `test/ui/watch.spec.js`.
+- [x] 4.7 Scaling tab: change instance type (no rebuild) and count → `workloads.scale()`, audited `service.scaled`.
+  `test/watch.test.js`. Follow-up: the accelerator rolls every instance on a count change (1 → 2 replaces the one it
+  had); adding or removing instances in place is an infra change.
+- [ ] 4.8 Cloud regions: metrics and logs from the cloud providers' monitoring (infra 8.5 for `aws`/`gcp`/`azure`), then
+  the same stores and screens.
 
 **Exit check:** the seeded dashboard and service page match their mock-ups with computed numbers; a `console.log`
 in a deployed service appears in the live tail in under 3 seconds; CPU on the chart moves when load is applied.
+Met on the Local network 2026-11-22 (real Docker, `render-examples/express-hello-world`, 2 × Starter): lines in the
+live tail within a second; under load CPU rose to 0.41 of the 0.5 vCPU cap per instance and fell back; requests and
+bytes matched the load generator's counts; a redeploy under load answered every request.
 
 ## Phase 5 — Remaining app types: Static Site, Cron Job, Workflow
 

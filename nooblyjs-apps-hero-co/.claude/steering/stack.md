@@ -71,13 +71,13 @@ the three accelerators as `file:` links, plus a reason in the PR for anything el
 | `authservice` | Email + password sign-up and sessions; GitHub sign-in through the `passport` provider (`passport-github2`); personal API tokens for the CLI later | `file` → `passport` + Redis session store |
 | `logging` | App logs (not customer logs, see §4.3) | `file` → `file` + stdout |
 | `queueing` | Build jobs, deploy fan-out, log batches, webhook events | `memory` → `redis` |
-| `scheduling` | Cron Job services; metric roll-ups; log retention sweeps | `memory` (cron expressions from `scheduling/providers/cronExpression.js`) |
+| `scheduling` | Cron Job services (metric flushes and the hourly log sweep are timers in `src/telemetry/`, D9) | `memory` (cron expressions from `scheduling/providers/cronExpression.js`) |
 | `working` | Build workers off the request path | `default` |
 | `workflow` | Workflow service type (parallel tasks with retries); multi-step onboarding | `memory` + `exportState()` persisted by us |
-| `measuring` | Per-instance CPU, memory, requests, bandwidth samples and roll-ups | `default` |
+| `measuring` | Not used for metric history: see D9 (`src/telemetry/metrics.js`) | `default` |
 | `caching` | Dashboard summaries, GitHub repo lists, session store | `memory` → `redis` |
 | `notifying` | Internal topics (`deploy.*`, `service.*`) and outbound webhooks | `memory` |
-| `searching` | Log search within the retention window; repo search | `memory` |
+| `searching` | Repo search; log search scans instead (D9) | `memory` |
 | `filing` | Build artefacts, static site bundles, log archives | `local` → `s3`/`gcp` |
 | `dataservice` | Workspaces, projects, environments, services, deploys, plans, usage | `file` → `mongodb` |
 
@@ -193,17 +193,22 @@ Cron Jobs: our core `scheduling` fires `services.platform.workloads.runJob()`. W
 ### 4.2 Live data
 
 - Deploy progress: `infrastructure.deploy.*` events on our `eventEmitter` → our deploy records → SSE.
-- Metrics: `services.platform.telemetry.subscribe({ onMetrics })` (8.5, every 10 s per instance) → `measuring` →
-  roll-ups at 1 min / 1 h → charts. History is ours; the accelerator keeps 15 minutes.
+- Metrics: `services.platform.telemetry.subscribe({ onMetrics })` (8.5, every 10 s per instance) →
+  `src/telemetry/metrics.js` → raw for 1 h, minute roll-ups for 24 h, hour roll-ups for 30 days, saved through
+  `filing` (`<DATA_DIR>/telemetry/metrics/<workspace>/<service>.json`, flushed every minute) → charts (at most 240
+  points). Requests, 5xx and bytes out come from our proxy (`src/routes/proxy.js` `onRequest`). History is ours; the
+  accelerator keeps 15 minutes. Live: a `metrics` event per service at most every 5 s.
 - Plan limits are part of every metric payload (`{ value, unit, limit }`), because the UI never shows a bare number.
 - Usage: hourly `services.platform.usage()` → payments `recordUsage()`.
 
 ### 4.3 Customer logs
 
 `services.platform.telemetry.subscribe({ onLogs })` (8.5; one line per event, tagged with workspace, service and
-instance, within 3 s) → (a) live fan-out over SSE per service, (b) daily NDJSON per service in `filing`, swept after
-the plan's retention (7 days on Standard), (c) `searching` index for the window. Levels are parsed from JSON logs or
-common prefixes (`INFO`, `WARN`, `ERROR`, `DEBUG`).
+instance, within 3 s) → `src/telemetry/logs.js` → (a) live fan-out over SSE (`log` events), (b) NDJSON chunks per
+service per minute in `filing` (`<DATA_DIR>/telemetry/logs/<workspace>/<service>/<minute>-<id>.ndjson`), swept hourly
+after the plan's retention (3 / 7 / 14 / 30 days), (c) search by scanning the chunks in the asked window, newest
+first (D9). A deploy's build and rollout lines join as level `build` when it ends. Levels are parsed from JSON or
+logfmt `level`, `[TAG]` or a leading word (`INFO`, `WARN`, `ERROR`, `DEBUG`…); stderr without one is an error.
 
 ### 4.4 Layout
 
@@ -214,7 +219,7 @@ nooblyjs-apps-hero-co/
 │   ├── platform/          accelerators.js (mounts the three accelerators + the infrastructure host object), workloads.js (service → workload spec)
 │   ├── domain/            workspaces, projects, environments, services, deploys, env-groups
 │   ├── github/            app/OAuth, repos, webhooks
-│   ├── telemetry/         metric roll-ups, log storage, search and retention
+│   ├── telemetry/         index.js (subscribe, live events), metrics.js (roll-ups), logs.js (chunks, search, retention)
 │   ├── billing/           usage hand-off to payments, free-tier checks, Billing page API
 │   ├── routes/            /api/v1/*, /hooks/github, /events (SSE)
 │   └── seed/              the seed story (product.md §9)
@@ -294,3 +299,4 @@ npm run test:ui      # Playwright, desktop + phone
 | D6 | The theme is `nooblyjs/styling/styles.css`, copied verbatim; app extras in `hero-co.css` | One theme across core, the accelerators and the apps. |
 | D7 | Every accelerator mounts with `mount(app, eventEmitter, serviceRegistry, options)` | One loader, one shutdown path; events on one emitter. |
 | D8 | Billing is the payments accelerator; card data never touches our servers | PCI SAQ A scope; invoices, dunning and the ledger reused, not rebuilt. |
+| D9 | Metric history and logs in our own small stores on `filing`, not core `measuring` and `searching` (2026-11-22) | Core `measuring` (`default`) keeps samples in memory only, stamps each at `add()` (an agent sample carries its own time) and has no roll-ups. `searching` would index every line a second time for a word search we can answer by scanning one service's chunks in the asked window, newest first (a 5,000-line ring answers the live view). Revisit with a log volume that needs an index. |

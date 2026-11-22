@@ -243,6 +243,8 @@ recent deploys and log lines from the mock-ups. Every count and total on screen 
   price is flat per service per month for 1 to 10 instances. Web services sleep after 15 minutes without requests and
   wake on the next one, which keeps the flat price affordable (roadmap 3.11). Changed 2026-11-21: Private Services do
   not sleep (nothing sits in front of one to hold a request while it wakes), nor does a service on the Local network.
+  Provisional 2026-11-22 (Phase 4, `catalog.js`): logs are kept 3 days on Starter, 7 on Standard, 14 on Pro, 30 on
+  Pro Plus; 100 GB of bandwidth a month is included per workspace (the dashboard tile's limit). Overage prices: open.
 - `[GITHUB]` GitHub App (per-repo install, webhooks built in) vs OAuth app + personal tokens (what the infrastructure
   accelerator does today). nooblyjs-core has no GitHub sign-in provider; it can come through the `passport` provider.
 - `[MARKETING]` Whether the operator may send marketing (not just transactional) email to customers in v1.

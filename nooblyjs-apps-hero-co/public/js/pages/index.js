@@ -1,12 +1,13 @@
-// Every screen of product.md §5. Phase 0 draws each one's title and an empty state that says which phase builds it;
-// later phases replace a page's render() with the real screen.
+// Every screen of product.md §5. A screen a later phase builds draws its title and an empty state that says which
+// phase; the watch screens (Dashboard, Deploys, Metrics, Logs; Phase 4) are in watch.js.
 import { html } from '../html.js';
 import { api } from '../api.js';
 import { emptyState, optionCard, statusPill, stepper } from '../components/index.js';
 import { signUpPage, forgotPasswordPage, resetPasswordPage, verifyEmailPage, invitePage } from './account.js';
 import { settingsPage } from './settings.js';
 import { createServicePage, comingTypePage } from './create.js';
-import { servicePage, statusWord } from './service.js';
+import { servicePage } from './service.js';
+import { dashboardPage, deploysPage, metricsPage, logsPage } from './watch.js';
 import { envGroupsPage } from './env-groups.js';
 import { githubPage } from './github.js';
 import { CREATABLE } from '../shared/catalog.js';
@@ -37,36 +38,7 @@ const coming = (phase, what) => emptyState({ icon: 'cone-striped', title: `Comin
 
 /** name → ({ params, me, workspace }) => { title, content } (title is the document title). */
 export const PAGES = {
-  dashboard: async ({ workspace }) => {
-    const id = encodeURIComponent(workspace.id);
-    const [ws, { services }, github] = await Promise.all([
-      api(`/api/v1/workspaces/${id}`), api(`/api/v1/workspaces/${id}/services`), api(`/api/v1/workspaces/${id}/github`),
-    ]);
-    const env = ws.projects.find((p) => p.isDefault)?.environments.find((e) => e.name === 'Production');
-    const lead = `${services.length} service${services.length === 1 ? '' : 's'}${env ? ` · ${env.regionName} (${env.region})` : ''} · ${github.connected ? `GitHub: ${github.login}` : 'not connected to GitHub yet'}`;
-    const actions = html`<a class="btn btn-primary" href="/w/${workspace.id}/new">New service</a>`;
-    if (services.length) {
-      return {
-        title: `Production · ${workspace.name}`,
-        content: html`${head({ eyebrow: workspace.name, title: 'Production', lead, actions })}
-          <section class="nj-card" aria-labelledby="svc-title"><h2 class="nj-card-title" id="svc-title">Services</h2>
-          <div class="table-responsive"><table class="table mb-0"><caption class="visually-hidden">Services</caption>
-            <thead><tr><th scope="col">Name</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col">Repo</th></tr></thead>
-            <tbody>${services.map((s) => html`<tr><td><a href="/w/${workspace.id}/services/${s.name}">${s.name}</a></td><td>${CREATABLE[s.type]?.label ?? typeOf(s.type)?.name ?? s.type}</td><td>${statusPill(statusWord(s.status))}</td><td class="nj-meta">${s.source?.repo ?? '—'}</td></tr>`)}</tbody>
-          </table></div></section>
-          <p class="nj-meta mt-3">Stats, resources and recent deploys arrive here in Phase 4.</p>`,
-      };
-    }
-    return {
-    title: `Production · ${workspace.name}`,
-    content: html`${head({ eyebrow: workspace.name, title: 'Production', lead, actions })}${emptyState({
-      icon: 'rocket-takeoff',
-      title: 'No services yet',
-      text: 'Launch your first service from a GitHub repo. Stats, the services list and recent deploys appear here (Phase 4).',
-      action: html`<a class="btn btn-primary" href="/w/${workspace.id}/new">New service</a>`,
-    })}`,
-    };
-  },
+  dashboard: dashboardPage,
 
   'new-service': ({ workspace }) => ({
     title: `New service · ${workspace.name}`,
@@ -107,9 +79,9 @@ export const PAGES = {
         <p class="nj-meta mt-4">More projects and a Staging environment come later: there is no design for them yet.</p>`,
     };
   },
-  deploys: ({ workspace }) => simple(workspace, 'Deploys', 'Every deploy in this workspace: commit, trigger, status and when.', 'Phase 4'),
-  metrics: ({ workspace }) => simple(workspace, 'Metrics', 'CPU, memory, requests and bandwidth across every service.', 'Phase 4'),
-  logs: ({ workspace }) => simple(workspace, 'Logs', 'Live and historical logs from every service, filtered by level.', 'Phase 4'),
+  deploys: deploysPage,
+  metrics: metricsPage,
+  logs: logsPage,
   'env-groups': envGroupsPage,
   github: githubPage,
   billing: ({ workspace }) => simple(workspace, 'Billing', 'Your plan, usage this month, cards and invoices.', 'Phase 7'),

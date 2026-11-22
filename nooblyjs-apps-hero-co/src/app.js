@@ -28,6 +28,7 @@ import { createRecords } from './domain/records.js';
 import { createSecrets } from './domain/secrets.js';
 import { createGithub } from './github/github.js';
 import { followDeploys } from './platform/workloads.js';
+import { createTelemetry } from './telemetry/index.js';
 import { seedRecords } from './domain/seed.js';
 
 const require = createRequire(import.meta.url);
@@ -45,7 +46,7 @@ const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'packa
  * @param {number} [o.jobCheckMs]
  * @param {(host: object) => object} [o.changeInfraHost]   tests: alter the infrastructure host before mounting
  */
-export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h } = {}) {
+export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true } = {}) {
   if (config.production && config.devSignIn) throw new Error('The development sign-in cannot run with NODE_ENV=production.');
   if (config.production && !config.sessionSecret) throw new Error('SESSION_SECRET is required in production.');
   await fs.mkdir(config.dataDir, { recursive: true });
@@ -145,10 +146,13 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
 
   const platform = () => accelerators.mounted.infrastructure.services.platform;
   const deploysFollower = followDeploys({ eventEmitter, records, realtime, platform, log });
-  // Runtime log lines of a service go to its workspace's live channel (the service page's Logs).
-  const onLogLines = (e) => realtime.publish(e.tenantId, 'log', { service: e.workload, lines: e.lines });
-  eventEmitter.on('infrastructure.workload.log', onLogLines);
-  const proxy = createServiceProxy({ records, platform, eventEmitter, log });
+  // Metrics and logs of services (roadmap 4.1–4.3): kept, and passed to the workspace's live channel.
+  const telemetry = createTelemetry({
+    serviceRegistry, eventEmitter, platform, records, realtime, log, dataDir: config.dataDir,
+    workspaceIds: async () => (await accounts.listWorkspaces()).map((w) => w.id),
+    timers: telemetryTimers,
+  });
+  const proxy = createServiceProxy({ records, platform, eventEmitter, log, onRequest: telemetry.request });
   await proxy.load((await accounts.listWorkspaces()).map((w) => w.id));
   serviceProxy = proxy;
 
@@ -174,7 +178,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   coreLogin = auth.login;
   app.use('/api/v1/auth', auth.api);
   app.use(auth.pages);
-  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform }));
+  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry }));
   app.use('/api/v1', createApi({ express, session, realtime, accelerators: accelerators.describe, about: { name: 'nooblyjs-cloud', version: VERSION } }));
   app.use(express.static(path.join(ROOT, 'public'), { index: false, redirect: false }));
   app.use(createGithubConnect({ express, session, accounts, github, config, audit, log }));
@@ -212,6 +216,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     /** Call with the HTTP server once listening: local servers' agents connect over a WebSocket (infra spec 8.9). */
     attachUpgrades: (server) => host.attachUpgrades(server),
     realtime,
+    telemetry,
     accelerators,
     accounts,
     records,
@@ -225,6 +230,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     async idle() {
       await accelerators.mounted.infrastructure.idle();
       await deploysFollower.idle();
+      await telemetry.idle();
     },
     serviceRegistry,
     eventEmitter,
@@ -232,7 +238,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     async shutdown() {
       deploysFollower.stop();
       proxy.stop();
-      eventEmitter.off('infrastructure.workload.log', onLogLines);
+      await telemetry.stop();
       await accelerators.shutdown();
       await session.close?.();
       await serviceRegistry.shutdown?.();

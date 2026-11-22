@@ -32,8 +32,10 @@ export function stripOurCookies(header) {
  * @param {() => object} o.platform   services.platform
  * @param {import('node:events').EventEmitter} o.eventEmitter
  * @param {{ warn?: Function }} [o.log]
+ * @param {(ws: string, service: string, info: { status: number, bytes: number }) => void} [o.onRequest]
+ *   told when a proxied request ends: its status and the bytes sent back (the service's Requests and Bandwidth)
  */
-export function createServiceProxy({ records, platform, eventEmitter, log = {} }) {
+export function createServiceProxy({ records, platform, eventEmitter, log = {}, onRequest = () => {} }) {
   const routes = new Map(); // `${ws}/${name}` → { urls: string[], next: number }
   const key = (ws, name) => `${ws}/${name}`;
 
@@ -90,6 +92,7 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {} }
       res.setHeader('x-content-type-options', 'nosniff');
       res.setHeader('referrer-policy', 'same-origin');
       res.statusCode = up.statusCode ?? 502;
+      up.on('data', (chunk) => { res.heroBytes = (res.heroBytes ?? 0) + chunk.length; });
       up.pipe(res);
     });
     upstream.on('timeout', () => upstream.destroy(new Error('timeout')));
@@ -117,6 +120,16 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {} }
     // /ws/name → /ws/name/, so the app's relative links resolve under its prefix.
     if (after === '' || after.startsWith('?')) return res.redirect(308, `${base}/${after}`);
     req.servicePrefix = `${base}/`;
+    let told = false;
+    const tell = () => {
+      if (told) return;
+      told = true;
+      try {
+        onRequest(ws, name, { status: res.statusCode, bytes: res.heroBytes ?? Number(res.getHeader('content-length') ?? 0) });
+      } catch { /* counting never breaks a request */ }
+    };
+    res.on('finish', tell);
+    res.on('close', tell);
     if (!route.urls.length) {
       res.set('Retry-After', '30');
       return res.status(503).type('text').send('This service has no instance answering right now: it is deploying, or its server is offline. Try again shortly.');

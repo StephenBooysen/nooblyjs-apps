@@ -9,6 +9,8 @@ export const STATUS_TONE = {
   Failed: 'failed', Error: 'failed',
   Suspended: 'idle', Idle: 'idle', Sleeping: 'idle',
   New: 'new', Beta: 'new', Invited: 'new',
+  // Instances (Phase 4): what the runtime says each one is doing.
+  Running: 'live', Starting: 'deploying', Crashed: 'failed', Stopped: 'idle', Unknown: 'idle',
 };
 
 export function statusPill(status) {

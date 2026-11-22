@@ -93,11 +93,12 @@ function buildFieldset({ catalog, type, firstRepo }) {
       <input class="form-control nj-mono" id="f-root" name="rootDir" placeholder="apps/api" autocomplete="off" spellcheck="false" aria-describedby="root-hint rootDir-error">
       <div class="form-text" id="root-hint">Leave empty to build from the top of the repo.</div>${feedback('rootDir')}</div>
     <div class="nj-grid-2">
-      <div><label class="form-label" for="f-build">Build command</label>
-        <input class="form-control nj-mono" id="f-build" name="buildCommand" value="npm ci && npm run build" autocomplete="off" spellcheck="false" aria-describedby="buildCommand-error">${feedback('buildCommand')}</div>
-      ${type.key === 'static' ? '' : html`<div><label class="form-label" for="f-start">Start command</label>
-        <input class="form-control nj-mono" id="f-start" name="startCommand" value="npm start" autocomplete="off" spellcheck="false" aria-describedby="startCommand-error">${feedback('startCommand')}</div>`}
+      <div><label class="form-label" for="f-build">Build command <span class="nj-meta">· optional</span></label>
+        <input class="form-control nj-mono" id="f-build" name="buildCommand" placeholder="Default: ${RUNTIMES[0].defaultBuild}" autocomplete="off" spellcheck="false" aria-describedby="commands-hint buildCommand-error">${feedback('buildCommand')}</div>
+      ${type.key === 'static' ? '' : html`<div><label class="form-label" for="f-start">Start command <span class="nj-meta">· optional</span></label>
+        <input class="form-control nj-mono" id="f-start" name="startCommand" placeholder="Default: ${RUNTIMES[0].defaultStart}" autocomplete="off" spellcheck="false" aria-describedby="commands-hint startCommand-error">${feedback('startCommand')}</div>`}
     </div>
+    <div class="form-text" id="commands-hint">Leave them empty to use the runtime's defaults, shown in grey.</div>
   </fieldset>`;
 }
 
@@ -270,6 +271,11 @@ export async function createServicePage({ workspace, typeInfo, url }) {
       let nameTouched = false;
       $('#f-name').addEventListener('input', () => { nameTouched = true; });
       form.addEventListener('change', (e) => {
+        if (e.target.name === 'runtime') {
+          const runtime = RUNTIMES.find((r) => r.key === e.target.value);
+          $('#f-build').placeholder = `Default: ${runtime.defaultBuild}`;
+          if ($('#f-start')) $('#f-start').placeholder = `Default: ${runtime.defaultStart}`;
+        }
         if (e.target.name === 'repo') {
           if (!nameTouched) $('#f-name').value = e.target.value.split('/')[1].toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^[^a-z]+/, '').slice(0, 63);
           loadBranches();
@@ -358,8 +364,8 @@ export async function createServicePage({ workspace, typeInfo, url }) {
           region: $('#f-region').value,
           runtime: $('#f-runtime').value,
           rootDir: $('#f-root').value,
-          buildCommand: $('#f-build').value,
-          ...(type.key === 'static' ? {} : { startCommand: $('#f-start').value }),
+          buildCommand: $('#f-build').value.trim() || null,
+          ...(type.key === 'static' ? {} : { startCommand: $('#f-start').value.trim() || null }),
           plan: form.querySelector('input[name="plan"]:checked')?.value ?? 'standard',
           instances: type.instances ? Number($('#f-instances').value) : 1,
           env: rows.map((row) => {
