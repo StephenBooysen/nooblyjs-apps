@@ -30,6 +30,8 @@ import { createGithub } from './github/github.js';
 import { followDeploys } from './platform/workloads.js';
 import { createTelemetry } from './telemetry/index.js';
 import { createCron } from './scheduling/cron.js';
+import { createTasks } from './scheduling/tasks.js';
+import { taskTriggerRoutes } from './routes/tasks.js';
 import { seedRecords } from './domain/seed.js';
 
 const require = createRequire(import.meta.url);
@@ -48,8 +50,9 @@ const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'packa
  * @param {(host: object) => object} [o.changeInfraHost]   tests: alter the infrastructure host before mounting
  * @param {boolean} [o.telemetryTimers]  false in tests: they flush and sweep telemetry themselves
  * @param {boolean} [o.cronTimers]       false in tests: they call cron.tick() themselves
+ * @param {boolean} [o.taskTimers]       false in tests: they call tasks.tick() themselves
  */
-export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true } = {}) {
+export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true, taskTimers = true } = {}) {
   if (config.production && config.devSignIn) throw new Error('The development sign-in cannot run with NODE_ENV=production.');
   if (config.production && !config.sessionSecret) throw new Error('SESSION_SECRET is required in production.');
   await fs.mkdir(config.dataDir, { recursive: true });
@@ -62,6 +65,10 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   // apps, so they never see our session. Set once the accelerators are mounted.
   let serviceProxy = null;
   app.use((req, res, next) => (serviceProxy ? serviceProxy.middleware(req, res, next) : next()));
+  // A Workflow's tasks triggered from code (roadmap 5.4), also before sessions: the Workflow's key is the only proof,
+  // so a browser's cookie neither helps nor gets in the way (no CSRF check, no session). Set once the records exist.
+  let taskTrigger = null;
+  app.use('/api/v1/tasks', (req, res, next) => (taskTrigger ? taskTrigger(req, res, next) : next()));
 
   // Sessions run before nooblyjs-core so its /services portal (and its own login API) can be closed to customers.
   // The handlers are bound below, once core (and the accounts store on its dataService) exists.
@@ -161,6 +168,12 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     workspaceIds: async () => (await accounts.listWorkspaces()).map((w) => w.id),
     timers: cronTimers,
   });
+  // Workflows (roadmap 5.4): their queues, retries, and their runs into the logs and the live channel.
+  const tasks = createTasks({
+    records, platform, eventEmitter, realtime, telemetry, log,
+    workspaceIds: async () => (await accounts.listWorkspaces()).map((w) => w.id),
+    timers: taskTimers,
+  });
   const proxy = createServiceProxy({ records, platform, eventEmitter, log, onRequest: telemetry.request });
   await proxy.load((await accounts.listWorkspaces()).map((w) => w.id));
   serviceProxy = proxy;
@@ -187,7 +200,8 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   coreLogin = auth.login;
   app.use('/api/v1/auth', auth.api);
   app.use(auth.pages);
-  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry, cron }));
+  taskTrigger = taskTriggerRoutes({ express, records, tasks: () => tasks, audit });
+  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry, cron, tasks }));
   app.use('/api/v1', createApi({ express, session, realtime, accelerators: accelerators.describe, about: { name: 'nooblyjs-cloud', version: VERSION } }));
   app.use(express.static(path.join(ROOT, 'public'), { index: false, redirect: false }));
   app.use(createGithubConnect({ express, session, accounts, github, config, audit, log }));
@@ -227,6 +241,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     realtime,
     telemetry,
     cron,
+    tasks,
     accelerators,
     accounts,
     records,
@@ -241,6 +256,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
       await accelerators.mounted.infrastructure.idle();
       await deploysFollower.idle();
       await cron.idle();
+      await tasks.idle();
       await telemetry.idle();
     },
     serviceRegistry,
@@ -248,6 +264,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     setOperator,
     async shutdown() {
       cron.stop();
+      tasks.stop();
       deploysFollower.stop();
       proxy.stop();
       await telemetry.stop();

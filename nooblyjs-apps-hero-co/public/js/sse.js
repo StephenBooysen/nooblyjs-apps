@@ -24,7 +24,7 @@ function open(url) {
     retryMs = Math.min(retryMs * 2, 30_000);
   });
   // Named events: hello now; deploy.*, instance.*, metrics and logs from Phase 2 on.
-  for (const type of ['hello', 'infrastructure', 'deploy', 'instance', 'metrics', 'log', 'scale', 'run']) {
+  for (const type of ['hello', 'infrastructure', 'deploy', 'instance', 'metrics', 'log', 'scale', 'run', 'task']) {
     source.addEventListener(type, (e) => dispatch(type, JSON.parse(e.data)));
   }
 }

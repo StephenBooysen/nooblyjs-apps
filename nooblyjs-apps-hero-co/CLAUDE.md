@@ -45,6 +45,9 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
 - `src/scheduling/cron.js`: Cron Jobs' minute scheduler (UTC, stack.md D10) and the follower that writes each run's
   start and result to the service's logs; `src/routes/jobs.js`: runs, Run now and the schedule;
   `public/js/shared/cron.js`: the cron parser, its words and next runs, shared by the server and the browser.
+- `src/scheduling/tasks.js`: Workflows' queue (stack.md D11): each task run a one-off container up to the concurrency,
+  retries with backoff, cancel, the follower; `src/routes/tasks.js`: tasks, runs, the trigger key, and
+  `/api/v1/tasks/...` (bearer key, mounted ahead of sessions); `public/js/pages/tasks.js`: task rows, tables, trigger card.
 - `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
   (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, format, components, shell,

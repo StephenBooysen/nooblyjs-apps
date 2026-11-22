@@ -100,7 +100,8 @@ export function createCron({ records, platform, eventEmitter, realtime, telemetr
   };
   const onRun = (type) => later(async (p) => {
     const s = await serviceOf(p);
-    if (!s) return;
+    // A Workflow's runs are its tasks' (src/scheduling/tasks.js).
+    if (!s || s.type !== 'cron') return;
     const ws = s.workspaceId;
     const by = p.trigger === 'schedule' ? 'by the schedule' : 'by hand';
     if (type === 'started') say(ws, s.name, `Run started ${by}.`);

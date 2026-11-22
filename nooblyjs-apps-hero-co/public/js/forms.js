@@ -36,6 +36,11 @@ export function showErrors(form, err) {
       field.classList.add('is-invalid');
       feedback.textContent = d.message;
       firstField ??= field;
+    } else if (feedback) {
+      // A message about a group (such as `tasks`, the list as a whole): under the group, focus on its first field.
+      feedback.textContent = d.message;
+      feedback.setAttribute('role', 'alert');
+      firstField ??= feedback.parentElement?.querySelector('input, select, textarea') ?? null;
     }
   }
   if (firstField) return firstField.focus();

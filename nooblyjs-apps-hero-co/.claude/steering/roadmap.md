@@ -199,7 +199,16 @@ bytes matched the load generator's counts; a redeploy under load answered every 
   going is skipped and the service's logs say so. Run for real 2026-11-22 on the Local network (every minute: two
   runs succeeded with 162 MB and 143 MB peaks of 512 MB; a 71 s run exited 3, the fire in its minute was skipped, Run
   now was refused while it ran).
-- [ ] 5.4 Workflow: core `workflow` for task definitions, retries and concurrency cap; tasks running and queue meters.
+- [x] 5.4 Workflow: tasks (name, command, retries) and how many run at once; each task run a one-off container through
+  `workloads.runJob()` from our own queue (stack D11; infra spec 8.2 R6: job runs side by side up to the job's
+  concurrency, with per-run env). `test/tasks.test.js`, `test/ui/workflow.spec.js`. Create form with task rows; service
+  page with Run (JSON input as `TASK_INPUT`), the task runs with each attempt's log and Cancel while waiting, tasks and
+  concurrency changed from the next run (no rebuild), Trigger from code (`/api/v1/tasks/...` with a per-Workflow bearer
+  key, shown once), a Logs tab and Scaling by type only; Tasks running and Queue meters on the dashboard and Metrics.
+  Failed runs retry after 10 s, doubling to 5 min; past the concurrency, runs wait (up to 1,000). Run for real
+  2026-11-22 on the Local network (concurrency 2: two 9 s runs side by side, the third started when one ended; a task
+  exiting 3 failed, was tried again 10 s later and failed for good after 2 attempts; a run triggered with the key
+  succeeded, a wrong key got a 401; every run's container was removed).
 - [ ] 5.5 Create forms and detail pages for each (designs needed).
 
 **Exit check:** the seeded `storefront`, `etl` and `orders` services run for real and show the meters from the

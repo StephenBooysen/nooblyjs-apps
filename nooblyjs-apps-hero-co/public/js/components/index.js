@@ -11,6 +11,8 @@ export const STATUS_TONE = {
   New: 'new', Beta: 'new', Invited: 'new',
   // Instances (Phase 4): what the runtime says each one is doing.
   Running: 'live', Starting: 'deploying', Crashed: 'failed', Stopped: 'idle', Unknown: 'idle',
+  // A Workflow's task runs (roadmap 5.4).
+  Queued: 'idle', Retrying: 'deploying', Cancelled: 'idle',
 };
 
 export function statusPill(status) {

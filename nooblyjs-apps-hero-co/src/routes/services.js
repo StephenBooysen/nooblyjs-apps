@@ -3,7 +3,7 @@
 // walks them. Owners and Members create and deploy; only the Owner connects GitHub (product.md §7). Environment
 // values are write-only: answers carry keys, and a value comes back only through an audited reveal that names the
 // service or group.
-import { CREATABLE, PLANS, REGIONS, RUNTIMES, MAX_INSTANCES, planOf, regionOf, runtimeOf, estimate, specText } from '../../public/js/shared/catalog.js';
+import { CREATABLE, PLANS, REGIONS, RUNTIMES, MAX_INSTANCES, WORKFLOW, TASK_NAME, planOf, regionOf, runtimeOf, estimate, specText } from '../../public/js/shared/catalog.js';
 import { parseCron, describeCron, nextRuns } from '../../public/js/shared/cron.js';
 import { serviceView, groupView, githubView } from '../domain/records.js';
 import { toWorkloadSpec, fromPlatformDeploy, mergeDeploy, hostFor, pathFor, sleepsWhenIdle } from '../platform/workloads.js';
@@ -48,6 +48,35 @@ export function checkCron(b, problems, { partial = false } = {}) {
     if (!command) problems.push({ path: 'command', message: 'The command each run starts, such as python etl.py.' });
     else if (command.length > 500 || /[\r\n]/.test(command)) problems.push({ path: 'command', message: 'One line of up to 500 characters.' });
     else out.command = command;
+  }
+  return out;
+}
+
+/** A Workflow's tasks ({ name, command, retries }) and how many runs go at once, or problems. → { tasks, concurrency } */
+export function checkTasks(b, problems, { partial = false } = {}) {
+  const out = {};
+  if (!partial || b.tasks !== undefined) {
+    if (!Array.isArray(b.tasks) || !b.tasks.length || b.tasks.length > WORKFLOW.maxTasks) problems.push({ path: 'tasks', message: `From 1 to ${WORKFLOW.maxTasks} tasks.` });
+    else {
+      const seen = new Set();
+      out.tasks = b.tasks.map((t, i) => {
+        const name = typeof t?.name === 'string' ? t.name.trim() : '';
+        const command = typeof t?.command === 'string' ? t.command.trim() : '';
+        const retries = t?.retries === undefined || t?.retries === null || t?.retries === '' ? WORKFLOW.defaults.retries : Number(t.retries);
+        if (!TASK_NAME.test(name)) problems.push({ path: `tasks.${i}.name`, message: 'Lower-case letters, digits and hyphens, starting with a letter; up to 63 characters.' });
+        else if (seen.has(name)) problems.push({ path: `tasks.${i}.name`, message: `${name} is named twice.` });
+        seen.add(name);
+        if (!command) problems.push({ path: `tasks.${i}.command`, message: 'The command this task runs, such as node tasks/send-receipt.js.' });
+        else if (command.length > 500 || /[\r\n]/.test(command)) problems.push({ path: `tasks.${i}.command`, message: 'One line of up to 500 characters.' });
+        if (!Number.isInteger(retries) || retries < 0 || retries > WORKFLOW.maxRetries) problems.push({ path: `tasks.${i}.retries`, message: `From 0 to ${WORKFLOW.maxRetries} retries.` });
+        return { name, command, retries };
+      });
+    }
+  }
+  if (!partial || b.concurrency !== undefined) {
+    const c = b.concurrency === undefined ? WORKFLOW.defaults.concurrency : Number(b.concurrency);
+    if (!Number.isInteger(c) || c < 1 || c > WORKFLOW.maxConcurrency) problems.push({ path: 'concurrency', message: `From 1 to ${WORKFLOW.maxConcurrency} runs at once.` });
+    else out.concurrency = c;
   }
   return out;
 }
@@ -123,6 +152,8 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       sleepsWhenIdle: sleepsWhenIdle(s),
       // A Cron Job's schedule in words and its next three runs (UTC).
       ...(s.type === 'cron' ? { scheduleText: describeCron(s.schedule ?? ''), nextRuns: nextRuns(s.schedule ?? '', new Date(), 3).map((d) => d.toISOString()) } : {}),
+      // A Workflow's tasks and how many runs go at once (its runs and queue: GET .../tasks).
+      ...(s.type === 'workflow' ? { tasks: s.tasks ?? [], concurrency: s.concurrency ?? WORKFLOW.defaults.concurrency } : {}),
       // A Private Service's name for the workspace's other services (roadmap 3.9; the platform's, infra 8.2 R5).
       ...(s.type === 'private' ? { internalHost: `${platform().workloads.internalHost(s.workspaceId, { kind: 'private', name: s.workload ?? s.name })}:${s.port ?? 10000}` } : {}),
       envGroups: groups.map((g) => ({ id: g.id, name: g.name })),
@@ -196,8 +227,9 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
     const rootDir = typeof b.rootDir === 'string' ? b.rootDir.trim().replace(/^(\.\/)+/, '').replace(/\/+$/, '') : '';
     if (!text(rootDir, 200) || rootDir.startsWith('/') || rootDir.split('/').includes('..')) problems.push({ path: 'rootDir', message: 'A folder inside the repository, such as apps/api.' });
     for (const key of ['buildCommand', 'startCommand']) if (b[key] !== undefined && b[key] !== null && (!text(b[key], 500) || /[\r\n]/.test(b[key]))) problems.push({ path: key, message: 'One line of up to 500 characters.' });
-    // A Cron Job: what each run does, and when (UTC).
+    // A Cron Job: what each run does, and when (UTC). A Workflow: its tasks, and how many run at once.
     const cron = type.schedule ? checkCron(b, problems) : null;
+    const workflow = type.tasks ? checkTasks(b, problems) : null;
     const plan = planOf(b.plan ?? 'standard');
     if (!plan) problems.push({ path: 'plan', message: 'Choose an instance type.' });
     const instances = type.instances ? Number(b.instances ?? 1) : 1;
@@ -231,6 +263,7 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       build: { runtime: runtime.key, buildCommand: b.buildCommand || null, startCommand: b.startCommand || null },
       region: region.id, plan: plan.key, instances,
       ...(cron ? { schedule: cron.schedule, command: cron.command } : {}),
+      ...(workflow ? { tasks: workflow.tasks, concurrency: workflow.concurrency } : {}),
       env: [], envGroups: groups.map((g) => g.id),
       autoDeploy: b.autoDeploy !== false,
       url: type.publicUrl ? (region.local ? `${config.publicUrl}${pathFor(ws, name)}` : `https://${hostFor(name, config.appDomain)}`) : null,

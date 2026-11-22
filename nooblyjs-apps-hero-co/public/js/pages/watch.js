@@ -309,7 +309,22 @@ function statMeter({ label, value, unit, caption, pct, metric }) {
 }
 
 /** Kinds whose own pages (and numbers) arrive later: their card says so instead of drawing empty meters. */
-const LATER = { postgres: 'Managed Postgres: storage and connections arrive with its own page.', keyvalue: 'Managed Key Value: memory and connections arrive with its own page.', workflow: 'Tasks and queue depth arrive with Workflows.' };
+const LATER = { postgres: 'Managed Postgres: storage and connections arrive with its own page.', keyvalue: 'Managed Key Value: memory and connections arrive with its own page.' };
+
+/**
+ * A Workflow's meters (product.md §6.4; roadmap 5.4): task runs going against how many may run at once, runs waiting
+ * against the queue's limit, and the last run that ended.
+ */
+export function taskMeters(t) {
+  const last = t.last
+    ? `${t.last.task} ${statusWord(t.last.status).toLowerCase()} ${ago(t.last.at)}${Number.isFinite(t.last.durationMs) ? `, took ${msText(t.last.durationMs)}` : ''}${t.last.attempts > 1 ? ` (${t.last.attempts} attempts)` : ''}.`
+    : 'No task has run yet.';
+  return [
+    meter({ label: 'Tasks running', value: `${countText(t.running)} of ${countText(t.concurrency)} at once`, pct: pctOf(t.running, t.concurrency), metric: 'cpu' }),
+    meter({ label: 'Queue', value: `${countText(t.queued)} waiting of ${countText(t.queueLimit)}`, pct: pctOf(t.queued, t.queueLimit), metric: 'requests' }),
+    html`<p class="nj-meta mb-0" data-last-task><span class="nj-meta">Last run</span> ${last}</p>`,
+  ];
+}
 
 /**
  * A Cron Job's runs on its card and its Metrics row (roadmap 5.3): the last run (its result, when, how long it took),
@@ -347,8 +362,8 @@ export function runsTable(runs, limitMb) {
 }
 
 function serviceCard(c, ws) {
-  const sub = c.instances ? `${c.typeLabel} · ${c.instances} × ${c.planName ?? c.plan} · ${c.regionName}` : c.run ? `${c.typeLabel} · ${c.run.scheduleText || 'no schedule'} · ${c.regionName}` : `${c.typeLabel} · ${c.regionName}`;
-  const meters = c.run ? runMeters(c.run) : LATER[c.type] ? html`<p class="nj-meta mb-0">${LATER[c.type]}</p>` : c.cpu.limit
+  const sub = c.instances ? `${c.typeLabel} · ${c.instances} × ${c.planName ?? c.plan} · ${c.regionName}` : c.run ? `${c.typeLabel} · ${c.run.scheduleText || 'no schedule'} · ${c.regionName}` : c.tasks ? `${c.typeLabel} · ${c.tasks.tasks} task${c.tasks.tasks === 1 ? '' : 's'} · ${c.regionName}` : `${c.typeLabel} · ${c.regionName}`;
+  const meters = c.run ? runMeters(c.run) : c.tasks ? taskMeters(c.tasks) : LATER[c.type] ? html`<p class="nj-meta mb-0">${LATER[c.type]}</p>` : c.cpu.limit
     ? [
       meter({ label: 'CPU', value: c.cpu.used === null ? `No samples · ${cpuText(c.cpu.limit)} vCPU` : `${cpuText(c.cpu.used)} of ${cpuText(c.cpu.limit)} vCPU`, pct: pctOf(c.cpu.used, c.cpu.limit), metric: 'cpu' }),
       meter({ label: 'Memory', value: c.memory.usedMb === null ? `No samples · ${memoryText(c.memory.limitMb)}` : `${memoryText(c.memory.usedMb)} of ${memoryText(c.memory.limitMb)}`, pct: pctOf(c.memory.usedMb, c.memory.limitMb), metric: 'memory' }),
@@ -455,7 +470,7 @@ export async function dashboardPage({ workspace }) {
           applyFilter();
         } catch { /* the next event tries again */ }
       });
-      const stops = [on('metrics', refresh), on('deploy', refresh)];
+      const stops = [on('metrics', refresh), on('deploy', refresh), on('task', refresh)];
       return () => {
         refresh.cancel();
         for (const s of stops) s();
@@ -506,7 +521,7 @@ function metricsRows(m, ws) {
     const chart = (label, metric, pts, limit, text) => html`<div class="nj-mini-chart"><p class="nj-meta">${label} · ${text}</p>${pts.length ? raw(areaChart(pts, { metric, limit, height: 90, label: `${s.name} ${label} over the last ${m.range}` })) : html`<div class="nj-res-empty">No samples</div>`}</div>`;
     return html`<section class="nj-card mb-3" aria-labelledby="m-${s.name}">
       <div class="nj-section-head"><div><h2 class="nj-card-title mb-0" id="m-${s.name}"><a href="/w/${ws}/services/${s.name}?tab=metrics">${s.name}</a></h2><span class="nj-meta">${s.typeLabel}${s.instances ? ` · ${s.instances} × ${s.planName}` : ''} · ${s.regionName}</span></div>${statusPill(statusWord(s.status))}</div>
-      ${s.run ? html`<div class="nj-run-row">${runMeters(s.run)}</div>` : !sampled.length && !s.points.some((p) => p.req) ? html`<p class="nj-meta mb-0">${LATER[s.type] ?? (s.region === 'local' ? `No samples in the last ${m.range} yet: they arrive every 10 seconds while an instance runs.` : `Charts for ${s.regionName} arrive with cloud monitoring. Services in the Local network region have them now.`)}</p>` : html`<div class="nj-mini-charts">
+      ${s.run ? html`<div class="nj-run-row">${runMeters(s.run)}</div>` : s.tasks ? html`<div class="nj-run-row">${taskMeters(s.tasks)}</div>` : !sampled.length && !s.points.some((p) => p.req) ? html`<p class="nj-meta mb-0">${LATER[s.type] ?? (s.region === 'local' ? `No samples in the last ${m.range} yet: they arrive every 10 seconds while an instance runs.` : `Charts for ${s.regionName} arrive with cloud monitoring. Services in the Local network region have them now.`)}</p>` : html`<div class="nj-mini-charts">
         ${chart('CPU', 'cpu', sampled.map((p) => ({ t: p.t, value: p.cpu })), s.cpu.limit || undefined, s.cpu.used === null ? 'no samples now' : `${cpuText(s.cpu.used)} of ${cpuText(s.cpu.limit)} vCPU now`)}
         ${chart('Memory', 'memory', sampled.map((p) => ({ t: p.t, value: p.mem })), s.memory.limitMb || undefined, s.memory.usedMb === null ? 'no samples now' : `${memoryText(s.memory.usedMb)} of ${memoryText(s.memory.limitMb)} now`)}
         ${chart('Requests', 'requests', s.points.some((p) => p.req) ? s.points.map((p) => ({ t: p.t, value: p.reqPerMin })) : [], undefined, `${countText(s.requests.perMin)} / min now`)}

@@ -5,7 +5,7 @@
 //
 // Deploy progress comes back as `infrastructure.deploy.*` events on the shared EventEmitter: followDeploys() keeps our
 // deploy records and the service's status from them and publishes each change to the workspace's live channel.
-import { CREATABLE, PLANS, SLEEP, planOf, regionOf } from '../../public/js/shared/catalog.js';
+import { CREATABLE, PLANS, SLEEP, WORKFLOW, planOf, regionOf } from '../../public/js/shared/catalog.js';
 
 /** Deploy statuses in the order they happen; a record never moves back (events may arrive after a slower write). */
 const RANK = { queued: 0, building: 1, deploying: 2, live: 3, failed: 3, cancelled: 3, superseded: 4 };
@@ -55,6 +55,8 @@ export function toWorkloadSpec(service, { appDomain, groups = [] }) {
     ...(type.sleeps && !region.local ? { sleep: { afterMin: SLEEP.afterMinutes } } : {}),
     // A Cron Job's schedule is kept by us (src/scheduling/cron.js); the platform stores it for its operators' screens.
     ...(type.schedule ? { schedule: service.schedule ?? null } : {}),
+    // A Workflow's task runs go side by side up to its concurrency (infra 8.2 R6); its queue is ours (src/scheduling/tasks.js).
+    ...(type.tasks ? { concurrency: service.concurrency ?? WORKFLOW.defaults.concurrency } : {}),
   };
 }
 

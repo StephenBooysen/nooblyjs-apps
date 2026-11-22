@@ -467,3 +467,19 @@ label.nj-repo:has(input:focus-visible) { outline: 2px solid var(--nj-accent); ou
 .nj-run-last { font-size: 13px; font-weight: 600; color: var(--nj-ink); }
 .nj-run-last .nj-meta { font-weight: 600; margin-right: 4px; }
 .nj-run-row { display: grid; gap: 4px; max-width: 640px; }
+
+/* ---------- Phase 5.4: Workflows ---------- */
+.nj-tasks { display: grid; gap: 8px; }
+.nj-task-head, .nj-task-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) 88px auto; gap: 8px; align-items: start; }
+.nj-task-head { font-size: 13px; font-weight: 600; color: var(--nj-muted); }
+.nj-task-head span:last-child { width: 42px; }
+.nj-task-row .invalid-feedback { grid-column: 1 / -1; }
+.nj-task-row .invalid-feedback:empty { display: none; }
+.nj-task-meters { display: grid; gap: 4px; max-width: 640px; margin-bottom: 16px; }
+.nj-code { background: var(--nj-surface-sunken); border: 1px solid var(--nj-border); border-radius: var(--nj-radius-tile); padding: 12px 16px; font-family: var(--nj-mono); font-size: 13px; white-space: pre-wrap; word-break: break-all; }
+.nj-key { font-family: var(--nj-mono); font-size: 13px; word-break: break-all; user-select: all; }
+@media (max-width: 575.98px) {
+  .nj-task-head { display: none; }
+  .nj-task-row { grid-template-columns: minmax(0, 1fr) 72px auto; }
+  .nj-task-row > input:nth-of-type(1) { grid-column: 1 / -1; }
+}

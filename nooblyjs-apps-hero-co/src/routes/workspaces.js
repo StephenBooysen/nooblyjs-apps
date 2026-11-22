@@ -7,6 +7,7 @@ import { normaliseEmail } from '../platform/accounts.js';
 import { DEFAULT_REGION } from '../platform/accounts.js';
 import { addServiceRoutes } from './services.js';
 import { addJobRoutes } from './jobs.js';
+import { addTaskRoutes } from './tasks.js';
 import { addTelemetryRoutes } from './telemetry.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -26,7 +27,7 @@ const sendError = (res, status, code, message, details) => res.status(status).js
  * @param {object} [o.github]
  * @param {() => object} [o.platform]   the infrastructure accelerator's services.platform
  */
-export function createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry }) {
+export function createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry, tasks }) {
   const router = express.Router({ mergeParams: true });
   router.use(express.json({ limit: '16kb' }));
   router.param('workspace', (req, res, next) => session.requireWorkspace(req, res, next));
@@ -124,6 +125,7 @@ export function createWorkspacesApi({ express, session, accounts, link, config, 
   addServiceRoutes(router, { session, records, secrets, github, platform, config, audit, realtime, W });
   addTelemetryRoutes(router, { records, platform, telemetry, audit, realtime, W });
   addJobRoutes(router, { records, platform, telemetry, audit, realtime, W });
+  addTaskRoutes(router, { records, platform, tasks: () => tasks, audit, realtime, config, W });
 
   // ---- invitation links ------------------------------------------------------------
 
