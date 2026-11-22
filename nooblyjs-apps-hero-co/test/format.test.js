@@ -1,7 +1,7 @@
 // The watch screens' number formats (public/js/format.js): units always, limits where there are some.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpuText, memoryText, memoryParts, bytesText, rateParts, countText, pctOf, ago, uptime, logTime, duration } from '../public/js/format.js';
+import { cpuText, memoryText, memoryParts, bytesText, rateParts, countText, pctOf, ago, uptime, logTime, duration, msText, until, utcText } from '../public/js/format.js';
 
 test('CPU, memory, bytes and counts carry their units', () => {
   assert.deepEqual([cpuText(0.414), cpuText(0.004), cpuText(0), cpuText(12.34), cpuText(null)], ['0.41', '<0.01', '0', '12.3', '—']);
@@ -21,4 +21,12 @@ test('times: how long ago, uptime, log times and deploy durations', () => {
   assert.match(logTime('2026-11-22T08:21:04.112Z'), /^\d\d:21:04\.112$/);
   assert.equal(logTime('nonsense'), '');
   assert.deepEqual([duration(at(48), at(0)), duration(at(192), at(0)), duration(at(120), at(0)), duration(null, at(0))], ['48 s', '3 min 12 s', '2 min', '']);
+});
+
+test('runs: how long they took, how long until the next, and its time in UTC', () => {
+  const now = Date.parse('2026-11-22T10:00:00Z');
+  assert.deepEqual([msText(5), msText(4210), msText(42_400), msText(192_000), msText(120_000), msText(null)], ['under 1 s', '4.2 s', '42 s', '3 min 12 s', '2 min', '—']);
+  const at = (s) => new Date(now + s * 1000).toISOString();
+  assert.deepEqual([until(at(20), now), until(at(720), now), until(at(3 * 3600), now), until(at(2 * 86400), now), until(null, now)], ['in under a minute', 'in 12 min', 'in 3 hours', 'in 2 days', '']);
+  assert.deepEqual([utcText('2026-11-22T16:30:00Z', now), utcText('2026-11-23T02:00:00Z', now), utcText('nonsense', now)], ['16:30 UTC', 'Mon 23 Nov, 02:00 UTC', '']);
 });

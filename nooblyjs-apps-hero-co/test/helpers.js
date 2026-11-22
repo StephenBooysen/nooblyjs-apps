@@ -77,7 +77,7 @@ export async function startApp(options = {}) {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   const config = { ...loadConfig({ NODE_ENV: 'test' }), dataDir, publicUrl: base, ...(options.config ?? {}) };
-  const hero = await createApp({ config, mockStepMs: 0, jobCheckMs: 0, telemetryTimers: false, ...options, ...(options.config ? { config } : {}) });
+  const hero = await createApp({ config, mockStepMs: 0, jobCheckMs: 0, telemetryTimers: false, cronTimers: false, ...options, ...(options.config ? { config } : {}) });
   server.on('request', hero.app);
   hero.attachUpgrades(server);
   const call = caller(base);

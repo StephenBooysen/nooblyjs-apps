@@ -459,3 +459,11 @@ label.nj-repo:has(input:focus-visible) { outline: 2px solid var(--nj-accent); ou
   .nj-log-row .nj-log-level, .nj-log-row-svc .nj-log-level { justify-self: start; }
   .nj-res-value { font-size: 28px; }
 }
+
+/* A table's scroll box holds its visually hidden text too (an absolute span otherwise widens the page on a phone). */
+.table-responsive { position: relative; }
+
+/* A Cron Job's runs on its card and Metrics row (roadmap 5.3): the last run in a sentence, its peak, the next run. */
+.nj-run-last { font-size: 13px; font-weight: 600; color: var(--nj-ink); }
+.nj-run-last .nj-meta { font-weight: 600; margin-right: 4px; }
+.nj-run-row { display: grid; gap: 4px; max-width: 640px; }

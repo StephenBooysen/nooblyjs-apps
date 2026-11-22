@@ -6,6 +6,7 @@
 import { normaliseEmail } from '../platform/accounts.js';
 import { DEFAULT_REGION } from '../platform/accounts.js';
 import { addServiceRoutes } from './services.js';
+import { addJobRoutes } from './jobs.js';
 import { addTelemetryRoutes } from './telemetry.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -122,6 +123,7 @@ export function createWorkspacesApi({ express, session, accounts, link, config, 
   // Services, environment groups and GitHub (Phase 2).
   addServiceRoutes(router, { session, records, secrets, github, platform, config, audit, realtime, W });
   addTelemetryRoutes(router, { records, platform, telemetry, audit, realtime, W });
+  addJobRoutes(router, { records, platform, telemetry, audit, realtime, W });
 
   // ---- invitation links ------------------------------------------------------------
 

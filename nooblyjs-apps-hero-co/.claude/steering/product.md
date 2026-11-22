@@ -237,8 +237,8 @@ recent deploys and log lines from the mock-ups. Every count and total on screen 
 - ~~`[RUNTIME]`~~ **Decided 2026-11-19:** containers on shared hosts, built and run by the infrastructure accelerator's
   phase 8 (specs in `nooblyjs-accl-infrastructure/.claude/specs/`).
 - ~~`[ENTRY]`~~ **Decided 2026-11-19:** every accelerator mounts with `mount(app, eventEmitter, serviceRegistry, options)`.
-- `[BILLING]` Card capture, invoices and dunning come from `nooblyjs-accel-payments` (decided 2026-11-19). Still open:
-  the first provider (Stripe or Paystack, payments O2). Plans decided 2026-11-20 (`public/js/shared/catalog.js`): four
+- `[BILLING]` Card capture, invoices and dunning come from `nooblyjs-accel-payments` (decided 2026-11-19). The first
+  provider is **Stripe** (decided 2026-11-22, payments O2; Paystack can follow). Plans decided 2026-11-20 (`public/js/shared/catalog.js`): four
   instance types, Starter $0 (the free tier; there is no separate Free plan), Standard $5, Pro $20, Pro Plus $100. The
   price is flat per service per month for 1 to 10 instances. Web services sleep after 15 minutes without requests and
   wake on the next one, which keeps the flat price affordable (roadmap 3.11). Changed 2026-11-21: Private Services do

@@ -52,16 +52,20 @@ export const RUNTIMES = [
 ];
 
 /**
- * The service types this phase can create, and what each becomes on the platform. Cron jobs wait for scheduling
- * (core `scheduling` → runJob), workflows for core `workflow`, Postgres and Key Value for infra 8.6 and 8.7, Sandbox
+ * The service types this phase can create, and what each becomes on the platform. `plan`: it picks an instance type;
+ * `instances`: it picks a count too; `schedule`: it runs on a cron schedule (src/scheduling/cron.js) with a command
+ * instead of a start command. Workflows wait for core `workflow`, Postgres and Key Value for infra 8.6 and 8.7, Sandbox
  * Groups for an isolation decision (product.md §11).
  */
 export const CREATABLE = {
-  web: { kind: 'service', label: 'Web Service', action: 'Deploy web service', port: true, instances: true, publicUrl: true, sleeps: true },
-  private: { kind: 'private', label: 'Private Service', action: 'Deploy private service', port: true, instances: true, publicUrl: false, sleeps: false },
-  worker: { kind: 'worker', label: 'Background Worker', action: 'Deploy worker', port: false, instances: true, publicUrl: false, sleeps: false },
-  static: { kind: 'static', label: 'Static Site', action: 'Deploy static site', port: false, instances: false, publicUrl: true, sleeps: false },
+  web: { kind: 'service', label: 'Web Service', action: 'Deploy web service', port: true, plan: true, instances: true, publicUrl: true, sleeps: true },
+  private: { kind: 'private', label: 'Private Service', action: 'Deploy private service', port: true, plan: true, instances: true, publicUrl: false, sleeps: false },
+  worker: { kind: 'worker', label: 'Background Worker', action: 'Deploy worker', port: false, plan: true, instances: true, publicUrl: false, sleeps: false },
+  static: { kind: 'static', label: 'Static Site', action: 'Deploy static site', port: false, plan: false, instances: false, publicUrl: true, sleeps: false },
+  cron: { kind: 'job', label: 'Cron Job', action: 'Create cron job', port: false, plan: true, instances: false, publicUrl: false, sleeps: false, schedule: true },
 };
+/** A run's command and schedule as the create form starts them. */
+export const CRON_DEFAULTS = { schedule: '0 2 * * *', plan: 'starter' };
 
 export const planOf = (key) => PLANS.find((p) => p.key === key) ?? null;
 export const regionOf = (id) => REGIONS.find((r) => r.id === id) ?? null;

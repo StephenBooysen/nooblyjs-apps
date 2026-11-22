@@ -29,6 +29,7 @@ import { createSecrets } from './domain/secrets.js';
 import { createGithub } from './github/github.js';
 import { followDeploys } from './platform/workloads.js';
 import { createTelemetry } from './telemetry/index.js';
+import { createCron } from './scheduling/cron.js';
 import { seedRecords } from './domain/seed.js';
 
 const require = createRequire(import.meta.url);
@@ -45,8 +46,10 @@ const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'packa
  * @param {number} [o.mockStepMs]
  * @param {number} [o.jobCheckMs]
  * @param {(host: object) => object} [o.changeInfraHost]   tests: alter the infrastructure host before mounting
+ * @param {boolean} [o.telemetryTimers]  false in tests: they flush and sweep telemetry themselves
+ * @param {boolean} [o.cronTimers]       false in tests: they call cron.tick() themselves
  */
-export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true } = {}) {
+export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true } = {}) {
   if (config.production && config.devSignIn) throw new Error('The development sign-in cannot run with NODE_ENV=production.');
   if (config.production && !config.sessionSecret) throw new Error('SESSION_SECRET is required in production.');
   await fs.mkdir(config.dataDir, { recursive: true });
@@ -152,6 +155,12 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     workspaceIds: async () => (await accounts.listWorkspaces()).map((w) => w.id),
     timers: telemetryTimers,
   });
+  // Cron Jobs (roadmap 5.3): their schedules, and their runs into the logs and the live channel.
+  const cron = createCron({
+    records, platform, eventEmitter, realtime, telemetry, log,
+    workspaceIds: async () => (await accounts.listWorkspaces()).map((w) => w.id),
+    timers: cronTimers,
+  });
   const proxy = createServiceProxy({ records, platform, eventEmitter, log, onRequest: telemetry.request });
   await proxy.load((await accounts.listWorkspaces()).map((w) => w.id));
   serviceProxy = proxy;
@@ -178,7 +187,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   coreLogin = auth.login;
   app.use('/api/v1/auth', auth.api);
   app.use(auth.pages);
-  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry }));
+  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry, cron }));
   app.use('/api/v1', createApi({ express, session, realtime, accelerators: accelerators.describe, about: { name: 'nooblyjs-cloud', version: VERSION } }));
   app.use(express.static(path.join(ROOT, 'public'), { index: false, redirect: false }));
   app.use(createGithubConnect({ express, session, accounts, github, config, audit, log }));
@@ -217,6 +226,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     attachUpgrades: (server) => host.attachUpgrades(server),
     realtime,
     telemetry,
+    cron,
     accelerators,
     accounts,
     records,
@@ -230,12 +240,14 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     async idle() {
       await accelerators.mounted.infrastructure.idle();
       await deploysFollower.idle();
+      await cron.idle();
       await telemetry.idle();
     },
     serviceRegistry,
     eventEmitter,
     setOperator,
     async shutdown() {
+      cron.stop();
       deploysFollower.stop();
       proxy.stop();
       await telemetry.stop();

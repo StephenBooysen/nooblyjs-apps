@@ -1,12 +1,15 @@
 // New service of a type (product.md §6.3; mock-up "New web service"): four numbered fieldsets (Source code, Build and
 // run, Instance type, Environment variables) beside a sticky Summary that prices the choice as it changes, and the
-// button that names the action. Web, Private, Worker and Static Site use this screen and drop what they do not need.
-// Field errors from the API's 422 appear under their fields (forms.js).
+// button that names the action. Web, Private, Worker, Static Site and Cron Job use this screen and drop what they do
+// not need: a Cron Job has a schedule (UTC, previewed in words as it is typed) and a command instead of a start command,
+// and an instance type without a count. Field errors from the API's 422 appear under their fields (forms.js).
 import { html } from '../html.js';
 import { api } from '../api.js';
 import { showErrors } from '../forms.js';
 import { stepper, emptyState } from '../components/index.js';
-import { CREATABLE, PLANS, RUNTIMES, MAX_INSTANCES, SLEEP, planOf, estimate, specText, priceText } from '../shared/catalog.js';
+import { CREATABLE, CRON_DEFAULTS, PLANS, RUNTIMES, MAX_INSTANCES, SLEEP, planOf, estimate, specText, priceText } from '../shared/catalog.js';
+import { parseCron, describeCron, nextRuns, CRON_HINT } from '../shared/cron.js';
+import { until, utcText } from '../format.js';
 
 const ago = (iso) => {
   if (!iso) return 'a while ago';
@@ -80,7 +83,7 @@ function buildFieldset({ catalog, type, firstRepo }) {
     <div class="nj-grid-2">
       <div><label class="form-label" for="f-name">Service name</label>
         <input class="form-control" id="f-name" name="name" value="${name}" required maxlength="63" autocomplete="off" spellcheck="false" aria-describedby="name-hint name-error">
-        <div class="form-text" id="name-hint">${type.publicUrl ? html`Your URL will be <span data-url-full>${name || 'name'}.${catalog.appDomain}</span>` : type.key === 'private' ? 'Reachable inside this workspace by this name.' : 'A worker has no URL.'}</div>${feedback('name')}</div>
+        <div class="form-text" id="name-hint">${type.publicUrl ? html`Your URL will be <span data-url-full>${name || 'name'}.${catalog.appDomain}</span>` : type.key === 'private' ? 'Reachable inside this workspace by this name.' : type.schedule ? 'A cron job has no URL: it runs, then stops.' : 'A worker has no URL.'}</div>${feedback('name')}</div>
       <div><label class="form-label" for="f-branch">Branch</label>
         <select class="form-select" id="f-branch" name="branch" aria-describedby="branch-error"><option>main</option></select>${feedback('branch')}</div>
       <div><label class="form-label" for="f-region">Region</label>
@@ -95,35 +98,53 @@ function buildFieldset({ catalog, type, firstRepo }) {
     <div class="nj-grid-2">
       <div><label class="form-label" for="f-build">Build command <span class="nj-meta">· optional</span></label>
         <input class="form-control nj-mono" id="f-build" name="buildCommand" placeholder="Default: ${RUNTIMES[0].defaultBuild}" autocomplete="off" spellcheck="false" aria-describedby="commands-hint buildCommand-error">${feedback('buildCommand')}</div>
-      ${type.key === 'static' ? '' : html`<div><label class="form-label" for="f-start">Start command <span class="nj-meta">· optional</span></label>
+      ${type.key === 'static' || type.schedule ? '' : html`<div><label class="form-label" for="f-start">Start command <span class="nj-meta">· optional</span></label>
         <input class="form-control nj-mono" id="f-start" name="startCommand" placeholder="Default: ${RUNTIMES[0].defaultStart}" autocomplete="off" spellcheck="false" aria-describedby="commands-hint startCommand-error">${feedback('startCommand')}</div>`}
     </div>
-    <div class="form-text" id="commands-hint">Leave them empty to use the runtime's defaults, shown in grey.</div>
+    <div class="form-text" id="commands-hint">${type.schedule ? 'Leave it empty to use the runtime\'s default, shown in grey.' : 'Leave them empty to use the runtime\'s defaults, shown in grey.'}</div>
+    ${type.schedule ? html`<div class="nj-grid-2">
+      <div><label class="form-label" for="f-schedule">Schedule (UTC)</label>
+        <input class="form-control nj-mono" id="f-schedule" name="schedule" value="${CRON_DEFAULTS.schedule}" required autocomplete="off" spellcheck="false" aria-describedby="schedule-preview schedule-hint schedule-error">
+        <div class="form-text" id="schedule-preview" data-schedule-preview aria-live="polite"></div>
+        <div class="form-text" id="schedule-hint">${CRON_HINT}</div>${feedback('schedule')}</div>
+      <div><label class="form-label" for="f-command">Command</label>
+        <input class="form-control nj-mono" id="f-command" name="command" required placeholder="node scripts/nightly.js" autocomplete="off" spellcheck="false" aria-describedby="command-hint command-error">
+        <div class="form-text" id="command-hint">What each run starts, in the built image. A run that exits with 0 succeeded.</div>${feedback('command')}</div>
+    </div>` : ''}
   </fieldset>`;
 }
 
+/** The schedule as typed: in words with the next run, or what is wrong with it. */
+function schedulePreview(value) {
+  const parsed = parseCron(value);
+  if (parsed.error) return parsed.error;
+  const [next] = nextRuns(parsed, new Date(), 1);
+  return `${describeCron(parsed)} · next ${next ? `${utcText(next.toISOString())} (${until(next.toISOString())})` : 'not within a year'}`;
+}
+
 function instanceFieldset(type) {
-  if (!type.instances) return '';
+  if (!type.plan) return '';
+  const chosen = type.schedule ? CRON_DEFAULTS.plan : 'standard';
   return html`<fieldset class="nj-fieldset">
     <legend><span class="nj-step-no" aria-hidden="true">3</span>Instance type</legend>
-    <p class="mb-0">This is the CPU and memory reserved for each instance. You can change it later without redeploying.</p>
+    <p class="mb-0">${type.instances ? 'This is the CPU and memory reserved for each instance. You can change it later without redeploying.' : 'This is the CPU and memory each run gets. One run at a time; you can change it later without redeploying.'}</p>
     <div role="radiogroup" aria-label="Instance type" aria-describedby="plan-error" class="nj-plans">${PLANS.map((p) => html`<label class="nj-plan">
-      <input type="radio" class="visually-hidden" name="plan" value="${p.key}"${p.key === 'standard' ? html` checked` : ''}>
+      <input type="radio" class="visually-hidden" name="plan" value="${p.key}"${p.key === chosen ? html` checked` : ''}>
       <span class="nj-plan-name">${p.name}</span>
       <span class="nj-plan-price nj-num">${priceText(p.priceUsd)}</span>
       <span class="nj-plan-spec nj-num">${specText(p)}</span>
     </label>`)}</div>${feedback('plan')}
-    <div class="nj-instances">
+    ${type.instances ? html`<div class="nj-instances">
       <label class="form-label mb-0" for="f-instances">Instances</label>
       <input class="form-control nj-num" id="f-instances" name="instances" type="number" value="2" min="1" max="${MAX_INSTANCES}" aria-describedby="instances-hint instances-error">
       <span class="form-text mt-0" id="instances-hint">Traffic is balanced across instances. Add more for zero-downtime deploys. Up to ${MAX_INSTANCES}, at the same price.</span>
-    </div>${feedback('instances')}
+    </div>${feedback('instances')}` : ''}
   </fieldset>`;
 }
 
 function envFieldset({ groups, type }) {
   return html`<fieldset class="nj-fieldset">
-    <legend><span class="nj-step-no" aria-hidden="true">${type.instances ? 4 : 3}</span>Environment variables</legend>
+    <legend><span class="nj-step-no" aria-hidden="true">${type.plan ? 4 : 3}</span>Environment variables</legend>
     <div class="nj-env" data-env>${envRow(0, { key: 'NODE_ENV', value: 'production' })}</div>${feedback('env')}
     <div class="d-flex flex-wrap gap-2">
       <button type="button" class="btn btn-secondary btn-sm" data-env-add><i class="bi bi-plus-lg" aria-hidden="true"></i> Add variable</button>
@@ -150,11 +171,12 @@ function summaryAside(type) {
       <dt>Type</dt><dd>${type.label}</dd>
       <dt>Repo</dt><dd data-sum="repo">—</dd>
       <dt>Branch</dt><dd data-sum="branch">main</dd>
-      ${type.instances ? html`<dt>Instance</dt><dd data-sum="plan">Standard</dd><dt>Compute</dt><dd data-sum="compute" class="nj-num">1 CPU · 2 GB × 2</dd>` : ''}
+      ${type.plan ? html`<dt>Instance</dt><dd data-sum="plan">Standard</dd><dt>Compute</dt><dd data-sum="compute" class="nj-num">1 CPU · 2 GB × 2</dd>` : ''}
+      ${type.schedule ? html`<dt>Schedule</dt><dd data-sum="schedule">—</dd>` : ''}
     </dl>
     <hr>
     <div class="nj-summary-total"><span>Estimated</span><strong class="nj-num" data-sum="price">$— / mo</strong></div>
-    <p class="nj-meta mb-1">A flat price for the service, for 1 to ${MAX_INSTANCES} instances.</p>
+    <p class="nj-meta mb-1">${type.schedule ? 'A flat price for the cron job, however often it runs.' : `A flat price for the service, for 1 to ${MAX_INSTANCES} instances.`}</p>
     ${type.sleeps ? html`<p class="nj-meta">In a cloud region it sleeps after ${SLEEP.afterMinutes} minutes without requests, and wakes on the next one. ${SLEEP.wakeText}</p>` : ''}
     <div class="nj-switch-row">
       <span><strong class="d-block">Auto-deploy</strong><span class="nj-meta" data-sum="auto">Deploy on every push to main</span></span>
@@ -162,7 +184,7 @@ function summaryAside(type) {
     </div>
     <div class="alert alert-danger mt-3 mb-0" role="alert" tabindex="-1" data-form-alert hidden></div>
     <button type="submit" class="btn btn-primary w-100 nj-deploy-btn">${type.action}</button>
-    <p class="nj-meta mt-2 mb-0">Your first build starts straight away. You can watch it in the logs.</p>
+    <p class="nj-meta mt-2 mb-0">${type.schedule ? 'Your first build starts straight away. The first run waits for the schedule, or for Run now.' : 'Your first build starts straight away. You can watch it in the logs.'}</p>
   </aside>`;
 }
 
@@ -244,7 +266,7 @@ export async function createServicePage({ workspace, typeInfo, url }) {
       function update() {
         const gitUrl = $('#f-git-url').value.trim();
         const repo = source === 'git' ? gitUrl.replace(/^https:\/\//, '') : form.querySelector('input[name="repo"]:checked')?.value;
-        const plan = planOf(form.querySelector('input[name="plan"]:checked')?.value ?? 'standard');
+        const plan = planOf(form.querySelector('input[name="plan"]:checked')?.value ?? (type.schedule ? CRON_DEFAULTS.plan : 'standard'));
         const instances = type.instances ? Math.max(1, Number($('#f-instances')?.value) || 1) : 1;
         const branch = (source === 'git' ? $('#f-git-branch').value.trim() : branchSelect.value) || 'main';
         const set = (key, value) => {
@@ -255,7 +277,12 @@ export async function createServicePage({ workspace, typeInfo, url }) {
         set('branch', branch);
         if (plan) {
           set('plan', plan.name);
-          set('compute', `${specText(plan)} × ${instances}`);
+          set('compute', type.schedule ? `${specText(plan)} per run` : `${specText(plan)} × ${instances}`);
+        }
+        if (type.schedule) {
+          const parsed = parseCron($('#f-schedule').value);
+          set('schedule', parsed.error ? '—' : describeCron(parsed));
+          $('[data-schedule-preview]').textContent = schedulePreview($('#f-schedule').value);
         }
         const est = estimate(plan?.key);
         set('price', est.text);
@@ -365,7 +392,8 @@ export async function createServicePage({ workspace, typeInfo, url }) {
           runtime: $('#f-runtime').value,
           rootDir: $('#f-root').value,
           buildCommand: $('#f-build').value.trim() || null,
-          ...(type.key === 'static' ? {} : { startCommand: $('#f-start').value.trim() || null }),
+          ...(type.key === 'static' || type.schedule ? {} : { startCommand: $('#f-start').value.trim() || null }),
+          ...(type.schedule ? { schedule: $('#f-schedule').value, command: $('#f-command').value.trim() } : {}),
           plan: form.querySelector('input[name="plan"]:checked')?.value ?? 'standard',
           instances: type.instances ? Number($('#f-instances').value) : 1,
           env: rows.map((row) => {
@@ -399,12 +427,12 @@ export async function createServicePage({ workspace, typeInfo, url }) {
 
 /** A type that cannot be created yet: what it is and when it comes. */
 export function comingTypePage({ workspace, typeInfo }) {
-  const when = { cron: 'with scheduled runs', workflow: 'with workflows', postgres: 'with managed Postgres', keyvalue: 'with managed Key Value', sandbox: 'once sandbox isolation is decided' }[typeInfo.key];
+  const when = { workflow: 'with workflows', postgres: 'with managed Postgres', keyvalue: 'with managed Key Value', sandbox: 'once sandbox isolation is decided' }[typeInfo.key];
   return {
     title: `New ${typeInfo.name} · ${workspace.name}`,
     content: html`<div class="nj-page-head"><div>
         <p class="nj-breadcrumb"><a href="/w/${workspace.id}">Production</a> / <a href="/w/${workspace.id}/new">New service</a> / ${typeInfo.name}</p>
         <h1 class="nj-title">New ${typeInfo.name}</h1><p class="nj-lead">${typeInfo.text}</p></div></div>
-      ${emptyState({ icon: 'cone-striped', title: `${typeInfo.name} is coming`, text: `You can create these ${when}. Web services, private services, workers and static sites work today.`, action: html`<a class="btn btn-primary" href="/w/${workspace.id}/new/web">New web service</a>` })}`,
+      ${emptyState({ icon: 'cone-striped', title: `${typeInfo.name} is coming`, text: `You can create these ${when}. Web services, private services, workers, static sites and cron jobs work today.`, action: html`<a class="btn btn-primary" href="/w/${workspace.id}/new/web">New web service</a>` })}`,
   };
 }

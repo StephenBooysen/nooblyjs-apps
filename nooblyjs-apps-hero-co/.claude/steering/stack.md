@@ -71,7 +71,7 @@ the three accelerators as `file:` links, plus a reason in the PR for anything el
 | `authservice` | Email + password sign-up and sessions; GitHub sign-in through the `passport` provider (`passport-github2`); personal API tokens for the CLI later | `file` → `passport` + Redis session store |
 | `logging` | App logs (not customer logs, see §4.3) | `file` → `file` + stdout |
 | `queueing` | Build jobs, deploy fan-out, log batches, webhook events | `memory` → `redis` |
-| `scheduling` | Cron Job services (metric flushes and the hourly log sweep are timers in `src/telemetry/`, D9) | `memory` (cron expressions from `scheduling/providers/cronExpression.js`) |
+| `scheduling` | Not used for Cron Jobs: see D10 (`src/scheduling/cron.js`); metric flushes and the hourly log sweep are timers in `src/telemetry/` (D9) | `memory` |
 | `working` | Build workers off the request path | `default` |
 | `workflow` | Workflow service type (parallel tasks with retries); multi-step onboarding | `memory` + `exportState()` persisted by us |
 | `measuring` | Not used for metric history: see D9 (`src/telemetry/metrics.js`) | `default` |
@@ -300,3 +300,4 @@ npm run test:ui      # Playwright, desktop + phone
 | D7 | Every accelerator mounts with `mount(app, eventEmitter, serviceRegistry, options)` | One loader, one shutdown path; events on one emitter. |
 | D8 | Billing is the payments accelerator; card data never touches our servers | PCI SAQ A scope; invoices, dunning and the ledger reused, not rebuilt. |
 | D9 | Metric history and logs in our own small stores on `filing`, not core `measuring` and `searching` (2026-11-22) | Core `measuring` (`default`) keeps samples in memory only, stamps each at `add()` (an agent sample carries its own time) and has no roll-ups. `searching` would index every line a second time for a word search we can answer by scanning one service's chunks in the asked window, newest first (a 5,000-line ring answers the live view). Revisit with a log volume that needs an index. |
+| D10 | Cron Jobs fire from our own minute scheduler (`src/scheduling/cron.js`, `public/js/shared/cron.js`), not core `scheduling` (2026-11-22) | Core's cron matches the server's local time (schedules are UTC, as Render's are) and a fire runs a worker script, where ours calls `workloads.runJob()` with the record's command. Its expression parser is not exported, and the browser needs the same parser to preview a schedule in words and list the next runs. One timer a second into each UTC minute, a guard against firing twice in a minute, and the platform's one-run-at-a-time rule (409) for overlaps. |
