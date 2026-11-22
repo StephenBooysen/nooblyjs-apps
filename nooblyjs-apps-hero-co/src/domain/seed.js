@@ -7,6 +7,16 @@ import { mockTokenFor, MOCK_ORGS } from '../github/mock-data.js';
 
 export const SEED_WORKSPACE = 'exclusivity-life';
 const TYPE_OF_KIND = { service: 'web', private: 'private', worker: 'worker', static: 'static', job: 'cron' };
+/** A job with no schedule is a Workflow (its runs are its tasks'). */
+const typeOf = (w) => (w.kind === 'job' && !w.schedule ? 'workflow' : TYPE_OF_KIND[w.kind] ?? 'web');
+/** The seed Workflow's tasks (product.md §9: orders). */
+const SEED_TASKS = {
+  orders: [
+    { name: 'charge-card', command: 'node tasks/charge-card.js', retries: 3 },
+    { name: 'send-receipt', command: 'node tasks/send-receipt.js', retries: 2 },
+    { name: 'sync-inventory', command: 'node tasks/sync-inventory.js', retries: 1 },
+  ],
+};
 const DEMO = { NODE_ENV: 'production', LOG_LEVEL: 'info' };
 
 /** The plan nearest a workload's { cpu, memoryMb }. */
@@ -43,7 +53,7 @@ export async function seedRecords({ records, secrets, platform, accounts, reset 
   const workloads = Array.isArray(listed) ? listed : listed.workloads ?? [];
   let deployCount = 0;
   for (const w of workloads) {
-    const type = TYPE_OF_KIND[w.kind] ?? 'web';
+    const type = typeOf(w);
     const svc = await records.services.create({
       workspaceId: ws, name: w.name, type,
       source: { provider: 'github', repo: w.source?.repo ?? null, branch: w.source?.branch ?? 'main', rootDir: w.source?.rootDir ?? '' },
@@ -54,7 +64,8 @@ export async function seedRecords({ records, secrets, platform, accounts, reset 
       url: w.domains?.length ? `https://${w.domains[0]}` : null,
       internalHost: w.kind === 'private' ? `${w.name}:${w.run?.port ?? 10000}` : null,
       status: w.status ?? 'live', current: w.current ? { deployId: w.current.deployId, commit: w.current.commit } : null, workload: w.name,
-      ...(w.kind === 'job' ? { schedule: w.schedule ?? null, command: w.run?.command ?? null } : {}),
+      ...(type === 'cron' ? { schedule: w.schedule ?? null, command: w.run?.command ?? null } : {}),
+      ...(type === 'workflow' ? { tasks: SEED_TASKS[w.name] ?? [], concurrency: w.concurrency ?? 1 } : {}),
       createdBy: stevie, createdAt: w.createdAt ?? new Date().toISOString(),
     });
     // Plain values become sealed variables of ours; links (database, cache) wait for 8.6 and 8.7.

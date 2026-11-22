@@ -10,6 +10,9 @@
 //
 // A Cron Job (roadmap 5.3) has Run now instead of Restart; its Overview starts with its schedule (in words, the next
 // runs, a form to change it) and its runs (each with its log); its second tab is its Logs; it scales by type only.
+// A Workflow (roadmap 5.4) has no Restart either; its Overview starts with its tasks (each with Run, the meters, a form
+// to change them), its task runs (each attempt's log, Cancel while waiting) and how code triggers a task; its second
+// tab is its Logs; it scales by type only.
 //
 // Deploy changes, metrics, runs and log lines arrive over the live channel and redraw the parts they touch.
 import { html } from '../html.js';
@@ -21,14 +24,17 @@ import { statusPill, emptyState } from '../components/index.js';
 import { SLEEP, PLANS, MAX_INSTANCES, CREATABLE, planOf, specText, priceText, estimate } from '../shared/catalog.js';
 import { parseCron, describeCron, nextRuns } from '../shared/cron.js';
 import { until, utcText } from '../format.js';
-import { statusWord, resourceCards, instanceTiles, logsPanel, mountLogs, retentionText, deploysTable, runsTable, segmented, selectSegment, throttle, RANGES } from './watch.js';
+import { statusWord, resourceCards, instanceTiles, logsPanel, mountLogs, retentionText, deploysTable, runsTable, segmented, selectSegment, throttle, RANGES, taskMeters } from './watch.js';
+import { tasksCard, taskRunsTable, triggerCard, bindTasksEditor } from './tasks.js';
 
 export { statusWord };
 const STEPS = ['Clone', 'Build', 'Roll out'];
-const TYPE_NAME = { postgres: 'Postgres', keyvalue: 'Key Value', cron: 'Cron Job' };
+const TYPE_NAME = { postgres: 'Postgres', keyvalue: 'Key Value', cron: 'Cron Job', workflow: 'Workflow' };
+/** Types that run when asked, not all the time: their second tab is their run output, not live resources. */
+const RUNS_ONLY = new Set(['cron', 'workflow']);
 const TABS = [['overview', 'Overview'], ['metrics', 'Metrics and logs'], ['deploys', 'Deploys'], ['environment', 'Environment'], ['scaling', 'Scaling'], ['settings', 'Settings']];
-/** A Cron Job's tabs: its second one is its run output, not live resources (nothing runs between runs). */
-const tabsFor = (svc) => (svc.type === 'cron' ? TABS.map(([k, label]) => [k, k === 'metrics' ? 'Logs' : label]) : TABS);
+/** A Cron Job's or Workflow's tabs: the second one is its run output, not live resources (nothing runs between runs). */
+const tabsFor = (svc) => (RUNS_ONLY.has(svc.type) ? TABS.map(([k, label]) => [k, k === 'metrics' ? 'Logs' : label]) : TABS);
 const time = (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '');
 const when = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—');
 const short = (sha) => (sha ? sha.slice(0, 7) : '—');
@@ -80,6 +86,12 @@ function actions(svc) {
       <button type="button" class="btn btn-primary" data-action="runs"${suspended || !svc.current ? ' disabled' : ''}><i class="bi bi-play-fill" aria-hidden="true"></i> Run now</button>
     </div>`;
   }
+  if (svc.type === 'workflow') {
+    return html`<div class="nj-actions" role="group" aria-label="Workflow actions">
+      ${suspended ? html`<button type="button" class="btn btn-secondary" data-action="resume">Resume</button>` : html`<button type="button" class="btn btn-secondary" data-action="suspend">Suspend</button>`}
+      <button type="button" class="btn btn-primary" data-action="deploys"${suspended ? ' disabled' : ''}><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Manual deploy</button>
+    </div>`;
+  }
   return html`<div class="nj-actions" role="group" aria-label="Service actions">
     ${svc.type === 'static' ? '' : html`<button type="button" class="btn btn-secondary" data-action="restart"${suspended ? ' disabled' : ''}>Restart</button>`}
     ${suspended ? html`<button type="button" class="btn btn-secondary" data-action="resume">Resume</button>` : html`<button type="button" class="btn btn-secondary" data-action="suspend">Suspend</button>`}
@@ -90,6 +102,7 @@ function actions(svc) {
 /** What the status means, when it needs saying. */
 function statusNote(svc) {
   if (svc.status === 'sleeping') return html`<div class="alert alert-info mb-4" role="status"><strong>Sleeping.</strong> It had no requests for ${SLEEP.afterMinutes} minutes, so it stopped. The next request wakes it: ${SLEEP.wakeText}</div>`;
+  if (svc.status === 'suspended' && svc.type === 'workflow') return html`<div class="alert alert-warning mb-4" role="status"><strong>Suspended.</strong> No task starts and nothing deploys, not even on a push, until you resume it. Runs you queue wait; runs going finish.</div>`;
   if (svc.status === 'suspended' && svc.type === 'cron') return html`<div class="alert alert-warning mb-4" role="status"><strong>Suspended.</strong> The schedule fires nothing and nothing deploys, not even on a push, until you resume it.</div>`;
   if (svc.status === 'suspended') return html`<div class="alert alert-warning mb-4" role="status"><strong>Suspended.</strong> Nothing is running and nothing deploys, not even on a push, until you resume it.</div>`;
   return '';
@@ -159,7 +172,7 @@ function scalingSection(svc) {
     </div>` : '';
   return html`<form class="nj-card" data-scale novalidate aria-labelledby="scale-title">
     <h2 class="nj-card-title" id="scale-title">${type.instances ? 'Instance type and count' : 'Instance type'}</h2>
-    <p class="nj-meta">${type.instances ? 'A new count adds or removes instances; the others keep running. A new type starts every instance again at the new size and stops the old ones once the new ones answer. Requests are answered throughout.' : 'The CPU and memory each run gets, from the next run. One run at a time, so there is no count.'}</p>
+    <p class="nj-meta">${type.instances ? 'A new count adds or removes instances; the others keep running. A new type starts every instance again at the new size and stops the old ones once the new ones answer. Requests are answered throughout.' : type.tasks ? 'The CPU and memory each task run gets, from the next run. How many run at once is set with the tasks, on the Overview.' : 'The CPU and memory each run gets, from the next run. One run at a time, so there is no count.'}</p>
     <fieldset class="mb-4"><legend class="form-label">Instance type</legend>
       <div role="radiogroup" aria-label="Instance type" class="nj-plans">${PLANS.map((p) => html`<label class="nj-plan">
         <input class="visually-hidden" type="radio" name="plan" value="${p.key}"${p.key === svc.plan ? ' checked' : ''}${suspended ? ' disabled' : ''}>
@@ -183,8 +196,9 @@ function settingsSection(svc) {
     ['Type', svc.typeLabel ?? svc.type],
     ['Region', `${svc.regionName} (${svc.region})`],
     ...(svc.source ? [['Repository', svc.source.repo], ['Branch', svc.source.branch], ['Root directory', svc.source.rootDir || 'the repository root'], ['Auto-deploy', svc.autoDeploy ? 'On every push to the branch' : 'Off: manual deploys only']] : []),
-    ...(svc.build ? [['Runtime', svc.runtimeName ?? svc.build.runtime ?? '—'], ['Build command', svc.build.buildCommand || 'the runtime\'s default'], ...(svc.type === 'cron' ? [] : [['Start command', svc.build.startCommand || 'the runtime\'s default']])] : []),
+    ...(svc.build ? [['Runtime', svc.runtimeName ?? svc.build.runtime ?? '—'], ['Build command', svc.build.buildCommand || 'the runtime\'s default'], ...(RUNS_ONLY.has(svc.type) ? [] : [['Start command', svc.build.startCommand || 'the runtime\'s default']])] : []),
     ...(svc.type === 'cron' ? [['Schedule', `${svc.scheduleText || '—'} (${svc.schedule ?? 'none'})`], ['Command', svc.command ?? '—']] : []),
+    ...(svc.type === 'workflow' ? [['Tasks', (svc.tasks ?? []).map((t) => t.name).join(', ') || 'none'], ['Runs at once', `Up to ${svc.concurrency}`]] : []),
     ['Address', svc.path ? `${window.location.origin}${svc.path}` : svc.url ?? (svc.internalHost ? `${svc.internalHost} (private network)` : '—')],
     ['Created', when(svc.createdAt)],
   ];
@@ -212,6 +226,8 @@ export async function servicePage({ workspace, params }) {
   const detail = latest ? await api(`${base}/deploys/${encodeURIComponent(latest.id)}`) : null;
   const tabs = tabsFor(svc);
   const cron = svc.type === 'cron';
+  const workflow = svc.type === 'workflow';
+  const runsOnly = RUNS_ONLY.has(svc.type);
   let tab = new URLSearchParams(window.location.search).get('tab');
   if (!tabs.some(([k]) => k === tab)) tab = 'overview';
   const panel = (key, body) => html`<div class="nj-tabpanel" role="tabpanel" id="panel-${key}" aria-labelledby="tab-${key}" data-panel="${key}"${key === tab ? '' : ' hidden'}>${body}</div>`;
@@ -224,7 +240,7 @@ export async function servicePage({ workspace, params }) {
     content: html`<div class="nj-page-head"><div>
         <p class="nj-breadcrumb"><a href="/w/${workspace.id}">Production</a> / ${svc.name}</p>
         <div class="nj-title-row"><h1 class="nj-title">${svc.name}</h1><span data-status role="status" aria-label="Status">${statusPill(statusWord(svc.status))}</span></div>
-        <p class="nj-lead mb-1" data-lead>${TYPE_NAME[svc.type] ?? svc.typeLabel}${svc.runtimeName ? ` · ${svc.runtimeName}` : ''}${['static', 'postgres', 'keyvalue'].includes(svc.type) ? '' : svc.type === 'cron' ? ` · ${svc.planName}` : ` · ${svc.instances} × ${svc.planName}`} · ${svc.regionName}</p>
+        <p class="nj-lead mb-1" data-lead>${TYPE_NAME[svc.type] ?? svc.typeLabel}${svc.runtimeName ? ` · ${svc.runtimeName}` : ''}${['static', 'postgres', 'keyvalue'].includes(svc.type) ? '' : svc.type === 'cron' ? ` · ${svc.planName}` : workflow ? ` · ${svc.planName} · up to ${svc.concurrency} at once` : ` · ${svc.instances} × ${svc.planName}`} · ${svc.regionName}</p>
         <p class="nj-meta mb-0">
           ${svc.path ? html`<a href="${svc.path}" data-reload rel="noopener" target="_blank">${window.location.origin}${svc.path}</a> · ` : svc.url ? html`<a href="${svc.url}" data-reload rel="noopener" target="_blank">${svc.url.replace('https://', '')}</a> · ` : svc.internalHost ? html`Private: <code>${svc.internalHost}</code> · ` : ''}
           ${repoLine ? html`<i class="bi bi-github" aria-hidden="true"></i> ${repoLine}` : ''}
@@ -247,6 +263,13 @@ export async function servicePage({ workspace, params }) {
             <div data-runs><p class="nj-meta mb-0">Loading…</p></div>
           </section>
           <div class="mb-4" data-run-out></div>` : ''}
+        ${workflow ? html`<div data-tasks-card>${tasksCard(svc, { running: 0, queued: 0, concurrency: svc.concurrency, queueLimit: 1000, last: null })}</div>
+          <section class="nj-card mb-4" aria-labelledby="task-runs-title">
+            <div class="nj-section-head"><h2 class="nj-card-title mb-0" id="task-runs-title">Task runs</h2><button type="button" class="btn btn-link p-0" data-tab="metrics">All its logs</button></div>
+            <div data-task-runs><p class="nj-meta mb-0">Loading…</p></div>
+          </section>
+          <div class="mb-4" data-task-out></div>
+          <div data-trigger-box></div>` : ''}
         <section class="nj-card mb-4" aria-labelledby="deploy-title">
           <h2 class="nj-card-title" id="deploy-title">Latest deploy</h2>
           <p class="nj-meta">${svc.estimate.text}${svc.sleepsWhenIdle ? ` · sleeps after ${SLEEP.afterMinutes} minutes without requests` : ''}${svc.spec ? ` · ${svc.planName} is ${svc.spec} per instance` : ''}</p>
@@ -258,7 +281,7 @@ export async function servicePage({ workspace, params }) {
           <div data-recent>${deploysTable(svc.deploys.slice(0, 5).map(row), workspace.id, { withService: false })}</div>
         </section>`)}
 
-      ${panel('metrics', cron ? logsPanel({ download: true, foot: retentionText(svc.plan) }) : html`
+      ${panel('metrics', runsOnly ? logsPanel({ download: true, foot: retentionText(svc.plan) }) : html`
         <div class="nj-section-head"><h2 class="nj-section-title mb-0">Resources</h2>${segmented('Range', RANGES.map((r) => [r, r]), '1h', 'range')}</div>
         <div class="mb-4" data-resources><div class="nj-res-empty">Loading…</div></div>
         <section class="nj-card mb-4" aria-labelledby="instances-title">
@@ -305,7 +328,7 @@ export async function servicePage({ workspace, params }) {
         if (loaded.has(key)) return;
         loaded.add(key);
         if (key === 'metrics') {
-          if (!cron) refreshMetrics();
+          if (!runsOnly) refreshMetrics();
           stops.push(mountLogs(root.querySelector('#panel-metrics'), { url: `${base}/logs`, service: svc.name, downloadUrl: () => `${base}/logs/download` }));
         }
         if (key === 'deploys') showDeployLog(root.querySelector('#deploy-pick')?.value);
@@ -338,14 +361,14 @@ export async function servicePage({ workspace, params }) {
         }
       }
       root.querySelector('#panel-metrics').addEventListener('click', (event) => {
-        if (cron) return;
+        if (runsOnly) return;
         const b = event.target.closest('[data-range]');
         if (!b) return;
         range = b.dataset.range;
         selectSegment(root.querySelector('#panel-metrics'), 'range', range);
         refreshMetrics();
       });
-      const liveMetrics = throttle(() => { if (!cron && tab === 'metrics' && range === '1h') refreshMetrics(); });
+      const liveMetrics = throttle(() => { if (!runsOnly && tab === 'metrics' && range === '1h') refreshMetrics(); });
       stops.push(on('metrics', (e) => { if (e.service === svc.name) liveMetrics(); }), liveMetrics.cancel);
 
       // ----- Deploys -----
@@ -373,7 +396,164 @@ export async function servicePage({ workspace, params }) {
       const poll = setInterval(() => {
         if (running(current) && tab === 'overview') refreshLog(current);
         if (cron && tab === 'overview' && runs.some((r) => r.id === shownRun && ['queued', 'running'].includes(r.status))) showRunLog(shownRun);
+        if (workflow && tab === 'overview' && taskRuns.some((r) => r.id === shownTask && r.status === 'running')) showTaskRun(shownTask);
       }, 2000);
+
+      // ----- A Workflow's tasks, runs and trigger -----
+      let taskRuns = [];
+      let shownTask = null;
+      let triggerFacts = null;
+      let freshKey = null;
+      async function showTaskRun(id) {
+        shownTask = id;
+        const out = root.querySelector('[data-task-out]');
+        try {
+          const r = await api(`${base}/task-runs/${encodeURIComponent(id)}`);
+          out.innerHTML = String(html`${r.attempts.length ? r.attempts.map((a) => html`<div class="mb-3">${buildLog(a.log, a.status === 'running' || a.status === 'queued', `${r.task} · attempt ${a.attempt} of ${r.maxAttempts} · queued ${when(r.createdAt)}`, 'Waiting for the run to start…')}</div>`) : ''}`);
+        } catch (err) {
+          out.textContent = err.message;
+        }
+      }
+      function drawTrigger() {
+        if (!triggerFacts) return;
+        root.querySelector('[data-trigger-box]').innerHTML = String(triggerCard(triggerFacts, { task: svc.tasks?.[0]?.name ?? 'send-receipt', fresh: freshKey }));
+      }
+      async function refreshTasks() {
+        const box = root.querySelector('[data-task-runs]');
+        try {
+          const r = await api(`${base}/tasks`);
+          taskRuns = r.runs;
+          Object.assign(svc, { tasks: r.tasks, concurrency: r.concurrency });
+          const meters = root.querySelector('[data-task-meters]');
+          const last = r.runs.find((x) => ['succeeded', 'failed'].includes(x.status));
+          meters.innerHTML = String(html`${taskMeters({ ...r.counts, last: last ? { task: last.task, status: last.status, at: last.finishedAt ?? last.createdAt, durationMs: last.durationMs, attempts: last.attempt } : null })}`);
+          applySizes(meters);
+          box.innerHTML = String(taskRunsTable(r.runs, r.limitMb));
+          triggerFacts = r.trigger;
+          drawTrigger();
+          if (shownTask) await showTaskRun(shownTask);
+        } catch (err) {
+          box.textContent = err.message;
+        }
+      }
+      if (workflow) {
+        refreshTasks();
+        const liveTasks = throttle(refreshTasks, 1000);
+        stops.push(on('task', (e) => { if (e.service === svc.name) liveTasks(); }), liveTasks.cancel);
+        const card = root.querySelector('[data-tasks-card]');
+        const note = () => card.querySelector('[data-tasks-note]');
+        // Run: the input form under the table, for the task asked.
+        card.addEventListener('click', (event) => {
+          const runButton = event.target.closest('[data-task-run]');
+          const runForm = card.querySelector('[data-run-form]');
+          if (runButton) {
+            runForm.hidden = false;
+            runForm.dataset.task = runButton.dataset.taskRun;
+            runForm.querySelector('[data-run-task]').textContent = runButton.dataset.taskRun;
+            runForm.input.focus();
+          }
+          if (event.target.closest('[data-run-cancel]')) runForm.hidden = true;
+          const edit = event.target.closest('[data-tasks-edit]');
+          const tForm = card.querySelector('[data-tasks-form]');
+          if (edit) {
+            tForm.hidden = !tForm.hidden;
+            edit.setAttribute('aria-expanded', String(!tForm.hidden));
+            if (!tForm.hidden) tForm.querySelector('input').focus();
+          }
+          if (event.target.closest('[data-tasks-cancel]')) {
+            tForm.hidden = true;
+            card.querySelector('[data-tasks-edit]').setAttribute('aria-expanded', 'false');
+          }
+        });
+        // Submits are caught on the card: Save draws the card again, with new forms.
+        let editor = bindTasksEditor(card.querySelector('[data-tasks-form]'));
+        card.addEventListener('submit', (event) => {
+          if (event.target.matches('[data-run-form]')) queueRun(event);
+          else if (event.target.matches('[data-tasks-form]')) saveTasks(event);
+        });
+        async function queueRun(event) {
+          event.preventDefault();
+          const form = event.target;
+          const field = form.input;
+          field.classList.remove('is-invalid');
+          form.querySelector('[data-for="input"]').textContent = '';
+          let input;
+          try {
+            input = field.value.trim() ? JSON.parse(field.value) : undefined;
+          } catch {
+            field.classList.add('is-invalid');
+            field.setAttribute('aria-invalid', 'true');
+            form.querySelector('[data-for="input"]').textContent = 'Input is JSON, such as {"orderId": 42}.';
+            field.focus();
+            return;
+          }
+          try {
+            const { run } = await api(`${base}/tasks/${encodeURIComponent(form.dataset.task)}/runs`, { method: 'POST', body: input === undefined ? {} : { input } });
+            note().textContent = run.status === 'running' ? `${run.task} is running. Its output shows below.` : `${run.task} is queued: it starts when a place is free${svc.status === 'suspended' ? ' and the workflow is resumed' : ''}.`;
+            form.hidden = true;
+            field.value = '';
+            shownTask = run.id;
+            await refreshTasks();
+          } catch (err) {
+            showErrors(form, err);
+            if (!err.details?.length) note().textContent = err.message;
+          }
+        }
+        async function saveTasks(event) {
+          event.preventDefault();
+          const form = event.target;
+          for (const el of form.querySelectorAll('.is-invalid')) el.classList.remove('is-invalid');
+          for (const el of form.querySelectorAll('.invalid-feedback')) el.textContent = '';
+          form.querySelector('[data-form-alert]').hidden = true;
+          try {
+            const r = await api(`${base}/tasks`, { method: 'PUT', body: { tasks: editor.read(), concurrency: editor.concurrency() } });
+            Object.assign(svc, { tasks: r.tasks, concurrency: r.concurrency });
+            card.innerHTML = String(tasksCard(svc, { running: 0, queued: 0, concurrency: svc.concurrency, queueLimit: 1000, last: null }));
+            note().textContent = r.changed ? `Saved: ${r.tasks.length} task${r.tasks.length === 1 ? '' : 's'}, up to ${r.concurrency} at once. It applies from the next run.` : 'Nothing changed.';
+            const lead = root.querySelector('[data-lead]');
+            lead.textContent = lead.textContent.replace(/up to \d+ at once/, `up to ${r.concurrency} at once`);
+            editor = bindTasksEditor(card.querySelector('[data-tasks-form]'));
+            await refreshTasks();
+          } catch (err) {
+            showErrors(form, err);
+          }
+        }
+        root.querySelector('[data-task-runs]').addEventListener('click', async (event) => {
+          const log = event.target.closest('[data-task-log]');
+          if (log) showTaskRun(log.dataset.taskLog).then(() => root.querySelector('[data-task-out]').scrollIntoView({ block: 'nearest' }));
+          const cancel = event.target.closest('[data-task-cancel]');
+          if (cancel) {
+            cancel.disabled = true;
+            try {
+              await api(`${base}/task-runs/${encodeURIComponent(cancel.dataset.taskCancel)}/cancel`, { method: 'POST', body: {} });
+              await refreshTasks();
+            } catch (err) {
+              note().textContent = err.message;
+              cancel.disabled = false;
+            }
+          }
+        });
+        root.querySelector('[data-trigger-box]').addEventListener('click', async (event) => {
+          const create = event.target.closest('[data-key-create]');
+          const remove = event.target.closest('[data-key-remove]');
+          if (!create && !remove) return;
+          if (create && triggerFacts?.key && !window.confirm('Replace the key? The old one stops working at once.')) return;
+          if (remove && !window.confirm('Remove the key? Nothing can start a task from code until you create another.')) return;
+          try {
+            if (create) {
+              const r = await api(`${base}/trigger-key`, { method: 'POST', body: {} });
+              freshKey = r.key;
+            } else {
+              await api(`${base}/trigger-key`, { method: 'DELETE' });
+              freshKey = null;
+            }
+            await refreshTasks();
+            root.querySelector('[data-key-note]').textContent = create ? 'Key made. Copy it now.' : 'Key removed.';
+          } catch (err) {
+            root.querySelector('[data-key-note]').textContent = err.message;
+          }
+        });
+      }
 
       // ----- A Cron Job's runs and schedule -----
       let runs = [];
@@ -549,12 +729,12 @@ export async function servicePage({ workspace, params }) {
       }));
 
       // Manual deploy, Restart, Suspend, Resume (roadmap 3.8). The status comes back over the live channel.
-      const SAY = { deploys: 'Deploy started.', restart: 'Restarting the instances one at a time.', suspend: cron ? 'Suspending: the schedule stops firing.' : 'Suspending: the instances stop.', resume: cron ? 'Resuming: the schedule fires again.' : 'Resuming: the instances start.', runs: 'Run started. Its output shows below as it runs.' };
+      const SAY = { deploys: 'Deploy started.', restart: 'Restarting the instances one at a time.', suspend: cron ? 'Suspending: the schedule stops firing.' : workflow ? 'Suspending: no task starts until you resume it.' : 'Suspending: the instances stop.', resume: cron ? 'Resuming: the schedule fires again.' : workflow ? 'Resuming: waiting runs start.' : 'Resuming: the instances start.', runs: 'Run started. Its output shows below as it runs.' };
       root.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-action]');
         if (!button) return;
         const verb = button.dataset.action;
-        if (verb === 'suspend' && !window.confirm(cron ? `Suspend ${svc.name}? Its schedule fires nothing until you resume it.` : `Suspend ${svc.name}? Its instances stop and it answers no requests until you resume it.`)) return;
+        if (verb === 'suspend' && !window.confirm(cron ? `Suspend ${svc.name}? Its schedule fires nothing until you resume it.` : workflow ? `Suspend ${svc.name}? No task starts until you resume it; runs you queue wait.` : `Suspend ${svc.name}? Its instances stop and it answers no requests until you resume it.`)) return;
         const note = root.querySelector('[data-action-note]');
         button.disabled = true;
         try {

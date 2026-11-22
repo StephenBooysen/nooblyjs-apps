@@ -10,7 +10,7 @@
 //   GET  /workspaces/:ws/services/:service/logs?level=&q=&since=&until=&limit=
 //   GET  /workspaces/:ws/services/:service/logs/download   the same lines as text
 //   POST /workspaces/:ws/services/:service/scale           { plan?, instances? } → services.platform.workloads.scale
-import { CREATABLE, PLANS, MAX_INSTANCES, BANDWIDTH_INCLUDED_GB, planOf, regionOf } from '../../public/js/shared/catalog.js';
+import { CREATABLE, PLANS, MAX_INSTANCES, BANDWIDTH_INCLUDED_GB, WORKFLOW, planOf, regionOf } from '../../public/js/shared/catalog.js';
 import { serviceView } from '../domain/records.js';
 import { RANGES } from '../telemetry/metrics.js';
 import { LEVELS } from '../telemetry/logs.js';
@@ -89,6 +89,7 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
    * going now, and the next time the schedule fires. Null for other kinds.
    */
   async function runFacts(s) {
+    if (s.type === 'workflow') return taskFacts(s);
     if (s.type !== 'cron') return null;
     const [w, runs] = s.workload ? await Promise.all([
       platform().workloads.get(s.workspaceId, s.workload).catch(() => null),
@@ -101,6 +102,23 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
       next: s.status === 'suspended' ? null : nextRuns(s.schedule ?? '', new Date(), 1)[0]?.toISOString() ?? null,
       scheduleText: describeCron(s.schedule ?? ''),
       limitMb: planOf(s.plan)?.memoryMb ?? null,
+    };
+  }
+
+  /**
+   * A Workflow's meters (product.md §6.4): task runs going against its concurrency, runs waiting against the queue's
+   * limit, and the last run that ended.
+   */
+  async function taskFacts(s) {
+    const open = await records.taskRuns.list(s.workspaceId, { serviceId: s.id, status: ['queued', 'running'], limit: Infinity });
+    const [last] = await records.taskRuns.list(s.workspaceId, { serviceId: s.id, status: ['succeeded', 'failed'], limit: 1 });
+    return {
+      running: open.filter((r) => r.status === 'running').length,
+      queued: open.filter((r) => r.status === 'queued').length,
+      concurrency: s.concurrency ?? WORKFLOW.defaults.concurrency,
+      queueLimit: WORKFLOW.queue,
+      tasks: (s.tasks ?? []).length,
+      last: last ? { task: last.task, status: last.status, at: last.finishedAt ?? last.createdAt, durationMs: last.durationMs ?? null, attempts: last.attempt } : null,
     };
   }
 
@@ -118,7 +136,7 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
       bandwidth: { perSec: now.bytesPerSec, monthBytes: now.monthBytes },
       sampledAt: now.instances ? now.at : null,
       last: lastDeploy ? { id: lastDeploy.id, status: lastDeploy.status, commit: lastDeploy.commit ?? null, message: lastDeploy.message ?? null, at: lastDeploy.endedAt ?? lastDeploy.startedAt ?? lastDeploy.createdAt } : null,
-      ...(run ? { run } : {}),
+      ...(run ? (s.type === 'workflow' ? { tasks: run } : { run }) : {}),
     };
   }
 
@@ -274,7 +292,7 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
       if (!planOf(b.plan)) problems.push({ path: 'plan', message: `Choose ${PLANS.map((p) => p.name).join(', ')}.` });
       else changes.plan = b.plan;
     }
-    if (b.instances !== undefined && b.instances !== s.instances && !type.instances) problems.push({ path: 'instances', message: `A ${type.label} runs one at a time: choose its instance type only.` });
+    if (b.instances !== undefined && b.instances !== s.instances && !type.instances) problems.push({ path: 'instances', message: type.tasks ? 'A Workflow has no instances: choose the instance type each task run gets. How many run at once is set with its tasks.' : `A ${type.label} runs one at a time: choose its instance type only.` });
     else if (b.instances !== undefined && b.instances !== s.instances) {
       if (!Number.isInteger(b.instances) || b.instances < 1 || b.instances > MAX_INSTANCES) problems.push({ path: 'instances', message: `Choose 1 to ${MAX_INSTANCES} instances.` });
       else changes.instances = b.instances;

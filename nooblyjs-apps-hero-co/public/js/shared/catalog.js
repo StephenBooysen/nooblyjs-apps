@@ -54,8 +54,9 @@ export const RUNTIMES = [
 /**
  * The service types this phase can create, and what each becomes on the platform. `plan`: it picks an instance type;
  * `instances`: it picks a count too; `schedule`: it runs on a cron schedule (src/scheduling/cron.js) with a command
- * instead of a start command. Workflows wait for core `workflow`, Postgres and Key Value for infra 8.6 and 8.7, Sandbox
- * Groups for an isolation decision (product.md §11).
+ * instead of a start command; `tasks`: it has named tasks, each a command run in a container of its own when asked,
+ * up to a number at once, retried when they fail (src/scheduling/tasks.js; stack.md D11). Postgres and Key Value wait
+ * for infra 8.6 and 8.7, Sandbox Groups for an isolation decision (product.md §11).
  */
 export const CREATABLE = {
   web: { kind: 'service', label: 'Web Service', action: 'Deploy web service', port: true, plan: true, instances: true, publicUrl: true, sleeps: true },
@@ -63,9 +64,24 @@ export const CREATABLE = {
   worker: { kind: 'worker', label: 'Background Worker', action: 'Deploy worker', port: false, plan: true, instances: true, publicUrl: false, sleeps: false },
   static: { kind: 'static', label: 'Static Site', action: 'Deploy static site', port: false, plan: false, instances: false, publicUrl: true, sleeps: false },
   cron: { kind: 'job', label: 'Cron Job', action: 'Create cron job', port: false, plan: true, instances: false, publicUrl: false, sleeps: false, schedule: true },
+  workflow: { kind: 'job', label: 'Workflow', action: 'Create workflow', port: false, plan: true, instances: false, publicUrl: false, sleeps: false, tasks: true },
 };
 /** A run's command and schedule as the create form starts them. */
 export const CRON_DEFAULTS = { schedule: '0 2 * * *', plan: 'starter' };
+
+/**
+ * A Workflow's limits and the create form's starting values. `concurrency`: task runs at once; `retries`: how many more
+ * times a failed run is tried; `queue`: runs that may wait at once (the dashboard's "Queue 5 of 1,000"). A retry waits
+ * `backoffS` seconds, doubling each time, up to `backoffMaxS`.
+ */
+export const WORKFLOW = {
+  maxTasks: 20, maxConcurrency: 10, maxRetries: 5, queue: 1000, inputKb: 16, backoffS: 10, backoffMaxS: 300,
+  defaults: { plan: 'starter', concurrency: 2, retries: 2 },
+};
+/** A task's name: lower-case letters, digits and hyphens, as in the trigger URL. */
+export const TASK_NAME = /^[a-z][a-z0-9-]{0,62}$/;
+/** The variables each task run gets, besides the service's own. */
+export const TASK_ENV = ['TASK_NAME', 'TASK_INPUT', 'TASK_RUN_ID', 'TASK_ATTEMPT'];
 
 export const planOf = (key) => PLANS.find((p) => p.key === key) ?? null;
 export const regionOf = (id) => REGIONS.find((r) => r.id === id) ?? null;

@@ -15,7 +15,7 @@ test('the seed: services for the six workloads plus the database and cache, thei
   await t.idle();
   const { services } = (await t.get(`${WS}/services`, { as: 'stevie' })).json;
   assert.deepEqual(services.map((s) => [s.name, s.type]), [
-    ['agents', 'worker'], ['api', 'web'], ['cache', 'keyvalue'], ['database', 'postgres'], ['etl', 'cron'], ['orders', 'worker'], ['records', 'private'], ['storefront', 'static'],
+    ['agents', 'worker'], ['api', 'web'], ['cache', 'keyvalue'], ['database', 'postgres'], ['etl', 'cron'], ['orders', 'workflow'], ['records', 'private'], ['storefront', 'static'],
   ]);
   const api = (await t.get(`${WS}/services/api`, { as: 'stevie' })).json;
   assert.deepEqual([api.planName, api.instances, api.url, api.regionName, api.current.commit], ['Standard', 2, 'https://api-exclusivity.nooblyjs.app', 'Johannesburg', 'a1f3c9e']);

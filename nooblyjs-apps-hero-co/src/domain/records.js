@@ -1,5 +1,5 @@
 // The workspace's own records (stack.md §4.1) on nooblyjs-core's dataService, beside the accounts: services, deploys,
-// environment groups and the GitHub connection. The infrastructure accelerator keeps the workloads; these are what a
+// environment groups, the GitHub connection and Workflows' task runs (their queue, src/scheduling/tasks.js). The infrastructure accelerator keeps the workloads; these are what a
 // customer sees. Every lookup takes the workspace, so no call can return another workspace's record.
 //
 // Values that are secret (environment variables, the GitHub token) are stored sealed (src/domain/secrets.js) and the
@@ -11,16 +11,20 @@ export const DOMAIN_CONTAINERS = {
   deploys: 'hero_deploys',
   envGroups: 'hero_env_groups',
   github: 'hero_github',
+  taskRuns: 'hero_task_runs',
 };
 
 const now = () => new Date().toISOString();
 export const newId = (prefix) => `${prefix}_${crypto.randomBytes(9).toString('base64url').toLowerCase().replace(/[^a-z0-9]/g, '0')}`;
 
-/** A service as the API shows it: environment keys, never values. */
+/** A service as the API shows it: environment keys, never values; of a trigger key, never its hash. */
 export function serviceView(s) {
   if (!s) return null;
-  const { env = [], ...rest } = s;
-  return { ...rest, env: env.map((e) => ({ key: e.key })) };
+  const { env = [], triggerKey, ...rest } = s;
+  return {
+    ...rest, env: env.map((e) => ({ key: e.key })),
+    ...(s.type === 'workflow' ? { triggerKey: triggerKey ? { hint: triggerKey.hint, createdAt: triggerKey.createdAt, createdBy: triggerKey.createdBy ?? null } : null } : {}),
+  };
 }
 
 export const groupView = (g) => g && ({ id: g.id, name: g.name, vars: (g.vars ?? []).map((v) => ({ key: v.key })), createdAt: g.createdAt, updatedAt: g.updatedAt ?? null });
@@ -133,5 +137,40 @@ export function createRecords({ data }) {
     },
   };
 
-  return { init, services, deploys, envGroups, github };
+  // A task run: { id, workspaceId, serviceId, serviceName, task, input, status (queued, running, succeeded, failed,
+  // cancelled), attempt, maxAttempts, trigger (manual, api), by, notBefore, runIds (the platform's, one per attempt),
+  // createdAt, startedAt, finishedAt, exitCode, durationMs, peakMemoryMb, reason }.
+  const taskRuns = {
+    /** Newest first; `status` keeps one status (or a list of them). */
+    async list(workspaceId, { serviceId, status, limit = 50 } = {}) {
+      const want = status ? new Set([].concat(status)) : null;
+      return (await where(C.taskRuns, (r) => r.workspaceId === workspaceId && (!serviceId || r.serviceId === serviceId) && (!want || want.has(r.status))))
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)) || b.id.localeCompare(a.id))
+        .slice(0, limit);
+    },
+    async get(workspaceId, id) {
+      const r = await get(C.taskRuns, id);
+      return r?.workspaceId === workspaceId ? r : null;
+    },
+    /** The task run one of whose attempts is the platform's run `runId`. */
+    async byRunId(workspaceId, runId) {
+      return (await where(C.taskRuns, (r) => r.workspaceId === workspaceId && r.runIds?.includes(runId)))[0] ?? null;
+    },
+    async create(record) {
+      const r = { id: newId('trn'), createdAt: now(), runIds: [], attempt: 0, ...record };
+      await put(C.taskRuns, r);
+      return r;
+    },
+    async update(workspaceId, id, patch) {
+      const r = await taskRuns.get(workspaceId, id);
+      if (!r) return null;
+      const next = typeof patch === 'function' ? patch(r) : { ...r, ...patch };
+      return save(C.taskRuns, { ...next, id, workspaceId });
+    },
+    async removeService(workspaceId, serviceId) {
+      for (const r of await taskRuns.list(workspaceId, { serviceId, limit: Infinity })) await data.remove(C.taskRuns, r.id);
+    },
+  };
+
+  return { init, services, deploys, envGroups, github, taskRuns };
 }
