@@ -82,7 +82,7 @@ export function tasksCard(svc, facts) {
     <div class="nj-section-head"><h2 class="nj-card-title mb-0" id="tasks-title">Tasks</h2>
       <button type="button" class="btn btn-link p-0" data-tasks-edit aria-expanded="false" aria-controls="tasks-form">Change tasks or runs at once</button></div>
     <div class="nj-task-meters" data-task-meters>${taskMeters(facts)}</div>
-    ${tasks.length ? html`<div class="table-responsive"><table class="table mb-0">
+    ${tasks.length ? html`<div class="table-responsive" role="region" tabindex="0" aria-label="Tasks"><table class="table mb-0">
       <caption class="visually-hidden">Tasks</caption>
       <thead><tr><th scope="col">Task</th><th scope="col">Command</th><th scope="col">Retries</th><th scope="col"><span class="visually-hidden">Run</span></th></tr></thead>
       <tbody>${tasks.map((t) => html`<tr>
@@ -113,7 +113,7 @@ const attemptText = (r) => (r.attempt ? `${r.attempt} of ${r.maxAttempts}` : `0 
 /** A Workflow's task runs, newest first, each with its log (and Cancel while it waits). */
 export function taskRunsTable(runs, limitMb) {
   if (!runs.length) return emptyState({ icon: 'diagram-3', title: 'No task runs yet', text: 'Run a task above, or trigger one from your code. Each run shows here with its result, its attempts and its peak memory.' });
-  return html`<div class="table-responsive"><table class="table mb-0">
+  return html`<div class="table-responsive" role="region" tabindex="0" aria-label="Task runs"><table class="table mb-0">
     <caption class="visually-hidden">Task runs, newest first</caption>
     <thead><tr><th scope="col">Queued</th><th scope="col">Task</th><th scope="col">Status</th><th scope="col">Attempt</th><th scope="col">Started by</th><th scope="col">Took</th><th scope="col">Exit code</th><th scope="col">Peak memory</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
     <tbody>${runs.map((r) => {

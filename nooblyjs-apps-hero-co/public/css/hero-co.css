@@ -20,6 +20,11 @@
   --nj-muted: var(--muted);
   --nj-on-ink: var(--on-ink);
   --nj-on-ink-muted: var(--on-ink-muted);
+  /* The log viewer is the one dark surface (product.md §1), in light mode and in dark. */
+  --nj-log-bg: var(--ink);
+  --nj-log-text: var(--on-ink);
+  --nj-log-muted: var(--on-ink-muted);
+  --nj-log-live: var(--teal-soft);
   --nj-accent: var(--accent);
   --nj-accent-hover: var(--accent-link);
   --nj-accent-soft: var(--accent-soft);
@@ -189,21 +194,22 @@ code { color: var(--nj-ink-2); }
 .nj-instance-id { font-family: var(--nj-mono); font-size: 14px; font-weight: 500; }
 
 /* Log viewer: the one dark surface (product principle 1). */
-.nj-logs { background: var(--nj-ink); color: var(--nj-on-ink); border-radius: var(--nj-radius-card); overflow: hidden; }
+.nj-logs { background: var(--nj-log-bg); color: var(--nj-log-text); border-radius: var(--nj-radius-card); overflow: hidden; }
 .nj-logs-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid rgba(255, 248, 242, .12); }
+.nj-logs .nj-meta { color: var(--nj-log-muted); }
 .nj-logs-body { font-family: var(--nj-mono); font-size: 13px; line-height: 1.6; padding: 12px 16px; max-height: 420px; overflow: auto; }
 .nj-log-line { display: grid; grid-template-columns: 92px 100px 58px 1fr; gap: 12px; white-space: pre-wrap; word-break: break-word; }
 .nj-log-line-build { grid-template-columns: 92px 58px 1fr; }
-.nj-log-time, .nj-log-inst { color: var(--nj-on-ink-muted); }
+.nj-log-time, .nj-log-inst { color: var(--nj-log-muted); }
 .nj-log-level { display: inline-block; padding: 0 6px; border-radius: 6px; font-weight: 500; text-align: center; }
 .nj-log-info { background: rgba(255, 248, 242, .1); }
 .nj-log-warn { background: var(--nj-warning-soft); color: var(--nj-warning-text); }
 .nj-log-error { background: var(--nj-danger-soft); color: var(--nj-danger-text); }
-.nj-logs-foot { padding: 10px 16px; font-size: 12.5px; color: var(--nj-on-ink-muted); border-top: 1px solid rgba(255, 248, 242, .12); }
-.nj-logs-empty { color: var(--nj-on-ink-muted); padding: 24px 0; text-align: center; font-family: var(--font-body); }
-.nj-logs-title { font-size: 15px; font-weight: 600; margin: 0 auto 0 0; color: var(--nj-on-ink); }
-.nj-logs-input { width: auto; min-width: 140px; background: rgba(255, 248, 242, .08); color: var(--nj-on-ink); border-color: rgba(255, 248, 242, .2); }
-.nj-logs-input::placeholder { color: var(--nj-on-ink-muted); }
+.nj-logs-foot { padding: 10px 16px; font-size: 12.5px; color: var(--nj-log-muted); border-top: 1px solid rgba(255, 248, 242, .12); }
+.nj-logs-empty { color: var(--nj-log-muted); padding: 24px 0; text-align: center; font-family: var(--font-body); }
+.nj-logs-title { font-size: 15px; font-weight: 600; margin: 0 auto 0 0; color: var(--nj-log-text); }
+.nj-logs-input { width: auto; min-width: 140px; background: rgba(255, 248, 242, .08); color: var(--nj-log-text); border-color: rgba(255, 248, 242, .2); }
+.nj-logs-input::placeholder { color: var(--nj-log-muted); }
 
 /* Empty state. */
 .nj-empty { background: var(--nj-surface); border: 1px dashed var(--nj-border-strong); border-radius: var(--nj-radius-card); padding: 40px 32px; text-align: center; }
@@ -369,6 +375,8 @@ label.nj-repo:has(input:focus-visible) { outline: 2px solid var(--nj-accent); ou
 .nj-summary-total strong { font-family: var(--font-display); font-size: 24px; }
 .nj-switch-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--nj-border); }
 .nj-switch { width: 2.6em; height: 1.4em; flex-shrink: 0; margin: 0; }
+.nj-switch-row.form-switch { padding-left: 0; }
+.nj-switch-row.form-switch .nj-switch { margin-left: 0; }
 .nj-deploy-btn { margin-top: 12px; padding: 12px; font-weight: 700; }
 .nj-meter-failed .nj-meter-fill { background: var(--nj-danger-text); }
 .nj-deploy-steps { display: flex; gap: 16px; flex-wrap: wrap; list-style: none; padding: 0; margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--nj-muted); }
@@ -426,22 +434,22 @@ label.nj-repo:has(input:focus-visible) { outline: 2px solid var(--nj-accent); ou
 
 /* The log viewer's filters on the dark bar, and its levels. */
 .nj-logs .nj-tabs { background: rgba(255, 248, 242, .08); }
-.nj-logs .nj-tab { color: var(--nj-on-ink-muted); }
+.nj-logs .nj-tab { color: var(--nj-log-muted); }
 .nj-tab[aria-pressed="true"] { background: var(--nj-surface); color: var(--nj-ink); box-shadow: var(--nj-shadow-lift); }
-.nj-logs .nj-tab[aria-pressed="true"] { background: var(--nj-surface); color: var(--nj-ink); }
+.nj-logs .nj-tab[aria-pressed="true"] { background: var(--nj-log-text); color: var(--nj-log-bg); }
 .nj-logs-head { display: flex; align-items: center; gap: 12px; margin-right: auto; }
 .nj-logs-head .nj-logs-title { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: 700; }
-.nj-logs-live { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--nj-teal-soft); }
+.nj-logs-live { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--nj-log-live); }
 .nj-logs-live::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: currentColor; }
-.nj-logs-live.is-paused { color: var(--nj-on-ink-muted); }
-.nj-logs .btn-secondary { background: rgba(255, 248, 242, .08); color: var(--nj-on-ink); border-color: rgba(255, 248, 242, .2); }
-.nj-logs .btn-secondary:hover { background: rgba(255, 248, 242, .16); color: var(--nj-on-ink); }
+.nj-logs-live.is-paused { color: var(--nj-log-muted); }
+.nj-logs .btn-secondary { background: rgba(255, 248, 242, .08); color: var(--nj-log-text); border-color: rgba(255, 248, 242, .2); }
+.nj-logs .btn-secondary:hover { background: rgba(255, 248, 242, .16); color: var(--nj-log-text); }
 .nj-log-row { grid-template-columns: 104px 64px 56px 1fr; }
 .nj-log-row-svc { grid-template-columns: 104px 120px 64px 56px 1fr; }
 .nj-log-build { background: rgba(255, 248, 242, .16); }
-.nj-log-debug { background: transparent; color: var(--nj-on-ink-muted); border: 1px solid rgba(255, 248, 242, .2); }
-.nj-log-svc { color: var(--nj-on-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nj-logs-new { display: block; width: 100%; border: 0; border-bottom: 1px solid rgba(255, 248, 242, .12); background: rgba(255, 248, 242, .06); color: var(--nj-on-ink); font-size: 13px; font-weight: 600; padding: 8px 16px; text-align: left; }
+.nj-log-debug { background: transparent; color: var(--nj-log-muted); border: 1px solid rgba(255, 248, 242, .2); }
+.nj-log-svc { color: var(--nj-log-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nj-logs-new { display: block; width: 100%; border: 0; border-bottom: 1px solid rgba(255, 248, 242, .12); background: rgba(255, 248, 242, .06); color: var(--nj-log-text); font-size: 13px; font-weight: 600; padding: 8px 16px; text-align: left; }
 .nj-logs-new[hidden] { display: none; }
 
 /* Workspace Metrics: one card per service with small charts. */
@@ -535,3 +543,99 @@ label.nj-repo:has(input:focus-visible) { outline: 2px solid var(--nj-accent); ou
   .pay-summary-table th:nth-child(2), .pay-summary-invoices .pay-summary-table td:nth-child(2) { display: none; }
   .pay-summary-upcoming .pay-summary-table th:nth-child(2) { display: table-cell; }
 }
+
+/* Accessibility (roadmap 8.4) */
+/* A link inside running text is underlined, not told apart by colour alone (WCAG 1.4.1; the theme takes underlines off
+   every link). Buttons, cards and navigation keep theirs off. */
+:where(.nj-main, main) :where(p, dd, li, td, .form-text, .nj-meta, .nj-lead) a:not(.btn):not(.nj-svc-card-name):not(.nj-brand) { text-decoration: underline; text-underline-offset: 3px; }
+/* A table that scrolls sideways (phone) takes focus, so the keyboard can scroll it; the theme's focus ring shows where. */
+.table-responsive[tabindex="0"]:focus-visible { outline: 2px solid var(--nj-accent); outline-offset: 2px; }
+.nj-logs-body:focus-visible { outline: 2px solid var(--nj-log-muted); outline-offset: -2px; }
+/* Touch targets: 44 px on touch screens (stack.md §5; WCAG 2.5.5). Desktop keeps its tighter layout. A link inside a
+   sentence is exempt, as WCAG allows; links that stand alone (names in tables, card titles) are not. */
+@media (pointer: coarse) {
+  .btn, .nj-tab { min-height: 44px; min-width: 44px; }
+  .btn-link, .nj-svc-card-name, td a:not(.btn), th a:not(.btn), :where(h1, h2, h3, .nj-card-title) a:not(.btn),
+  .nj-section-head a:not(.btn), .nj-connected a, .nj-public-bar a:not(.btn), .nj-brand, .pay-link { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+  .nj-switch-row { min-height: 44px; cursor: pointer; }
+  .form-check:has(.nj-switch), .form-check:has(.form-check-input) { min-height: 44px; display: flex; align-items: center; gap: 8px; }
+  .form-check-label { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+}
+
+/* Dark mode (roadmap 8.4; stack.md §5): the theme has no dark values, so each of its colour tokens gets one here.
+   Warm, never a cold console: brown-black grounds, cream text, the persimmon accent kept for fills (white text on it
+   stays above 4.5:1) and a lighter persimmon for links and accents on dark. The log viewer keeps its own dark tokens.
+   Set by public/js/theme.js; checked by test/ui/a11y.spec.js in both modes. */
+:root[data-bs-theme="dark"] {
+  color-scheme: dark;
+  --bg: #17110F;
+  --surface: #221A17;
+  --surface-sunken: #1C1513;
+  --chip: #2C231F;
+  --border: #3B2F2A;
+  --border-strong: #4D3F38;
+  --divider: #2F2521;
+  --ink: #F7EEE8;
+  --ink-2: #E4D7CF;
+  --muted: #B9AAA1;
+  --on-ink: #241C1A;
+  --on-ink-muted: #5A4D47;
+  --accent: #C2471F;
+  --accent-link: #F39068;
+  --accent-soft: #4B2617;
+  --accent-tint: #2C1B14;
+  --accent-light: #F2A27E;
+  --teal: #5BB8BF;
+  --teal-soft: #173638;
+  --teal-text: #93D5DA;
+  --teal-ink: #93D5DA;
+  --neutral-soft: #2F2622;
+  --neutral-text: #D2C5BD;
+  --neutral-ink: #D2C5BD;
+  --neutral-dot: #A0928A;
+  --warn-soft: #3B2F0E;
+  --warn-ink: #F2D07A;
+  --warn-dot: #E2B543;
+  --warn-border: #8A6A1F;
+  --danger: #E8616F;
+  --danger-soft: #45171F;
+  --danger-ink: #F6A9B3;
+  --danger-wash: #3B151B;
+  --tier-light: #F2A27E;
+  --tier-balanced: #E0663A;
+  --tier-premium: #F7EEE8;
+  --avatar-peach-bg: #4A2A1C; --avatar-peach-deep: #FFD7C2;
+  --avatar-mint-bg: #1D3F3D; --avatar-mint-deep: #CDE7E4;
+  --avatar-lilac-bg: #33284A; --avatar-lilac-deep: #E5DAF5;
+  --avatar-butter-bg: #3F3414; --avatar-butter-deep: #FBE6A6;
+  --avatar-rose-bg: #46202B; --avatar-rose-deep: #F6CFD8;
+  --avatar-sky-bg: #1D2D47; --avatar-sky-deep: #D6E4FA;
+  --avatar-sage-bg: #27331A; --avatar-sage-deep: #DCE8C8;
+  --avatar-sand-bg: #3E2E20; --avatar-sand-deep: #EED9C4;
+  --shadow-lg: 0 10px 24px -14px rgba(0, 0, 0, .6);
+  --shadow: 0 10px 24px -14px rgba(0, 0, 0, .6);
+  --nj-shadow-lift: 0 10px 24px -14px rgba(0, 0, 0, .6);
+  --nj-shadow-float: 0 24px 48px -20px rgba(0, 0, 0, .65);
+  --nj-focus-ring: 0 0 0 3px rgba(243, 144, 104, .35);
+  --nj-backdrop: rgba(0, 0, 0, .6);
+  /* The log viewer: darker than the page, so it still reads as its own surface. */
+  --nj-log-bg: #0F0B0A;
+  --nj-log-text: #FFF8F2;
+  --nj-log-muted: #CDBFB7;
+  --nj-log-live: #DDEFEC;
+  /* For the theme's few fixed colours below. */
+  --nj-dark-link-hover: #F7B193;
+  --nj-dark-dot-off: #6F625B;
+  --nj-dark-teal-border: #24504F;
+  --nj-dark-danger-border: #6A2531;
+}
+/* The theme's few fixed colours, for dark. */
+:root[data-bs-theme="dark"] a:hover, :root[data-bs-theme="dark"] .btn-link:hover { color: var(--nj-dark-link-hover); }
+:root[data-bs-theme="dark"] .pill-available { color: var(--accent-link); }
+:root[data-bs-theme="dark"] .text-danger { color: var(--danger-ink) !important; }
+:root[data-bs-theme="dark"] .chip:hover { background-color: var(--divider); }
+:root[data-bs-theme="dark"] .status-dot-off { background-color: var(--nj-dark-dot-off); }
+:root[data-bs-theme="dark"] .alert-primary { background-color: var(--accent-tint); border-color: var(--accent-soft); color: var(--ink); }
+:root[data-bs-theme="dark"] .alert-success { background-color: var(--teal-soft); border-color: var(--nj-dark-teal-border); color: var(--ink); }
+:root[data-bs-theme="dark"] .alert-danger { background-color: var(--danger-wash); border-color: var(--nj-dark-danger-border); color: var(--ink); }
+:root[data-bs-theme="dark"] .alert-warning { background-color: var(--warn-soft); border-color: var(--warn-border); color: var(--ink); }

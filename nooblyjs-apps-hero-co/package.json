@@ -32,6 +32,7 @@
     "passport-github2": "^0.1.12"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.50.0",
     "nodemon": "^3.1.10"
   }
