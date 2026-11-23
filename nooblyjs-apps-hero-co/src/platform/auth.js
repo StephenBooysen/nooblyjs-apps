@@ -398,12 +398,15 @@ export function createAuth({ express, session, accounts, core, link, config, aud
   // Answered here, ahead of core, like its login API: a Google sign-in makes a hero-co session and, the first time, a
   // person and their workspace (as GitHub sign-up does). The redirect URI registered with Google is GOOGLE_CALLBACK on
   // PUBLIC_URL.
+  // The redirect URI: GOOGLE_REDIRECT_BASE (or PUBLIC_URL) + the callback path. Register exactly this with Google.
+  const googleRedirectUri = `${config.google?.redirectBase ?? config.publicUrl}${GOOGLE_CALLBACK}`;
   if (googleOnly) {
     const googleBase = googleMock ? url('/dev/google') : null;
+    log?.info?.(`[hero-co] Google sign-in${googleMock ? ' (mock Google at /dev/google)' : ''}: the authorised redirect URI is ${googleRedirectUri}`);
     passport.use('google', new GoogleStrategy({
       clientID: config.google?.clientId ?? 'mock-google-client',
       clientSecret: config.google?.clientSecret ?? 'mock-google-secret',
-      callbackURL: url(GOOGLE_CALLBACK),
+      callbackURL: googleRedirectUri,
       scope: ['openid', 'profile', 'email'],
       state: true,
       ...(googleMock ? { authorizationURL: `${googleBase}/o/oauth2/v2/auth`, tokenURL: `${googleBase}/token`, userProfileURL: `${googleBase}/userinfo` } : {}),

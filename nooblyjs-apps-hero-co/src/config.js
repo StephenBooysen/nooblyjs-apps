@@ -57,7 +57,13 @@ export function loadConfig(env = process.env) {
     // Google OAuth client (GOOGLE_OAUTH_CLIENT / GOOGLE_OAUTH_SECRET, or GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET). Its
     // authorised redirect URI is <PUBLIC_URL>/services/authservice/api/google/callback. Without it, outside
     // production, AUTHTYPE=google uses the mock at /dev/google.
-    google: { clientId: env.GOOGLE_OAUTH_CLIENT || env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_OAUTH_SECRET || env.GOOGLE_CLIENT_SECRET },
+    // GOOGLE_REDIRECT_BASE: the address Google sends the browser back to, when it is not PUBLIC_URL (a Codespaces
+    // forwarded address, say https://<codespace>-11010.app.github.dev); the callback path is added to it.
+    google: {
+      clientId: env.GOOGLE_OAUTH_CLIENT || env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_OAUTH_SECRET || env.GOOGLE_CLIENT_SECRET,
+      redirectBase: /^https?:\/\/[^/\s]+/.test(env.GOOGLE_REDIRECT_BASE ?? '') ? env.GOOGLE_REDIRECT_BASE.trim().replace(/\/+$/, '') : null,
+    },
     // Encrypts environment variables and GitHub tokens at rest (required in production; a dev key file otherwise).
     secretKey: env.HERO_SECRET_KEY,
     // The card provider (roadmap 7.3): Stripe when STRIPE_SECRET_KEY is set (with STRIPE_WEBHOOK_SECRET and
