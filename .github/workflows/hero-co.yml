@@ -1,0 +1,164 @@
+# NooblyJS Cloud (nooblyjs-apps-hero-co) CI (roadmap 8.1): node:test on Node 22 (file records) and Node 24 (MongoDB
+# and Redis, the production providers), Playwright desktop + phone, a production dependency audit of hero-co and every
+# package it links to, and the Docker image.
+#
+# hero-co links nooblyjs-core and three accelerators from sibling checkouts (file:../../...), and its theme test reads
+# nooblyjs/styling, so each job checks out all four repositories side by side, as in development:
+#   $GITHUB_WORKSPACE/{nooblyjs-apps, nooblyjs-core, nooblyjs-accl, nooblyjs}
+# Run it by hand with other branches of core or the accelerators through workflow_dispatch.
+name: hero-co
+
+on:
+  push:
+    branches: [main]
+    paths: ['nooblyjs-apps-hero-co/**', '.github/workflows/hero-co.yml']
+  pull_request:
+    paths: ['nooblyjs-apps-hero-co/**', '.github/workflows/hero-co.yml']
+  workflow_dispatch:
+    inputs:
+      core_ref:
+        description: nooblyjs-core branch, tag or commit
+        default: main
+      accl_ref:
+        description: nooblyjs-accl branch, tag or commit
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hero-co-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  OWNER: StephenBooysen
+  CORE_REF: ${{ inputs.core_ref || 'main' }}
+  ACCL_REF: ${{ inputs.accl_ref || 'main' }}
+  HERO: nooblyjs-apps/nooblyjs-apps-hero-co
+
+jobs:
+  test:
+    name: node:test (Node ${{ matrix.node }}, ${{ matrix.records }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node: 22
+            records: file
+          - node: 24
+            records: mongodb + redis
+    services:
+      mongo:
+        image: mongo:7
+        ports: ['27017:27017']
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: nooblyjs-apps }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs-core', ref: '${{ env.CORE_REF }}', path: nooblyjs-core }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs-accl', ref: '${{ env.ACCL_REF }}', path: nooblyjs-accl }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs', path: nooblyjs, sparse-checkout: styling }
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ matrix.node }}' }
+      - name: Install hero-co and the packages it links to
+        run: npm run setup
+        working-directory: ${{ env.HERO }}
+      - name: npm test
+        working-directory: ${{ env.HERO }}
+        env:
+          MONGODB_URL: ${{ matrix.records != 'file' && 'mongodb://127.0.0.1:27017' || '' }}
+          REDIS_URL: ${{ matrix.records != 'file' && 'redis://127.0.0.1:6379' || '' }}
+        run: npm test
+
+  ui:
+    name: Playwright (desktop + phone)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: nooblyjs-apps }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs-core', ref: '${{ env.CORE_REF }}', path: nooblyjs-core }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs-accl', ref: '${{ env.ACCL_REF }}', path: nooblyjs-accl }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs', path: nooblyjs, sparse-checkout: styling }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Install hero-co and the packages it links to
+        run: npm run setup
+        working-directory: ${{ env.HERO }}
+      - name: Chromium and its system libraries
+        run: npx playwright install --with-deps chromium
+        working-directory: ${{ env.HERO }}
+      - name: npm run test:ui
+        run: npm run test:ui
+        working-directory: ${{ env.HERO }}
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright
+          path: ${{ env.HERO }}/.temp/playwright/
+          retention-days: 14
+
+  audit:
+    name: Production dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: nooblyjs-apps }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs-core', ref: '${{ env.CORE_REF }}', path: nooblyjs-core }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs-accl', ref: '${{ env.ACCL_REF }}', path: nooblyjs-accl }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      # npm audit does not follow file: links, so each linked package is audited from its own lockfile.
+      - name: npm audit --omit=dev (high and critical fail)
+        run: |
+          status=0
+          for dir in "$HERO" nooblyjs-core nooblyjs-accl/nooblyjs-accel-customers nooblyjs-accl/nooblyjs-accel-payments nooblyjs-accl/nooblyjs-accl-infrastructure; do
+            echo "::group::$dir"
+            (cd "$dir" && npm audit --omit=dev --audit-level=high) || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: nooblyjs-apps }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs-core', ref: '${{ env.CORE_REF }}', path: nooblyjs-core }
+      - uses: actions/checkout@v4
+        with: { repository: '${{ env.OWNER }}/nooblyjs-accl', ref: '${{ env.ACCL_REF }}', path: nooblyjs-accl }
+      - name: docker build (the context is the folder holding the repositories)
+        run: docker build -f "$HERO/Dockerfile" -t nooblyjs-cloud:ci .
+      - name: The image starts in production and answers /health/ready on MongoDB
+        run: |
+          docker network create ci
+          docker run -d --rm --name mongo --network ci mongo:7
+          docker run -d --name hero --network ci -p 11010:11010 \
+            -e MONGODB_URL=mongodb://mongo:27017 -e PUBLIC_URL=https://cloud.example.test -e TRUST_PROXY=1 \
+            -e SESSION_SECRET="$(openssl rand -hex 32)" -e HERO_SECRET_KEY="$(openssl rand -hex 32)" \
+            -e PAY_SIGNING_SECRET="$(openssl rand -hex 32)" -e CX_TRACKING_SECRET="$(openssl rand -hex 32)" \
+            -e STRIPE_SECRET_KEY=sk_test_ci -e STRIPE_WEBHOOK_SECRET=whsec_ci -e STRIPE_PUBLISHABLE_KEY=pk_test_ci \
+            nooblyjs-cloud:ci
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:11010/health/ready; then echo; exit 0; fi
+            sleep 2
+          done
+          docker logs hero
+          exit 1

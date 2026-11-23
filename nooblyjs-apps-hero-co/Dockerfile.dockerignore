@@ -1,0 +1,22 @@
+# The build context is the folder holding nooblyjs-core, nooblyjs-accl and nooblyjs-apps (see Dockerfile). Send only
+# the four packages hero-co is built from, and none of their installed modules, data or secrets.
+*
+!nooblyjs-core
+!nooblyjs-accl/nooblyjs-accel-customers
+!nooblyjs-accl/nooblyjs-accel-payments
+!nooblyjs-accl/nooblyjs-accl-infrastructure
+!nooblyjs-apps/nooblyjs-apps-hero-co
+**/node_modules
+**/.git
+**/.github
+**/.claude
+**/.application
+**/.temp
+**/.env
+**/.env.*
+**/coverage
+**/test-results
+**/playwright-report
+nooblyjs-core/tests
+nooblyjs-core/examples
+nooblyjs-apps/nooblyjs-apps-hero-co/test

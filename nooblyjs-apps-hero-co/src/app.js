@@ -111,7 +111,11 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     security: { apiKeyAuth: { requireApiKey: false, apiKeys: [] }, servicesAuth: { requireLogin: true } },
   });
   const log = serviceRegistry.logger('console', { instanceName: 'hero-co' });
-  const data = serviceRegistry.dataService('file', { instanceName: 'nooblyjs-cloud', dataDir: path.join(config.dataDir, 'data') });
+  // Records: MongoDB in production (MONGODB_URL), core's file provider otherwise (stack.md §3.1, roadmap 8.1).
+  const data = config.mongodbUrl
+    ? serviceRegistry.dataService('mongodb', { instanceName: 'nooblyjs-cloud', connectionString: config.mongodbUrl, database: config.mongodbDatabase })
+    : serviceRegistry.dataService('file', { instanceName: 'nooblyjs-cloud', dataDir: path.join(config.dataDir, 'data') });
+  for (const line of productionWarnings(config)) log.warn?.(`[hero-co] ${line}`);
   const accounts = createAccounts({ data });
   await accounts.init();
   const records = createRecords({ data });
@@ -127,6 +131,15 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   }
 
   app.get('/health/live', (req, res) => res.json({ status: 'ok' }));
+  // Ready: the records store answers (a load balancer or Docker's HEALTHCHECK stops sending traffic when it does not).
+  app.get('/health/ready', async (req, res) => {
+    try {
+      await withTimeout(data.count('hero_people'), 3000);
+      res.json({ status: 'ok', records: config.mongodbUrl ? 'mongodb' : 'file' });
+    } catch {
+      res.status(503).json({ status: 'unavailable', records: config.mongodbUrl ? 'mongodb' : 'file' });
+    }
+  });
 
   // The back office: operators only, except the customers accelerator's public marketing routes.
   // The exceptions under /infrastructure: the agent's install script and files (infra spec 8.9 R2), which a server
@@ -294,6 +307,8 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     pay: accelerators.mounted.payments,
     accounts,
     records,
+    /** core's dataService behind accounts and records (file or mongodb). */
+    data,
     github,
     platform,
     core,
@@ -325,6 +340,27 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
       await serviceRegistry.shutdown?.();
     },
   };
+}
+
+/** Rejects when `promise` takes longer than `ms`. */
+function withTimeout(promise, ms) {
+  let timer;
+  return Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('timed out')), ms); })]).finally(() => clearTimeout(timer));
+}
+
+/**
+ * What a production start-up lacks without failing (the missing secrets fail where they are used: SESSION_SECRET
+ * above, HERO_SECRET_KEY in secrets.js, PAY_SIGNING_SECRET in the payments accelerator).
+ * @returns {string[]}
+ */
+export function productionWarnings(config) {
+  if (!config.production) return [];
+  const out = [];
+  if (!config.mongodbUrl) out.push('MONGODB_URL is not set: records are files under DATA_DIR, so only one instance can run.');
+  if (!config.redisUrl) out.push('REDIS_URL is not set: sessions are kept in memory, so a restart signs everyone out.');
+  if (!config.trustProxy) out.push('TRUST_PROXY is not set: behind a load balancer, secure cookies and client addresses need TRUST_PROXY=1.');
+  if (!/^https:\/\//.test(config.publicUrl)) out.push(`PUBLIC_URL (${config.publicUrl}) is not https: links in emails and the GitHub callback use it.`);
+  return out;
 }
 
 /**

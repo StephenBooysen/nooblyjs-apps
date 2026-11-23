@@ -70,7 +70,7 @@ const notFound = (req, res, what = 'page') => (isApi(req) ? sendError(res, 404, 
  */
 export function createSession({ accounts, config, log }) {
   if (config.production && !config.sessionSecret) throw new Error('SESSION_SECRET is required in production.');
-  const store = createSessionStore(expressSession, { logger: log });
+  const store = createSessionStore(expressSession, { logger: log, ...(config.redisUrl ? { redisUrl: config.redisUrl } : {}) });
   const cookie = expressSession({
     name: SESSION_COOKIE,
     store: store.store,
