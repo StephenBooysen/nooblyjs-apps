@@ -258,16 +258,17 @@ on its address.*
 
 Built on `nooblyjs-accel-payments`.
 
-- [ ] 7.1 **[pay 0–1]** Payments skeleton, accounts, catalogue, payment methods, `CardForm`.
-- [ ] 7.2 **[pay 2]** Subscriptions, usage, rating, invoices, tax.
-- [ ] 7.3 **[pay 3]** Collection, dunning, refunds, webhooks, Stripe adapter (Stripe first, decided 2026-11-22; payments O2).
-- [ ] 7.4 Billing account per workspace on sign-up (`ensureAccount`); plan table and meters seeded in the payments catalogue; the Summary's *Estimated / mo* reads its prices.
-- [ ] 7.5 Hourly usage hand-off: `services.platform.usage()` **[infra 8.5.5]** → `pay.billing.recordUsage()`.
-- [ ] 7.6 Free tier enforcement with the *Add a card* prompt (`CardForm`); `pay.account.delinquent` → suspend after the final dunning attempt, with warnings first.
-- [ ] 7.7 **Billing** page: plan, usage this period, next invoice estimate (`BillingSummary`), cards, invoices (PDF).
+- [x] 7.1 **[pay 0–1]** Payments skeleton, accounts, catalogue, payment methods, `CardForm`.
+- [x] 7.2 **[pay 2]** Subscriptions, usage, rating, invoices, tax.
+- [x] 7.3 **[pay 3]** Collection, dunning, refunds, webhooks, Stripe adapter (Stripe first, decided 2026-11-22; payments O2). *The Stripe adapter is checked against a stand-in Stripe API; its sandbox run waits for test keys (payments 3.5).* The operator UI (*NooblyJS Pay* at `/admin/payments/`) and the hosted checkout follow the payments mock-ups.
+- [x] 7.4 Billing account per workspace on sign-up (`ensureAccount`); plan table and meters seeded in the payments catalogue; the Summary's *Estimated / mo* reads its prices.
+- [x] 7.5 Hourly usage hand-off: `services.platform.usage()` **[infra 8.5.5]** → `pay.billing.recordUsage()`. *Decided 2026-11-23 (stack D14): one service-hour per paid service per hour, from our own service records, so a month is the flat monthly price.*
+- [x] 7.6 Free tier enforcement with the *Add a card* prompt (`CardForm`); `pay.account.delinquent` → suspend after the final dunning attempt, with warnings first.
+- [x] 7.7 **Billing** page: plan, usage this period, next invoice estimate (`BillingSummary`), cards, invoices (PDF).
 
 **Exit check:** a month of seeded usage produces an invoice within 5% of the sum of the Summary estimates shown at
 creation; a declined card is retried and the owner is emailed each time; a paid invoice shows on the Billing page.
+*Passed 2026-11-23 on the mock provider (`test/billing.test.js`, `test/ui/billing.spec.js`).*
 
 ## Phase 8 — Hardening and launch
 

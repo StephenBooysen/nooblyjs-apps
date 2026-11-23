@@ -22,6 +22,7 @@
     "express-session": "^1.19.0",
     "helmet": "^8.1.0",
     "nooblyjs-accel-customers": "file:../../nooblyjs-accl/nooblyjs-accel-customers",
+    "nooblyjs-accel-payments": "file:../../nooblyjs-accl/nooblyjs-accel-payments",
     "nooblyjs-accelerator-infrastructure": "file:../../nooblyjs-accl/nooblyjs-accl-infrastructure",
     "nooblyjs-core": "file:../../nooblyjs-core",
     "passport": "^0.7.0",

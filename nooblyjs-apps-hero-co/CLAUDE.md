@@ -36,7 +36,9 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
 - `src/platform/`: `accounts.js` (people, workspaces, members, invitations, tokens on core dataService), `auth.js`
   (sign-up/in, verify, reset, GitHub, the mock GitHub), `session.js` (sessions, CSRF, gates, dev sign-in),
   `customers-link.js` (customer, organisation, consent, account emails), `host.js` (the infrastructure accelerator's
-  host contract), `accelerators.js` (customers at `/admin`, payments when built, infrastructure at `/infrastructure`),
+  host contract), `accelerators.js` (customers at `/admin`, payments at `/admin/payments` and `/admin/billing`,
+  infrastructure at `/infrastructure`), `billing.js` (stack.md D14: the plan catalogue in the payments accelerator, a
+  billing account per workspace, the hourly hand-off, *card required*, suspend and resume, the development seed),
   `people.js`, `realtime.js`.
 - `src/routes/`: `api.js` (`/api/v1`), `workspaces.js` (`/api/v1/workspaces/:workspace/...`, invitations), `pages.js`
   (page URLs answered with `public/index.html`), `telemetry.js` (dashboard, metrics, instances, logs, scale).
@@ -51,6 +53,11 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
 - `src/routes/sites.js`: a Static Site's files (what it serves, the deploys kept for rollback, this month's requests,
   bandwidth and cache hits), single-page app and publish directory, and Rollback (stack.md D12); `src/routes/proxy.js`
   answers a Local network site from `services.platform.staticSites.respond()`.
+- `src/routes/billing.js`: the Owner's Billing API (cards, Pay now, details); `public/js/pages/billing.js` draws the
+  Billing page with the payments accelerator's `BillingSummary`; `public/js/components/card-prompt.js` mounts its
+  `CardForm` (the *Add a card* prompt that a 402 `card_required` opens from any form). Operators use *NooblyJS Pay* at
+  `/admin/payments/`; customers pay a link on its hosted checkout (`/admin/payments/p/invoices/<token>`). Tests pass
+  `billingTimers: false` and a `payClock`, and give a workspace a card with `addTestCard()` (`test/helpers.js`).
 - `src/routes/datastores.js`: Postgres and Key Value (stack.md D13): create, the data store page's facts, reveal,
   backups and restore, plan, and Link to service (`PUT .../links`); `public/js/pages/datastore.js` draws the create form,
   the page and the Link to service card. The databases and stores are the platform's; set `HERO_LOCAL_POSTGRES_URL`

@@ -69,3 +69,25 @@ Containers reach the server only through the agent's relay on their workspace's 
 with `--relay-target 127.0.0.1:5432`; the development agent is). Backups go to the infrastructure data folder
 (`platform-databases/<workspace>/<name>/backups`). Key Value stores need nothing set up: each is a `valkey/valkey`
 container, pulled from Docker Hub the first time.
+
+## 7. Payments (Stripe)
+
+Without Stripe keys the payments accelerator runs its mock provider (test cards only), which it refuses in production.
+To take real cards, set these in the environment only (never in a file of ours):
+
+| Variable | Value |
+| --- | --- |
+| `STRIPE_SECRET_KEY` | `sk_test_…` for test mode, `sk_live_…` for live |
+| `STRIPE_PUBLISHABLE_KEY` | `pk_test_…` / `pk_live_…` (the card form) |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_…`, from the endpoint below |
+| `PAY_SIGNING_SECRET` | A long random string: signs the checkout and 3-D Secure links in emails |
+
+In the Stripe dashboard add the webhook endpoint `<PUBLIC_URL>/admin/payments/p/webhooks/stripe` for
+`payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.requires_action`, `refund.created`,
+`charge.dispute.created`, `payment_method.updated` and `payment_method.automatically_updated`. With the secret key set,
+the CSP allows `js.stripe.com`, `hooks.stripe.com` and `api.stripe.com` by itself.
+
+Check it in *NooblyJS Pay* (`/admin/payments/`, operators): **Stripe connection** shows the mode and the Stripe
+account, **Webhooks** the endpoint and each event received. Prices are the payments catalogue's (**Plans**); a change
+there reaches the create forms and the Billing page.
+

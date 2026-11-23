@@ -6,7 +6,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { startApp, cookieJar } from './helpers.js';
+import { startApp, cookieJar, addTestCard } from './helpers.js';
 import { toWorkloadSpec } from '../src/platform/workloads.js';
 import { parseDotEnv } from '../src/routes/services.js';
 import { mockCommit } from '../src/github/mock-data.js';
@@ -213,6 +213,7 @@ test('another workspace sees nothing, and cannot take a name\'s URL', async () =
   const jar = cookieJar();
   const signup = await t.post('/api/v1/auth/signup', { jar, headers: { origin: t.base }, body: { name: 'Olu', team: 'Olu Co', email: 'olu@example.dev', password: 'a long password 1' } });
   assert.equal(signup.status, 201);
+  await addTestCard(t, 'olu-co');
   for (const url of [`${WS}/services`, `${WS}/services/blog`, `${WS}/env-groups`, `${WS}/github`, `${WS}/github/repos`]) {
     const r = await t.get(url, { jar });
     assert.equal(r.status, 404, url);

@@ -56,7 +56,7 @@ function logQuery(q) {
  * @param {import('express').Router} router
  * @param {object} o
  */
-export function addTelemetryRoutes(router, { records, platform, telemetry, audit, realtime, W }) {
+export function addTelemetryRoutes(router, { records, platform, telemetry, audit, realtime, billing, W }) {
   const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
   // Read when a request comes (the isolation test builds this router with stand-ins).
   const stores = () => telemetry;
@@ -317,6 +317,7 @@ export function addTelemetryRoutes(router, { records, platform, telemetry, audit
     }
     if (problems.length) return invalid(res, problems);
     if (!Object.keys(changes).length) return res.json({ service: serviceView(s), operation: null, changed: false });
+    if (changes.plan) await billing?.requireCardFor(s.workspaceId, s.type, changes.plan);
     const plan = planOf(changes.plan ?? s.plan);
     let operation = null;
     if (s.workload) {

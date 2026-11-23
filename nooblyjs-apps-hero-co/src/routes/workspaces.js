@@ -11,6 +11,7 @@ import { addTaskRoutes } from './tasks.js';
 import { addSiteRoutes } from './sites.js';
 import { addDataStoreRoutes } from './datastores.js';
 import { addTelemetryRoutes } from './telemetry.js';
+import { addBillingRoutes } from './billing.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const sendError = (res, status, code, message, details) => res.status(status).json({ error: { code, message, ...(details ? { details } : {}) } });
@@ -29,7 +30,7 @@ const sendError = (res, status, code, message, details) => res.status(status).js
  * @param {object} [o.github]
  * @param {() => object} [o.platform]   the infrastructure accelerator's services.platform
  */
-export function createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry, tasks }) {
+export function createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry, tasks, billing, pay }) {
   const router = express.Router({ mergeParams: true });
   router.use(express.json({ limit: '16kb' }));
   router.param('workspace', (req, res, next) => session.requireWorkspace(req, res, next));
@@ -124,12 +125,14 @@ export function createWorkspacesApi({ express, session, accounts, link, config, 
   });
 
   // Services, environment groups and GitHub (Phase 2).
-  addServiceRoutes(router, { session, records, secrets, github, platform, config, audit, realtime, W });
-  addTelemetryRoutes(router, { records, platform, telemetry, audit, realtime, W });
+  addServiceRoutes(router, { session, records, secrets, github, platform, config, audit, realtime, billing, W });
+  addTelemetryRoutes(router, { records, platform, telemetry, audit, realtime, billing, W });
   addJobRoutes(router, { records, platform, telemetry, audit, realtime, W });
   addTaskRoutes(router, { records, platform, tasks: () => tasks, audit, realtime, config, W });
   addSiteRoutes(router, { records, platform, telemetry, audit, realtime, W });
-  addDataStoreRoutes(router, { records, platform, config, audit, realtime, W });
+  addDataStoreRoutes(router, { records, platform, config, audit, realtime, billing, W });
+  // Billing (Phase 7): the Owner's.
+  if (billing) addBillingRoutes(router, { session, billing, pay, records, audit, W });
 
   // ---- invitation links ------------------------------------------------------------
 

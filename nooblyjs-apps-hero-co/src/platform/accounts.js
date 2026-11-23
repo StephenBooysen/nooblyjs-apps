@@ -50,6 +50,8 @@ export function createAccounts({ data }) {
   const put = (container, record) => data.addWithKey(container, record.id, record);
   const where = async (container, test) => (await all(container)).filter(test);
   const first = async (container, test) => (await all(container)).find(test) ?? null;
+  /** Called with each new workspace once its owner is a member (billing opens its account: roadmap 7.4). */
+  const created = [];
 
   async function init() {
     for (const name of Object.values(C)) {
@@ -121,6 +123,7 @@ export function createAccounts({ data }) {
     const project = { id: newId('prj'), workspaceId: workspace.id, name: 'Default', isDefault: true, createdAt: now() };
     await put(C.projects, project);
     await put(C.environments, { id: newId('env'), workspaceId: workspace.id, projectId: project.id, name: 'Production', region: DEFAULT_REGION.id, createdAt: now() });
+    for (const fn of created) await fn(workspace);
     return workspace;
   }
 
@@ -250,6 +253,8 @@ export function createAccounts({ data }) {
     init,
     getPerson, findPersonByEmail, findPersonByGithub, listPeople, createPerson, updatePerson,
     getWorkspace, createWorkspace, updateWorkspace, projectsOf, environmentsOf,
+    /** fn(workspace) after each createWorkspace(); it must not throw (a sign-up never fails for it). */
+    onWorkspaceCreated: (fn) => { created.push(fn); },
     listWorkspaces: () => all(C.workspaces),
     membership, workspacesFor, membersOf, addMember, removeMember,
     createInvitation, invitationsOf, findInvitation, revokeInvitation, acceptInvitation,

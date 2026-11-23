@@ -60,7 +60,7 @@ export function followDataStores({ eventEmitter, records, realtime, log = consol
  * @param {import('express').Router} router
  * @param {object} o
  */
-export function addDataStoreRoutes(router, { records, platform, config, audit, realtime, W }) {
+export function addDataStoreRoutes(router, { records, platform, config, audit, realtime, billing, W }) {
   const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
   const apiOf = (type) => (type === 'postgres' ? platform().databases : platform().keyvalue);
 
@@ -113,6 +113,8 @@ export function addDataStoreRoutes(router, { records, platform, config, audit, r
   /** A data store record of ours and the platform's database or store behind it. */
   async function create(req, res, { type, name, region, plan, backupTime, eviction, restore = null }) {
     const ws = req.workspace.id;
+    // The free tier (roadmap 7.6): Postgres, and a paid Key Value plan, need a card on file (402 card_required).
+    await billing?.requireCardFor(ws, type, plan.key);
     const service = await records.services.create({
       workspaceId: ws, name, type, source: null, build: null, region: region.id, plan: plan.key, instances: 1, env: [], envGroups: [],
       autoDeploy: false, url: null, internalHost: null, status: 'creating', current: null, workload: null, store: name,
@@ -173,6 +175,7 @@ export function addDataStoreRoutes(router, { records, platform, config, audit, r
     if (s.type === 'postgres' && b.backupTime !== undefined && b.backupTime !== null && !TIME.test(String(b.backupTime))) problems.push({ path: 'backupTime', message: 'A time such as 03:00 (UTC), or none.' });
     if (s.type === 'keyvalue' && b.eviction !== undefined && !EVICTIONS.some((e) => e.key === b.eviction)) problems.push({ path: 'eviction', message: 'Choose what happens when it is full.' });
     if (problems.length) return invalid(res, problems);
+    if (plan.key !== s.plan) await billing?.requireCardFor(s.workspaceId, s.type, plan.key);
     const name = s.store ?? s.name;
     try {
       if (s.type === 'postgres') await platform().databases.update(s.workspaceId, name, { plan: platformPlan('postgres', plan.key), ...(b.backupTime !== undefined ? { backupTime: b.backupTime } : {}) }, { actor: actorOf(req.person) });

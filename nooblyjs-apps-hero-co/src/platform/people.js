@@ -12,6 +12,8 @@ export const INFRA_ACCESS_ROLE = { platform: 'Owner', support: 'Viewer' };
 
 /** Operator role → the customers accelerator's roles (its README "Roles"). */
 export const CX_ROLES = { platform: ['admin'], support: ['agent'] };
+/** The payments accelerator's roles (its spec §8): support refunds up to its limit; platform does everything. */
+export const PAY_ROLES = { platform: ['admin'], support: ['support'] };
 
 /** The infrastructure accelerator's permission matrix (its product.md §7). Unknown permissions are refused. */
 export const INFRA_MATRIX = {
@@ -51,6 +53,7 @@ export function toPerson(record, workspaces = []) {
     operator: record.operator ?? null,
     accessRole: record.operator ? INFRA_ACCESS_ROLE[record.operator] : null,
     cxRoles: record.operator ? CX_ROLES[record.operator] : [],
+    payRoles: record.operator ? PAY_ROLES[record.operator] : [],
     workspaces,
   };
 }

@@ -121,7 +121,7 @@ export function parseDotEnv(source) {
  * @param {import('express').Router} router   the workspace router (router.param('workspace') already gates it)
  * @param {object} o
  */
-export function addServiceRoutes(router, { session, records, secrets, github, platform, config, audit, realtime, W = '/workspaces/:workspace' }) {
+export function addServiceRoutes(router, { session, records, secrets, github, platform, config, audit, realtime, billing, W = '/workspaces/:workspace' }) {
   const seal = (ctx, key, value) => secrets.seal(value, `${ctx}:${key}`);
   const sealVars = (ctx, vars, existing = []) => vars.map((v) => (v.keep ? existing.find((e) => e.key === v.key) : { key: v.key, sealed: seal(ctx, v.key, v.value) }));
   const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -247,6 +247,8 @@ export function addServiceRoutes(router, { session, records, secrets, github, pl
       else problems.push({ path: 'envGroups', message: 'One of the linked environment groups no longer exists.' });
     }
     if (problems.length) return invalid(res, problems);
+    // The free tier (roadmap 7.6): a paid instance type needs a card on file (402 card_required).
+    await billing?.requireCardFor(ws, b.type, plan.key);
 
     // GitHub tells us the commit; a public URL's commit is the one the build finds on the branch.
     let commit = { sha: undefined, message: undefined };

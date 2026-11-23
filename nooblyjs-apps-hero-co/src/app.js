@@ -34,9 +34,30 @@ import { createCron } from './scheduling/cron.js';
 import { createTasks } from './scheduling/tasks.js';
 import { taskTriggerRoutes } from './routes/tasks.js';
 import { seedRecords } from './domain/seed.js';
+import { createBilling, CardRequired } from './platform/billing.js';
 
 const require = createRequire(import.meta.url);
 const { helmetCspOption } = require('nooblyjs-core/src/shared/utils/contentSecurityPolicy.js');
+
+/**
+ * Core's CSP (no 'unsafe-inline'), plus Stripe's origins when Stripe takes the cards: its script, the Payment Element's
+ * and 3-D Secure frames, and its API (stack.md §3.4; docs/operator-setup.md). The mock provider's card form is a
+ * same-origin frame, which default-src 'self' already allows.
+ */
+function cspOption(config) {
+  const option = helmetCspOption();
+  if (!option || config.payProvider !== 'stripe') return option;
+  const d = option.directives;
+  return {
+    ...option,
+    directives: {
+      ...d,
+      scriptSrc: [...d.scriptSrc, 'https://js.stripe.com'],
+      frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
+      connectSrc: [...d.connectSrc, 'https://api.stripe.com'],
+    },
+  };
+}
 const { createShell, UI_DIR } = require('nooblyjs-core/src/shell');
 const { context: cxContext } = require('nooblyjs-accel-customers');
 const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'package.json'), 'utf8'));
@@ -52,8 +73,10 @@ const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'packa
  * @param {boolean} [o.telemetryTimers]  false in tests: they flush and sweep telemetry themselves
  * @param {boolean} [o.cronTimers]       false in tests: they call cron.tick() themselves
  * @param {boolean} [o.taskTimers]       false in tests: they call tasks.tick() themselves
+ * @param {boolean} [o.billingTimers]    false in tests: they call billing.handOff() and payments.tick() themselves
+ * @param {{ now(): number }} [o.payClock]   tests: the payments accelerator's and billing's clock
  */
-export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true, taskTimers = true } = {}) {
+export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true, taskTimers = true, billingTimers = true, payClock } = {}) {
   if (config.production && config.devSignIn) throw new Error('The development sign-in cannot run with NODE_ENV=production.');
   if (config.production && !config.sessionSecret) throw new Error('SESSION_SECRET is required in production.');
   await fs.mkdir(config.dataDir, { recursive: true });
@@ -61,7 +84,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   const app = express();
   app.disable('x-powered-by');
   if (config.trustProxy) app.set('trust proxy', 1);
-  app.use(helmet({ contentSecurityPolicy: helmetCspOption() }));
+  app.use(helmet({ contentSecurityPolicy: cspOption(config) }));
   // Local network services at /<workspace>/<service>/… (routes/proxy.js), before sessions: they are other people's
   // apps, so they never see our session. Set once the accelerators are mounted.
   let serviceProxy = null;
@@ -114,7 +137,10 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   let infraPublicPosts = [];
   const infraOpen = (req) => (req.method === 'GET' && infraPublic.has(req.path)) || (req.method === 'POST' && infraPublicPosts.some((p) => req.path.startsWith(p)));
   app.use(INFRA_MOUNT, (req, res, next) => (infraOpen(req) ? next() : session.requireOperator(req, res, next)));
-  app.use(CX_BASE, (req, res, next) => (req.originalUrl.startsWith(CX_PUBLIC) ? next() : session.requireOperator(req, res, next)));
+  // The payments accelerator's public paths (provider webhooks, hosted invoices, the 3-D Secure hand-off, the card
+  // form's components) are its own list, set once it is mounted.
+  let cxPublic = [CX_PUBLIC];
+  app.use(CX_BASE, (req, res, next) => (cxPublic.some((p) => req.originalUrl.startsWith(`${p}/`) || req.originalUrl === p) ? next() : session.requireOperator(req, res, next)));
 
   const realtime = createRealtime();
   let shell = null;
@@ -148,12 +174,13 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   }
 
   const accelerators = await mountAccelerators({
-    app, eventEmitter, serviceRegistry, shell, config, log, mockStepMs, jobCheckMs, resolveSecrets,
+    app, eventEmitter, serviceRegistry, shell, config, log, mockStepMs, jobCheckMs, resolveSecrets, payClock, payJobs: billingTimers,
     dataDir: config.dataDir,
     infraHost: changeInfraHost(host.hostFor(path.join(config.dataDir, 'infrastructure'))),
   });
   infraPublic = new Set(accelerators.mounted.infrastructure.publicPaths ?? []);
   infraPublicPosts = accelerators.mounted.infrastructure.publicPostPrefixes ?? [];
+  cxPublic = [CX_PUBLIC, ...(accelerators.mounted.payments?.publicPaths ?? [])];
 
   const platform = () => accelerators.mounted.infrastructure.services.platform;
   const deploysFollower = followDeploys({ eventEmitter, records, realtime, platform, log });
@@ -183,7 +210,21 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   const link = createCustomersLink({ cx: accelerators.mounted.customers, systemContext: cxContext.systemContext, accounts, log, audit });
   await link.ensureTemplates();
   await ensureCoreAdmins({ accounts, core, log });
-  if (config.devSignIn) await seedDevPeople({ accounts, core, link });
+  // Billing (roadmap 7.4–7.7): the catalogue, a billing account per workspace (and one for each new workspace), the
+  // hourly usage hand-off, the free tier, suspension of a delinquent workspace's paid services.
+  const billing = createBilling({
+    pay: accelerators.mounted.payments, accounts, records, platform, link, eventEmitter, realtime, audit, config, log,
+    ...(payClock ? { clock: payClock } : {}), timers: billingTimers,
+  });
+  if (config.devSignIn) {
+    // Development: Stevie's workspace has a test card and three closed months of invoices (made before its billing
+    // account, so before the hook below opens one).
+    await billing.init({ ensureAll: false });
+    await seedDevPeople({ accounts, core, link });
+    if (!config.test) await billing.seedDevelopment('exclusivity-life');
+  }
+  accounts.onWorkspaceCreated((ws) => billing.ensureWorkspace(ws).then(() => undefined, (err) => log.warn?.(`[hero-co] billing account for ${ws.id} failed: ${err.message}`)));
+  await billing.init();
   if (config.production && !config.emailChannel) {
     log.warn?.('[hero-co] No email channel is configured: account emails go to the customers accelerator\'s console outbox only.');
   }
@@ -203,7 +244,9 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   app.use('/api/v1/auth', auth.api);
   app.use(auth.pages);
   taskTrigger = taskTriggerRoutes({ express, records, tasks: () => tasks, audit });
-  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry, cron, tasks }));
+  // Prices from the payments catalogue (the create form's Summary): not a secret, so no sign-in.
+  app.get('/api/v1/prices', (req, res) => res.json(billing.prices()));
+  app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry, cron, tasks, billing, pay: accelerators.mounted.payments }));
   app.use('/api/v1', createApi({ express, session, realtime, accelerators: accelerators.describe, about: { name: 'nooblyjs-cloud', version: VERSION } }));
   app.use(express.static(path.join(ROOT, 'public'), { index: false, redirect: false }));
   app.use(createGithubConnect({ express, session, accounts, github, config, audit, log }));
@@ -217,6 +260,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   });
   // Never send a fault's message to the client.
   app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+    if (err instanceof CardRequired && req.originalUrl.includes('/api/')) return res.status(402).json({ error: { code: err.code, message: err.message } });
     const status = err.status >= 400 && err.status < 500 ? err.status : 500;
     if (status === 500) log.error?.(`[hero-co] ${req.method} ${req.originalUrl}: ${err.stack ?? err.message}`);
     const message = status === 500 ? 'Something went wrong on our side.' : (err.expose ? err.message : 'The request was not valid.');
@@ -245,6 +289,9 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     cron,
     tasks,
     accelerators,
+    billing,
+    /** The payments accelerator's mount() result. */
+    pay: accelerators.mounted.payments,
     accounts,
     records,
     github,
@@ -260,6 +307,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
       await cron.idle();
       await tasks.idle();
       await telemetry.idle();
+      await billing.idle();
     },
     serviceRegistry,
     eventEmitter,
@@ -271,6 +319,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
       dataFollower.stop();
       proxy.stop();
       await telemetry.stop();
+      billing.shutdown();
       await accelerators.shutdown();
       await session.close?.();
       await serviceRegistry.shutdown?.();

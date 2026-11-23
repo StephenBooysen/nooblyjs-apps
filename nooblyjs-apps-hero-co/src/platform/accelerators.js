@@ -3,7 +3,8 @@
 // mounted, so a bad start leaves the app without half an accelerator.
 //
 //   customers       /admin/customer/, /admin/marketing/   operator back office (stack.md §3.3)
-//   payments        /admin/payments/                      not built yet: reported as pending (payments roadmap Phase 0)
+//   payments        /admin/payments/, /admin/billing/     operator screens and APIs; /admin/payments/p and /components are
+//                                                         public (webhooks, hosted invoices, the card form)
 //   infrastructure  /infrastructure/                      operator control plane (stack.md §3.2)
 import path from 'node:path';
 import { INFRA_HOST_NEEDS } from './host.js';
@@ -35,8 +36,10 @@ async function importOptional(name) {
  * @param {number} [o.mockStepMs]        passed to the infrastructure accelerator (tests pass 0)
  * @param {number} [o.jobCheckMs]
  * @param {(tenantId: string, refs: string[]) => Promise<Record<string, string>>} [o.resolveSecrets]   opens our secretRefs at deploy (infra 8.9 R9)
+ * @param {{ now(): number }} [o.payClock]   the payments accelerator's clock (tests move it)
+ * @param {boolean} [o.payJobs]           the payments jobs (period close, dunning) on a timer; false in tests
  */
-export async function mountAccelerators({ app, eventEmitter, serviceRegistry, infraHost, shell, dataDir, config, log = console, mockStepMs, jobCheckMs, resolveSecrets }) {
+export async function mountAccelerators({ app, eventEmitter, serviceRegistry, infraHost, shell, dataDir, config, log = console, mockStepMs, jobCheckMs, resolveSecrets, payClock, payJobs = true }) {
   // Check before mounting anything.
   if (typeof eventEmitter?.emit !== 'function') throw new Error('mountAccelerators needs the shared EventEmitter.');
   if (!serviceRegistry?.initialized) throw new Error('mountAccelerators needs an initialised serviceRegistry.');
@@ -76,12 +79,24 @@ export async function mountAccelerators({ app, eventEmitter, serviceRegistry, in
     });
 
     if (paymentsModule) {
+      // Billing (roadmap 7.1–7.3; stack.md §3.4): its records in its own file store under DATA_DIR/payments; emails
+      // through the customers accelerator; Stripe when its keys are in the environment, else the mock provider.
       mounted.payments = await paymentsModule.mount(app, eventEmitter, serviceRegistry, {
         modules: ['payments', 'billing'],
         basePath: CX_BASE,
         containerPrefix: 'pay',
+        express: (await import('express')).default,
+        providers: { data: { type: 'file', options: { dataDir: path.join(dataDir, 'payments') } } },
+        provider: { type: config.payProvider ?? 'mock' },
         customers: mounted.customers,
-        auth: { roleResolver: (req) => req.person?.cxRoles ?? [] },
+        currency: 'USD',
+        brand: 'NooblyJS Cloud',
+        publicUrl: config.publicUrl,
+        billingUrl: (account) => (account.externalRef ? `${config.publicUrl}/w/${account.externalRef}/billing` : null),
+        seller: { name: 'NooblyJS Cloud' },
+        auth: { roleResolver: (req) => req.person?.payRoles ?? [] },
+        jobs: { enabled: payJobs },
+        ...(payClock ? { clock: payClock } : {}),
       });
     } else {
       pending.push({ name: 'payments', reason: 'Not built yet: nooblyjs-accel-payments roadmap Phase 0.' });

@@ -77,8 +77,11 @@ export async function startApp(options = {}) {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   const config = { ...loadConfig({ NODE_ENV: 'test' }), dataDir, publicUrl: base, ...(options.config ?? {}) };
-  const hero = await createApp({ config, mockStepMs: 0, jobCheckMs: 0, telemetryTimers: false, cronTimers: false, taskTimers: false, ...options, ...(options.config ? { config } : {}) });
+  const { cards = true, ...rest } = options;
+  const hero = await createApp({ config, mockStepMs: 0, jobCheckMs: 0, telemetryTimers: false, cronTimers: false, taskTimers: false, billingTimers: false, ...rest, ...(options.config ? { config } : {}) });
   server.on('request', hero.app);
+  // The development workspaces pay with a test card unless a test says otherwise (paid instance types need one).
+  if (cards) for (const ws of ['exclusivity-life', 'amara-labs']) await addTestCard(hero, ws);
   hero.attachUpgrades(server);
   const call = caller(base);
   const outbox = () => hero.accelerators.mounted.customers.marketing.channels.email.outbox;
@@ -108,6 +111,17 @@ export async function startApp(options = {}) {
       await fs.rm(dataDir, { recursive: true, force: true });
     },
   };
+}
+
+/**
+ * Saves a test card for a workspace's billing account through the mock provider's hosted fields (what CardForm does
+ * in a browser). 4242 4242 4242 4242 pays; 4000 0000 0000 0341 is saved, then declined.
+ */
+export async function addTestCard(hero, workspaceId, number = '4242424242424242') {
+  const account = await hero.billing.ensureWorkspace(workspaceId);
+  const setup = await hero.pay.payments.setupMethod(account.id);
+  hero.pay.mock.hostedFields.attach(setup.clientSecret, { number, expMonth: 12, expYear: new Date().getUTCFullYear() + 3, cvc: '123' });
+  return hero.pay.payments.confirmMethod(account.id, setup.setupId);
 }
 
 /** Connects a workspace to the mock GitHub as `login` ('octo-dev' or 'stevie'), the way a browser would. */

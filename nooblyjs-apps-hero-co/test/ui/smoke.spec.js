@@ -104,7 +104,7 @@ test('operators reach the back office and the infrastructure accelerator in the 
   await page.goto('/admin');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Back office');
   await expect(page.locator('.nj-accelerators .nj-card')).toHaveCount(3);
-  await expect(page.getByText('Not built yet: nooblyjs-accel-payments roadmap Phase 0.')).toBeVisible();
+  await expect(page.locator('.nj-accelerators .nj-card', { hasText: 'Payments' }).getByRole('link', { name: 'Open /admin/payments/' })).toBeVisible();
   await noHorizontalScroll(page);
   expect(problems).toEqual([]);
 

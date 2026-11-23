@@ -26,6 +26,8 @@ export function loadConfig(env = process.env) {
     port,
     dataDir: path.resolve(ROOT, env.DATA_DIR ?? '.application'),
     production,
+    // Tests: the development people without the development billing seed (test/helpers.js gives their cards).
+    test: env.NODE_ENV === 'test',
     publicUrl: (env.PUBLIC_URL ?? `http://localhost:${port}`).replace(/\/$/, ''),
     appDomain: env.APP_DOMAIN ?? 'nooblyjs.app',
     // The agent for the Local network region (infra spec 8.9) on this machine: 'fork' runs the real agent with this
@@ -45,5 +47,9 @@ export function loadConfig(env = process.env) {
     github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
     // Encrypts environment variables and GitHub tokens at rest (required in production; a dev key file otherwise).
     secretKey: env.HERO_SECRET_KEY,
+    // The card provider (roadmap 7.3): Stripe when STRIPE_SECRET_KEY is set (with STRIPE_WEBHOOK_SECRET and
+    // STRIPE_PUBLISHABLE_KEY; the payments accelerator reads them from the environment), else the mock provider, which
+    // the accelerator refuses in production. PAY_SIGNING_SECRET signs invoice and payment links (required in production).
+    payProvider: env.STRIPE_SECRET_KEY ? 'stripe' : 'mock',
   };
 }

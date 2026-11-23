@@ -47,6 +47,14 @@ export const TEMPLATES = [
     html: wrap('<p>{{inviter.name}} invited you to the <strong>{{workspace.name}}</strong> workspace on NooblyJS Cloud.</p><p><a href="{{inviteUrl}}">Accept the invitation</a></p><p>The invitation works for 7 days.</p>'),
     text: '{{inviter.name}} invited you to the {{workspace.name}} workspace on NooblyJS Cloud.\n\nAccept the invitation:\n{{inviteUrl}}\n\nThe invitation works for 7 days.',
   },
+  {
+    key: 'cloud-services-suspended',
+    name: 'NooblyJS Cloud: paid services suspended',
+    variables: [{ name: 'person.name', required: true, sample: 'Stevie' }, { name: 'workspace.name', required: true, sample: 'Exclusivity Life' }, { name: 'services', required: true, sample: 'web, api' }, { name: 'billingUrl', required: true, sample: 'https://cloud.example/w/acme/billing' }],
+    subject: 'Paid services in {{workspace.name}} are suspended',
+    html: wrap('<p>Hi {{person.name}},</p><p>We could not collect payment for <strong>{{workspace.name}}</strong> after the last retry, so we suspended its paid services: {{services}}. Their data and settings are kept.</p><p>Add a working card on the Billing page: the open invoices are paid straight away and the services resume.</p><p><a href="{{billingUrl}}">Open Billing</a></p>'),
+    text: 'Hi {{person.name}},\n\nWe could not collect payment for {{workspace.name}} after the last retry, so we suspended its paid services: {{services}}. Their data and settings are kept.\n\nAdd a working card on the Billing page: the open invoices are paid straight away and the services resume.\n{{billingUrl}}',
+  },
 ];
 
 /**

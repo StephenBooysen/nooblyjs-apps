@@ -52,14 +52,22 @@ test('the customers accelerator\'s public marketing routes need no sign-in', asy
   assert.notEqual(res.status, 401);
 });
 
-test('the admin page lists customers and infrastructure as mounted and payments as pending', async () => {
+test('the admin page lists customers, payments and infrastructure as mounted', async () => {
   const res = await t.get('/api/v1/admin/accelerators', { as: 'ops-platform' });
   assert.equal(res.status, 200);
   const byName = Object.fromEntries(res.json.items.map((a) => [a.name, a]));
   assert.equal(byName.customers.state, 'mounted');
   assert.equal(byName.infrastructure.state, 'mounted');
-  assert.equal(byName.payments.state, 'pending');
-  assert.match(byName.payments.reason, /roadmap Phase 0/);
+  assert.equal(byName.payments.state, 'mounted');
+  assert.deepEqual(byName.payments.links, ['/admin/payments/']);
+  // Its operator screens are for operators; its public paths (webhooks, hosted invoices, the card form) are open.
+  assert.equal((await t.get('/admin/payments/', { as: 'ops-platform' })).status, 200);
+  assert.equal((await t.get('/admin/payments/', { as: 'stevie' })).status, 404);
+  assert.equal((await t.get('/admin/payments/api/v1/overview', { as: 'stevie' })).status, 404);
+  assert.equal((await t.get('/admin/payments/api/v1/overview', { as: 'ops-platform' })).status, 200);
+  assert.equal((await t.get('/admin/payments/components/card-form.js')).status, 200);
+  assert.equal((await t.get('/admin/payments/p/invoices/not-a-token')).status, 404);
+  assert.equal((await t.get('/admin/payments-not/components/card-form.js')).status, 302, 'only the exact public prefixes');
 });
 
 test('infrastructure events reach the shared EventEmitter (mount() mirrors them)', async () => {
