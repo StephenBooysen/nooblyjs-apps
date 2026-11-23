@@ -8,7 +8,6 @@ export const ROUTES = [
   { pattern: '/reset-password', name: 'reset-password', layout: 'public' },
   { pattern: '/verify-email', name: 'verify-email', layout: 'public' },
   { pattern: '/invite', name: 'invite', layout: 'public' },
-  { pattern: '/admin', name: 'admin', layout: 'admin' },
   { pattern: '/w/:workspace', name: 'dashboard', layout: 'workspace' },
   { pattern: '/w/:workspace/new', name: 'new-service', layout: 'workspace' },
   { pattern: '/w/:workspace/new/:type', name: 'new-service-type', layout: 'workspace' },

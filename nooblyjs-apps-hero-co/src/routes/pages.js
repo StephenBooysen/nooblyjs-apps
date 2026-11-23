@@ -2,6 +2,7 @@
 // the screen. Gates run here, so a deep link to another workspace is a 404 before any HTML is sent.
 import path from 'node:path';
 import { ROOT } from '../config.js';
+import { EMBEDDED_SCREENS } from '../platform/accelerators.js';
 
 export const INDEX_FILE = path.join(ROOT, 'public', 'index.html');
 
@@ -14,12 +15,17 @@ export const PUBLIC_PAGES = ['/forgot-password', '/reset-password', '/verify-ema
 /** Service types (product.md §6.2), the :type of /w/:workspace/new/:type. */
 export const SERVICE_TYPES = ['static', 'web', 'private', 'worker', 'cron', 'workflow', 'postgres', 'keyvalue', 'sandbox'];
 
+/** The operator screens in nooblyjs-core's frame (src/platform/accelerators.js): the back office and the rail's
+ *  embedded accelerator pages. The frame's handler lets operators only through. */
+export const OPERATOR_PAGES = ['/admin', ...EMBEDDED_SCREENS.map((s) => s.mountPath)];
+
 /**
  * @param {object} o
  * @param {typeof import('express')} o.express
  * @param {ReturnType<import('../platform/session.js').createSession>} o.session
+ * @param {import('express').RequestHandler} o.frame   nooblyjs-core's frame page (shell.frame), operators only
  */
-export function createPages({ express, session }) {
+export function createPages({ express, session, frame }) {
   const router = express.Router();
   const page = (req, res) => {
     res.set('Cache-Control', 'no-store');
@@ -29,7 +35,7 @@ export function createPages({ express, session }) {
   router.get('/', page);
   // Public pages: sign-in, account emails' links (the page calls the API; a GET never changes anything).
   for (const p of PUBLIC_PAGES) router.get(p, page);
-  router.get('/admin', session.requireOperator, page);
+  for (const p of OPERATOR_PAGES) router.get(p, session.requireOperator, frame);
   router.get('/w/:workspace', session.requireWorkspace, page);
   for (const sub of WORKSPACE_PAGES.filter(Boolean)) router.get(`/w/:workspace${sub}`, session.requireWorkspace, page);
   router.get('/w/:workspace/new/:type', session.requireWorkspace, (req, res, next) => (SERVICE_TYPES.includes(req.params.type) ? page(req, res) : next()));

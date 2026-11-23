@@ -17,6 +17,7 @@ test('the router matches every product.md §5 route and nothing else', () => {
   assert.equal(match('/w/x/services'), null);
   assert.equal(match('/infrastructure'), null, 'accelerator pages are full page loads, not client routes');
   assert.equal(match('/admin/customer/'), null);
+  assert.equal(match('/admin'), null, 'the back office is nooblyjs-core\'s frame');
 });
 
 test('client and server agree on the workspace pages, the sidebar and the service types', () => {

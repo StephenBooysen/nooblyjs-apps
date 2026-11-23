@@ -21,7 +21,7 @@ async function audit(page, screens) {
   const found = [];
   for (const url of screens) {
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('h1, h2, form').first(), url).toBeVisible();
+    await expect(page.locator('h1:visible, h2:visible, form:visible').first(), url).toBeVisible();
     await page.waitForLoadState('networkidle').catch(() => {});
     const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
     for (const v of violations) found.push(`${url}: ${v.impact} ${v.id} (${v.help}) ×${v.nodes.length}, e.g. ${v.nodes[0]?.target?.join(' ')}`);
@@ -58,9 +58,9 @@ for (const mode of ['light', 'dark']) {
   });
 }
 
-test('operator screens (back office, payments, infrastructure)', async ({ page, context, baseURL }) => {
+test('operator screens (back office, the rail\'s accelerators, infrastructure)', async ({ page, context, baseURL }) => {
   await signIn(context, baseURL, 'ops-platform');
-  await audit(page, ['/admin', '/admin/payments/', '/infrastructure', '/infrastructure/platform']);
+  await audit(page, ['/admin', '/customers', '/marketing', '/payments', '/admin/payments/', '/infrastructure', '/infrastructure/platform']);
 });
 
 test('on a phone every control is at least 44 px (stack.md §5), except a link inside a sentence', async ({ page, context, baseURL }, info) => {

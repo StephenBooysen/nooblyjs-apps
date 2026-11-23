@@ -98,19 +98,44 @@ test('another workspace is not found', async ({ page, context, baseURL }) => {
   expect(res.status()).toBe(404);
 });
 
-test('operators reach the back office and the infrastructure accelerator in the nooblyjs-core frame', async ({ page, context, baseURL }) => {
+test('operators reach the back office and each accelerator from the rail of the nooblyjs-core frame', async ({ page, context, baseURL }) => {
   await signIn(context, baseURL, 'ops-platform');
   const problems = watch(page);
   await page.goto('/admin');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Back office');
-  await expect(page.locator('.nj-accelerators .nj-card')).toHaveCount(3);
-  await expect(page.locator('.nj-accelerators .nj-card', { hasText: 'Payments' }).getByRole('link', { name: 'Open /admin/payments/' })).toBeVisible();
+  const rail = page.getByRole('navigation', { name: 'NooblyJS systems' });
+  await expect(rail.locator('.rail__item')).toHaveText(['Customers', 'Marketing', 'Payments', 'Infrastructure']);
+  await expect(page.locator('.hero-accelerator')).toHaveCount(4);
+  await expect(page.locator('.hero-accelerator', { hasText: 'Payments' }).getByRole('link', { name: 'Open Payments' })).toHaveAttribute('href', '/payments');
   await noHorizontalScroll(page);
+
+  // Each button shows its accelerator's own page beside the rail, without reloading the frame.
+  const embedded = page.frameLocator('iframe.hero-embed');
+  await rail.getByRole('link', { name: 'Customers' }).click();
+  await expect(page).toHaveURL(/\/customers$/);
+  await expect(rail.getByRole('link', { name: 'Customers' })).toHaveAttribute('aria-current', 'page');
+  await expect(embedded.locator('.cx-logo')).toContainText('Customers');
+  await noHorizontalScroll(page);
+  // Its own navigation keeps its place in the address bar; its link to Marketing moves the rail there.
+  await embedded.getByRole('link', { name: 'Organizations' }).click();
+  await expect(page).toHaveURL(/\/customers#\/organizations$/);
+  await embedded.getByRole('link', { name: 'Marketing' }).click();
+  await expect(page).toHaveURL(/\/marketing(#.*)?$/);
+  await expect(rail.getByRole('link', { name: 'Marketing' })).toHaveAttribute('aria-current', 'page');
+
+  await rail.getByRole('link', { name: 'Payments' }).click();
+  await expect(page).toHaveURL(/\/payments$/);
+  await expect(embedded.locator('body')).toContainText(/Payments|NooblyJS Pay/, { timeout: 15_000 });
+
+  await rail.getByRole('link', { name: 'Infrastructure' }).click();
+  await expect(page).toHaveURL(/\/infrastructure$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Infrastructure', { timeout: 15_000 });
   expect(problems).toEqual([]);
 
-  const infra = await page.goto('/infrastructure/');
-  expect(infra.status()).toBe(200);
-  await expect(page.locator('body')).toContainText(/Infrastructure|Noobly Cloud/, { timeout: 15_000 });
+  // A deep link to an embedded view opens it in the frame.
+  await page.goto('/customers#/organizations');
+  await expect(rail.getByRole('link', { name: 'Customers' })).toHaveAttribute('aria-current', 'page');
+  await expect(embedded.locator('[data-cx-nav="organizations"]')).toHaveClass(/active/);
 });
 
 test('sign up with email through the form: field errors, then the new workspace with the verify banner', async ({ page }) => {
