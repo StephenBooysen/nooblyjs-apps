@@ -67,9 +67,10 @@ export function createAccounts({ data }) {
   const getPerson = (id) => get(C.people, id);
   const findPersonByEmail = (email) => first(C.people, (p) => p.email === normaliseEmail(email));
   const findPersonByGithub = (githubId) => first(C.people, (p) => p.githubId && p.githubId === String(githubId));
+  const findPersonByGoogle = (googleId) => first(C.people, (p) => p.googleId && p.googleId === String(googleId));
   const listPeople = () => all(C.people);
 
-  /** @param {{ id?: string, name: string, email: string, emailVerified?: boolean, githubId?: string, githubLogin?: string, operator?: string, signedUpWith: string }} input */
+  /** @param {{ id?: string, name: string, email: string, emailVerified?: boolean, githubId?: string, githubLogin?: string, googleId?: string, operator?: string, signedUpWith: string }} input */
   async function createPerson(input) {
     const email = normaliseEmail(input.email);
     if (await findPersonByEmail(email)) throw Object.assign(new Error('An account with this email exists.'), { code: 'email_taken' });
@@ -80,6 +81,7 @@ export function createAccounts({ data }) {
       emailVerifiedAt: input.emailVerified ? now() : null,
       githubId: input.githubId ? String(input.githubId) : null,
       githubLogin: input.githubLogin ?? null,
+      googleId: input.googleId ? String(input.googleId) : null,
       operator: input.operator ?? null,
       sessionEpoch: 0,
       customerId: null,
@@ -251,7 +253,7 @@ export function createAccounts({ data }) {
 
   return {
     init,
-    getPerson, findPersonByEmail, findPersonByGithub, listPeople, createPerson, updatePerson,
+    getPerson, findPersonByEmail, findPersonByGithub, findPersonByGoogle, listPeople, createPerson, updatePerson,
     getWorkspace, createWorkspace, updateWorkspace, projectsOf, environmentsOf,
     /** fn(workspace) after each createWorkspace(); it must not throw (a sign-up never fails for it). */
     onWorkspaceCreated: (fn) => { created.push(fn); },

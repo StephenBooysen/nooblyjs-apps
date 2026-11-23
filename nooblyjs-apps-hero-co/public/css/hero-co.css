@@ -311,6 +311,7 @@ code { color: var(--nj-ink-2); }
 .nj-auth-card .btn { min-height: 46px; }
 .nj-btn-github { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: var(--nj-ink); color: var(--nj-on-ink); border: 1px solid var(--nj-ink); font-weight: 600; }
 .nj-btn-github:hover, .nj-btn-github:focus-visible { background: var(--nj-ink-2); color: var(--nj-on-ink); border-color: var(--nj-ink-2); }
+.nj-btn-google { display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; }
 .nj-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--nj-muted); font-size: 13px; font-weight: 600; }
 .nj-divider::before, .nj-divider::after { content: ''; flex: 1; border-top: 1px solid var(--nj-border); }
 .nj-invite-note { background: var(--nj-accent-tint); border-radius: var(--nj-radius-control); padding: 10px 14px; font-weight: 600; font-size: 14.5px; }

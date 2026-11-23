@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import { Passport } from 'passport';
 import { Strategy as GitHubStrategy } from 'passport-github2';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { MOCK_ORGS, MOCK_BRANCHES, mockRepos, mockCommit, mockTokenFor } from '../github/mock-data.js';
 import { normaliseEmail } from './accounts.js';
 import { safeNext, LOGIN_PAGE, loginUrl } from './session.js';
@@ -107,8 +108,12 @@ const sendError = (res, status, code, message) => res.status(status).json({ erro
  */
 export function createAuth({ express, session, accounts, core, link, config, audit, log }) {
   const url = (p) => `${config.publicUrl}${p}`;
-  const githubMock = !config.github?.clientId && !config.production;
-  const githubEnabled = Boolean(config.github?.clientId) || githubMock;
+  // AUTHTYPE=google: Google is the only way in (core's sign-in page goes straight to it); email sign-up and GitHub
+  // sign-in are off. Without a Google client outside production, the mock at /dev/google stands in.
+  const googleOnly = config.authType === 'google';
+  const googleMock = googleOnly && !config.google?.clientId && !config.production;
+  const githubMock = !googleOnly && !config.github?.clientId && !config.production;
+  const githubEnabled = !googleOnly && (Boolean(config.github?.clientId) || githubMock);
   const limits = {
     signinEmail: createLimiter({ max: 10, windowMs: 15 * 60_000 }),
     signinIp: createLimiter({ max: 50, windowMs: 15 * 60_000 }),
@@ -150,9 +155,10 @@ export function createAuth({ express, session, accounts, core, link, config, aud
   const api = express.Router();
   api.use(express.json({ limit: '16kb' }));
 
-  api.get('/config', (req, res) => res.json({ github: githubEnabled, githubMock, devSignIn: config.devSignIn, passwordHint: PASSWORD_HINT }));
+  api.get('/config', (req, res) => res.json({ github: githubEnabled, githubMock, googleOnly, googleMock, googleUrl: GOOGLE_START, devSignIn: config.devSignIn, passwordHint: PASSWORD_HINT }));
 
   api.post('/signup', async (req, res, next) => {
+    if (googleOnly) return sendError(res, 403, 'google_only', 'Accounts are made by signing in with Google.');
     try {
       if (limits.signupIp.blocked(req.ip)) return tooMany(res);
       const { values, details } = checkSignUp(req.body);
@@ -385,7 +391,81 @@ export function createAuth({ express, session, accounts, core, link, config, aud
     success: true,
     data: { appName: 'NooblyJS Cloud', logoUrl: '/images/nooblyjs-logo.png', stylesheetUrl: null, homeUrl: req.person ? session.homeOf(req.person) : '/' },
   }));
-  login.get(`${A}/api/sso-config`, (req, res) => res.json({ success: true, data: { enabled: false, provider: null, initiateUrl: null } }));
+  // Core's sign-in page asks this first: with AUTHTYPE=google it goes straight to Google (?local=1 keeps the password form).
+  login.get(`${A}/api/sso-config`, (req, res) => res.json({ success: true, data: googleOnly ? { enabled: true, provider: 'google', initiateUrl: GOOGLE_START } : { enabled: false, provider: null, initiateUrl: null } }));
+
+  // ---- Google (AUTHTYPE=google), on core's paths ------------------------------------------
+  // Answered here, ahead of core, like its login API: a Google sign-in makes a hero-co session and, the first time, a
+  // person and their workspace (as GitHub sign-up does). The redirect URI registered with Google is GOOGLE_CALLBACK on
+  // PUBLIC_URL.
+  if (googleOnly) {
+    const googleBase = googleMock ? url('/dev/google') : null;
+    passport.use('google', new GoogleStrategy({
+      clientID: config.google?.clientId ?? 'mock-google-client',
+      clientSecret: config.google?.clientSecret ?? 'mock-google-secret',
+      callbackURL: url(GOOGLE_CALLBACK),
+      scope: ['openid', 'profile', 'email'],
+      state: true,
+      ...(googleMock ? { authorizationURL: `${googleBase}/o/oauth2/v2/auth`, tokenURL: `${googleBase}/token`, userProfileURL: `${googleBase}/userinfo` } : {}),
+    }, (accessToken, refreshToken, profile, done) => done(null, profile)));
+  }
+  login.get(GOOGLE_START, passport.initialize(), (req, res, next) => {
+    if (!googleOnly) return res.status(404).type('text').send('Google sign-in is not configured.');
+    req.session.googleIntent = { next: safeNext(req.query.returnUrl ?? req.query.next), invite: typeof req.query.invite === 'string' ? req.query.invite.slice(0, 200) : undefined };
+    passport.authenticate('google', { session: false, prompt: 'select_account' })(req, res, next);
+  });
+  login.get(GOOGLE_CALLBACK, passport.initialize(), (req, res, next) => {
+    if (!googleOnly) return res.status(404).type('text').send('Not found.');
+    passport.authenticate('google', { session: false }, async (err, profile) => {
+      try {
+        if (err || !profile) {
+          log?.warn?.(`[hero-co] Google sign-in failed: ${err?.message ?? 'no profile'}`);
+          return res.redirect(303, '/?error=google');
+        }
+        const intent = req.session.googleIntent ?? {};
+        delete req.session.googleIntent;
+        // Only an address Google has verified identifies the person (and links to an account with that email).
+        const verified = profile._json?.email_verified === true || profile._json?.email_verified === 'true';
+        const email = verified ? normaliseEmail(profile.emails?.[0]?.value) : '';
+        if (!email) return res.redirect(303, '/?error=google-email');
+        const name = String(profile.displayName || email.split('@')[0]).slice(0, 100);
+
+        let person = await accounts.findPersonByGoogle(profile.id);
+        let home = null;
+        let created = false;
+        if (!person) {
+          person = await accounts.findPersonByEmail(email);
+          if (person) {
+            person = await accounts.updatePerson(person.id, { googleId: String(profile.id), emailVerifiedAt: person.emailVerifiedAt ?? new Date().toISOString() });
+            await audit({ action: 'person.google-linked', actor: person.id, target: person.id, detail: { email } });
+          } else {
+            try {
+              await core.createUser({ email, fullName: name, password: `${crypto.randomBytes(24).toString('base64url')}9`, role: 'user' });
+            } catch (e) {
+              if (!/already exists/i.test(e.message)) throw e;
+            }
+            person = await accounts.createPerson({ name, email, emailVerified: true, googleId: profile.id, signedUpWith: 'google' });
+            const done = await finishSignUp(person, { team: intent.invite ? undefined : `${name}'s team`, invite: intent.invite, source: 'signup-google', request: { ip: req.ip, userAgent: req.get('user-agent') } });
+            person = done.person;
+            home = done.home;
+            created = true;
+            await audit({ action: 'person.signed-up', actor: person.id, target: person.id, detail: { with: 'google' } });
+            await sendWelcome(person);
+          }
+        }
+        if (!created && intent.invite) {
+          const result = await accounts.acceptInvitation(intent.invite, person);
+          if (result.ok) home = `/w/${result.workspaceId}`;
+        }
+        await session.signIn(req, res, person, { google: email });
+        if (!person.customerId) await link.linkPerson(person);
+        if (!created) await audit({ action: 'person.signed-in', actor: person.id, target: person.id, detail: { with: 'google' } });
+        res.redirect(303, intent.next ?? home ?? session.homeOf(await session.load(person)));
+      } catch (e) {
+        next(e);
+      }
+    })(req, res, next);
+  });
   // Core's meaning: signed in with a live core session (req.session.authToken, which core's /services gate checks).
   // A hero-co session whose core session has expired is asked for the password again, rather than sent round in a loop.
   login.get(`${A}/api/auth/check`, async (req, res) => {
@@ -423,7 +503,65 @@ export function createAuth({ express, session, accounts, core, link, config, aud
     }
   });
 
-  return { api, pages, login, githubMock };
+  return { api, pages, login, githubMock, googleOnly, googleMock };
+}
+
+/** Where Google sign-in starts and where Google sends the browser back (core's paths; register the second with Google). */
+export const GOOGLE_START = '/services/authservice/api/google';
+export const GOOGLE_CALLBACK = '/services/authservice/api/google/callback';
+
+/**
+ * A stand-in for Google's OAuth web flow and its userinfo endpoint (development and tests, AUTHTYPE=google without a
+ * client). The authorize page lists GOOGLE_MOCK_USERS; anyone can be anyone.
+ */
+export const GOOGLE_MOCK_USERS = [
+  { sub: 'g-2001', name: 'Grace Hopper', email: 'grace@google-mock.dev', email_verified: true },
+  { sub: 'g-2002', name: 'Stevie', email: 'stevie@exclusivity.life', email_verified: true },
+  { sub: 'g-2003', name: 'Unverified', email: 'unverified@google-mock.dev', email_verified: false },
+];
+
+export function googleMockRoutes(express) {
+  const router = express.Router();
+  const codes = new Map();
+  const tokens = new Map();
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  router.get('/o/oauth2/v2/auth', (req, res) => {
+    const { redirect_uri: redirect, state = '' } = req.query;
+    const rows = GOOGLE_MOCK_USERS.map((u) => `<li class="nj-dev-person"><form method="post" action="/dev/google/o/oauth2/v2/auth">
+      <input type="hidden" name="redirect_uri" value="${esc(redirect)}"><input type="hidden" name="state" value="${esc(state)}">
+      <input type="hidden" name="user" value="${esc(u.sub)}"><button class="btn btn-secondary" type="submit">${esc(u.name)}</button>
+      <span class="nj-meta">${esc(u.email)}${u.email_verified ? '' : ' (not verified)'}</span></form></li>`).join('');
+    res.type('html').send(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock Google · choose an account</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="/css/styles.css"><link rel="stylesheet" href="/css/hero-co.css"></head>
+<body class="nj-dev-login"><main class="nj-card nj-dev-card"><p class="nj-eyebrow">Mock Google (development)</p>
+<h1>Choose an account</h1><p class="lead">to continue to NooblyJS Cloud</p><ul class="nj-dev-people">${rows}</ul></main></body></html>`);
+  });
+  router.post('/o/oauth2/v2/auth', express.urlencoded({ extended: false }), (req, res) => {
+    const user = GOOGLE_MOCK_USERS.find((u) => u.sub === req.body.user);
+    const redirect = String(req.body.redirect_uri ?? '');
+    if (!user || !/^https?:\/\//.test(redirect)) return res.status(400).type('text').send('Bad request.');
+    const code = crypto.randomBytes(12).toString('hex');
+    codes.set(code, user);
+    const to = new URL(redirect);
+    to.searchParams.set('code', code);
+    to.searchParams.set('state', String(req.body.state ?? ''));
+    res.redirect(302, to.toString());
+  });
+  router.post('/token', express.urlencoded({ extended: false }), (req, res) => {
+    const user = codes.get(String(req.body.code ?? ''));
+    if (!user) return res.status(400).json({ error: 'invalid_grant' });
+    codes.delete(String(req.body.code));
+    const token = crypto.randomBytes(16).toString('hex');
+    tokens.set(token, user);
+    res.json({ access_token: token, token_type: 'Bearer', expires_in: 3599, scope: 'openid profile email' });
+  });
+  router.get('/userinfo', (req, res) => {
+    const user = tokens.get(String(req.get('authorization') ?? '').replace(/^bearer\s+/i, '') || String(req.query.access_token ?? ''));
+    if (!user) return res.status(401).json({ error: 'invalid_token' });
+    res.json({ sub: user.sub, name: user.name, given_name: user.name.split(' ')[0], email: user.email, email_verified: user.email_verified });
+  });
+  return router;
 }
 
 /**

@@ -51,6 +51,13 @@ export function loadConfig(env = process.env) {
     sessionSecret: env.SESSION_SECRET,
     // GitHub OAuth app. Without it, outside production, GitHub sign-in uses the mock at /dev/github.
     github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
+    // How people sign in: 'local' (email and password, and GitHub) or 'google' (AUTHTYPE=google: Google only; core's
+    // sign-in page goes straight to Google, and its password form stays for operators at ?local=1).
+    authType: String(env.AUTHTYPE ?? '').toLowerCase() === 'google' ? 'google' : 'local',
+    // Google OAuth client (GOOGLE_OAUTH_CLIENT / GOOGLE_OAUTH_SECRET, or GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET). Its
+    // authorised redirect URI is <PUBLIC_URL>/services/authservice/api/google/callback. Without it, outside
+    // production, AUTHTYPE=google uses the mock at /dev/google.
+    google: { clientId: env.GOOGLE_OAUTH_CLIENT || env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_OAUTH_SECRET || env.GOOGLE_CLIENT_SECRET },
     // Encrypts environment variables and GitHub tokens at rest (required in production; a dev key file otherwise).
     secretKey: env.HERO_SECRET_KEY,
     // The card provider (roadmap 7.3): Stripe when STRIPE_SECRET_KEY is set (with STRIPE_WEBHOOK_SECRET and

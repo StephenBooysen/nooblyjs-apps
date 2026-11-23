@@ -12,7 +12,7 @@ export const RESERVED_SEGMENTS = new Set([
   'images', 'fonts', 'assets', 'static', 'public', 'index.html', 'favicon.ico', 'robots.txt',
   // Signing in and accounts.
   'signin', 'signup', 'signout', 'login', 'logout', 'verify-email', 'reset-password', 'forgot-password', 'invite',
-  'invitations', 'account', 'me', 'settings', 'workspace', 'workspaces', 'oauth', 'github',
+  'invitations', 'account', 'me', 'settings', 'workspace', 'workspaces', 'oauth', 'github', 'google', 'token', 'userinfo',
   // The accelerators' paths (customers, payments, infrastructure), wherever they are mounted.
   'about', 'accounts', 'actions', 'activity', 'agent', 'audit', 'c', 'campaigns', 'capacity', 'catalog', 'channels',
   'check', 'communications', 'config', 'connections', 'cost', 'credit-notes', 'customers', 'dunning', 'events',

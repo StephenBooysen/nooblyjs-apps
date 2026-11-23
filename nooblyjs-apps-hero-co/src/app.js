@@ -18,7 +18,7 @@ import { createHost } from './platform/host.js';
 import { createRealtime, OPERATORS } from './platform/realtime.js';
 import { mountAccelerators, INFRA_MOUNT, CX_BASE, CX_PUBLIC } from './platform/accelerators.js';
 import { createCustomersLink } from './platform/customers-link.js';
-import { createCoreAuth, createAuth, githubMockRoutes } from './platform/auth.js';
+import { createCoreAuth, createAuth, githubMockRoutes, googleMockRoutes } from './platform/auth.js';
 import { createApi } from './routes/api.js';
 import { createWorkspacesApi } from './routes/workspaces.js';
 import { createPages } from './routes/pages.js';
@@ -80,6 +80,7 @@ const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'packa
 export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true, taskTimers = true, billingTimers = true, payClock, eventsRecheckMs } = {}) {
   if (config.production && config.devSignIn) throw new Error('The development sign-in cannot run with NODE_ENV=production.');
   if (config.production && !config.sessionSecret) throw new Error('SESSION_SECRET is required in production.');
+  if (config.production && config.authType === 'google' && !(config.google?.clientId && config.google?.clientSecret)) throw new Error('AUTHTYPE=google needs GOOGLE_OAUTH_CLIENT and GOOGLE_OAUTH_SECRET in production.');
   await fs.mkdir(config.dataDir, { recursive: true });
 
   const app = express();
@@ -129,6 +130,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   if (config.devSignIn) {
     app.use(session.devRoutes(express));
     app.use('/dev/github', githubMockRoutes(express));
+    app.use('/dev/google', googleMockRoutes(express));
   }
 
   app.get('/health/live', (req, res) => res.json({ status: 'ok' }));

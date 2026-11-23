@@ -29,7 +29,8 @@
     "nooblyjs-accelerator-infrastructure": "file:../../nooblyjs-accl/nooblyjs-accl-infrastructure",
     "nooblyjs-core": "file:../../nooblyjs-core",
     "passport": "^0.7.0",
-    "passport-github2": "^0.1.12"
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

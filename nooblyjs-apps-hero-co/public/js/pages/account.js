@@ -26,6 +26,12 @@ function githubButton({ label, href, enabled }) {
   return html`<a class="btn nj-btn-github w-100" href="${href}" data-reload data-github><i class="bi bi-github" aria-hidden="true"></i>${label}</a>`;
 }
 
+/** "Continue with Google" (AUTHTYPE=google): the one way to sign up or sign in. */
+function googleButton({ label = 'Continue with Google', start, query = {} }) {
+  const q = new URLSearchParams(Object.entries(query).filter(([, v]) => v)).toString();
+  return html`<a class="btn btn-secondary nj-btn-google w-100" href="${start}${q ? `?${q}` : ''}" data-reload data-google><i class="bi bi-google" aria-hidden="true"></i>${label}</a>`;
+}
+
 function card(title, lead, body) {
   return html`<section class="nj-auth-card" aria-labelledby="auth-title">
     <h2 class="nj-auth-title" id="auth-title">${title}</h2>
@@ -37,6 +43,8 @@ function card(title, lead, body) {
 const GITHUB_ERRORS = {
   github: 'GitHub sign-in did not finish. Try again.',
   'github-email': 'Your GitHub account has no verified email address. Verify one on GitHub, or sign up with email.',
+  google: 'Google sign-in did not finish. Try again.',
+  'google-email': 'Google has not verified the email address on that account. Use an account with a verified address.',
 };
 
 // ---- sign up (/) ---------------------------------------------------------------------
@@ -47,6 +55,10 @@ export function signUpPage({ me, config, url, serviceTypes }) {
   const ghHref = (marketing) => `/auth/github?${new URLSearchParams({ ...(invite ? { invite } : {}), ...(marketing ? { marketing: '1' } : {}) })}`;
   const account = me
     ? card('You are signed in', `As ${me.name} (${me.email}).`, html`<a class="btn btn-primary w-100" href="${homeOf(me)}">Open dashboard</a>`)
+    : config.googleOnly
+    ? card('Sign in or create your account', 'With your Google account. Your first sign-in makes your workspace; it is free to start.', html`
+      ${githubError ? html`<div class="alert alert-warning" role="alert">${githubError}</div>` : ''}
+      ${googleButton({ start: config.googleUrl, query: { invite } })}`)
     : card('Create your account', 'Free to start. Add a card when you need more than the free tier.', html`
       <p class="nj-invite-note" data-invite-note hidden></p>
       ${githubError ? html`<div class="alert alert-warning" role="alert">${githubError}</div>` : ''}
@@ -196,7 +208,10 @@ export function invitePage({ url, me, config }) {
       else if (inv.canAccept) body = html`<form data-form="accept">${alertSlot()}<button type="submit" class="btn btn-primary w-100">Join ${inv.workspace.name}</button></form>`;
       else if (me) body = html`<p>You are signed in as <strong>${inv.signedInAs}</strong>, but this invitation is for another email address. Sign out, then sign in with the invited address.</p><button type="button" class="btn btn-secondary w-100" data-action="signout">Sign out</button>`;
       else {
-        body = html`<p class="nj-meta">The invitation is for <strong>${inv.email}</strong>.</p>
+        body = config.googleOnly
+          ? html`<p class="nj-meta">The invitation is for <strong>${inv.email}</strong>. Sign in with the Google account for that address.</p>
+          ${googleButton({ start: config.googleUrl, query: { invite: token } })}`
+          : html`<p class="nj-meta">The invitation is for <strong>${inv.email}</strong>.</p>
           ${githubButton({ label: 'Continue with GitHub', href: `/auth/github?invite=${encodeURIComponent(token)}`, enabled: config.github })}
           <a class="btn btn-primary w-100 mt-2" href="/?invite=${encodeURIComponent(token)}">Create an account</a>
           <a class="btn btn-secondary w-100 mt-2" href="${loginUrl(here)}">Sign in</a>`;
