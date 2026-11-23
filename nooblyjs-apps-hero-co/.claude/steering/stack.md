@@ -275,7 +275,7 @@ theme (tokens, type, buttons, cards, forms, badges, pills, chips, alerts, tables
 | `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub connect and sign-in (sign-in uses the OAuth app's client id and secret; callback `<PUBLIC_URL>/auth/github/callback`) |
 | `DEV_SIGN_IN` | `0` turns the development sign-in off outside production (it is always off in production) |
 | `INFRA_PROVIDERS`, `INFRA_*` | Passed through to the infrastructure accelerator (`mock` until its phase 2 adapters land) |
-| `REDIS_URL`, `MONGODB_URL` | Production providers for queueing/caching/sessions and dataService |
+| `REDIS_URL`, `MONGODB_URL`, `MONGODB_DATABASE` | Production providers: sessions in Redis; records (dataService `mongodb`, database `nooblyjs_cloud` by default). `docs/production.md` |
 | `SMTP_URL`, `CX_TRACKING_SECRET` | Transactional email through the customers accelerator |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY` | Stripe for the payments accelerator when the secret key is set (it reads them itself; the CSP then allows Stripe's domains); otherwise the mock provider, which is refused in production |
 | `PAY_SIGNING_SECRET` | Signs hosted checkout and 3-D Secure links (required in production) |

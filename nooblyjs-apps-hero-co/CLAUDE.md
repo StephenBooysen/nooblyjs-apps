@@ -11,11 +11,13 @@ The UI spec and mock-ups live in `.claude/steering/ui/`.
 ## Run
 
 ```bash
-npm install
+npm run setup             # npm ci here and in every linked package (core, the three accelerators): each needs its own
 npm start                 # http://localhost:11010: sign up at /, sign in at /services/authservice/views/login.html (or /dev/login in development)
 npm test                  # node:test, offline, on the mock cloud
 npm run test:ui:install   # once: Playwright Chromium (needs system libraries: sudo npx playwright install-deps chromium)
 npm run test:ui           # Playwright, desktop + phone
+MONGODB_URL=mongodb://127.0.0.1:27017 REDIS_URL=redis://127.0.0.1:6379 npm test   # on the production providers
+npm run docker:build      # the production image (docs/production.md); context is the folder holding the repos
 ```
 
 Local network region (infra spec 8.9): in development `npm start` also runs the infrastructure accelerator's agent
@@ -62,6 +64,8 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   backups and restore, plan, and Link to service (`PUT .../links`); `public/js/pages/datastore.js` draws the create form,
   the page and the Link to service card. The databases and stores are the platform's; set `HERO_LOCAL_POSTGRES_URL`
   (an admin connection string, environment only) to offer Postgres on the Local network.
+- `docs/production.md`: the image, the production environment, MongoDB and Redis, one instance (roadmap 8.1). CI is
+  `../.github/workflows/hero-co.yml`; `scripts/install-all.sh` installs the linked packages.
 - `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
   (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, format, components, shell,

@@ -41,6 +41,12 @@ export function loadConfig(env = process.env) {
     trustProxy: env.TRUST_PROXY !== '0' && (env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true' || env.CODESPACES === 'true'),
     // The development sign-in (/dev/login, X-Dev-Person) and the development people: never in production.
     devSignIn: !production && env.DEV_SIGN_IN !== '0',
+    // Records (people, workspaces, services, deploys) in MongoDB when MONGODB_URL is set (production, roadmap 8.1);
+    // otherwise core's file provider under DATA_DIR/data. MONGODB_DATABASE names the database.
+    mongodbUrl: env.MONGODB_URL || null,
+    mongodbDatabase: env.MONGODB_DATABASE || 'nooblyjs_cloud',
+    // Sessions in Redis when REDIS_URL (or SESSION_REDIS_URL) is set; core's createSessionStore reads it itself.
+    redisUrl: env.SESSION_REDIS_URL || env.REDIS_URL || null,
     cxTrackingSecret: env.CX_TRACKING_SECRET,
     sessionSecret: env.SESSION_SECRET,
     // GitHub OAuth app. Without it, outside production, GitHub sign-in uses the mock at /dev/github.

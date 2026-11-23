@@ -15,12 +15,15 @@
     "seed": "node --env-file-if-exists=.env app.js --seed",
     "test": "node --test --test-force-exit \"test/**/*.test.js\"",
     "test:ui": "playwright test",
-    "test:ui:install": "playwright install chromium"
+    "test:ui:install": "playwright install chromium",
+    "docker:build": "docker build -f Dockerfile -t nooblyjs-cloud ../..",
+    "setup": "bash scripts/install-all.sh"
   },
   "dependencies": {
     "express": "^5.1.0",
     "express-session": "^1.19.0",
     "helmet": "^8.1.0",
+    "mongodb": "^6.22.0",
     "nooblyjs-accel-customers": "file:../../nooblyjs-accl/nooblyjs-accel-customers",
     "nooblyjs-accel-payments": "file:../../nooblyjs-accl/nooblyjs-accel-payments",
     "nooblyjs-accelerator-infrastructure": "file:../../nooblyjs-accl/nooblyjs-accl-infrastructure",

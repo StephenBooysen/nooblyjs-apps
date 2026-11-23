@@ -71,12 +71,16 @@ export function cookieJar() {
   };
 }
 
+let apps = 0;
+
 export async function startApp(options = {}) {
   const dataDir = await tempDir();
   const server = http.createServer();
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
-  const config = { ...loadConfig({ NODE_ENV: 'test' }), dataDir, publicUrl: base, ...(options.config ?? {}) };
+  // MONGODB_URL runs the suite on MongoDB (CI does): each app its own database, dropped by close().
+  const mongo = process.env.MONGODB_URL ? { mongodbUrl: process.env.MONGODB_URL, mongodbDatabase: `hero_test_${process.pid}_${++apps}` } : {};
+  const config = { ...loadConfig({ NODE_ENV: 'test' }), ...mongo, dataDir, publicUrl: base, ...(options.config ?? {}) };
   const { cards = true, ...rest } = options;
   const hero = await createApp({ config, mockStepMs: 0, jobCheckMs: 0, telemetryTimers: false, cronTimers: false, taskTimers: false, billingTimers: false, ...rest, ...(options.config ? { config } : {}) });
   server.on('request', hero.app);
@@ -104,9 +108,11 @@ export async function startApp(options = {}) {
       const res = await call('GET', tracked.replace(base, ''));
       return new URL(res.location ?? tracked);
     },
-    async close() {
+    /** Stops the app; `keepDatabase` leaves its MongoDB database for another app to start on (a restart). */
+    async close({ keepDatabase = false } = {}) {
       await new Promise((resolve) => server.close(resolve));
       server.closeAllConnections?.();
+      if (hero.config.mongodbUrl && !keepDatabase) await hero.data.provider.db_?.dropDatabase().catch(() => {});
       await hero.shutdown();
       await fs.rm(dataDir, { recursive: true, force: true });
     },

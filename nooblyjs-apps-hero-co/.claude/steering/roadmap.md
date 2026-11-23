@@ -273,6 +273,13 @@ creation; a declined card is retried and the owner is emailed each time; a paid 
 ## Phase 8 — Hardening and launch
 
 - [ ] 8.1 Production providers: MongoDB dataService, Redis queue/cache/sessions; `TRUST_PROXY`; Dockerfile and CI (Node 22 + 24, tests, Playwright, audit).
+  *Done for one instance (2026-11-23, `docs/production.md`): records in MongoDB with `MONGODB_URL` (core's MongoDB
+  provider fixed to replace on update, as its contract says), sessions in Redis with `REDIS_URL`, start-up warnings
+  for what production lacks, `/health/ready`; the whole suite passes on MongoDB and Redis, and a sign-in survives a
+  restart (`test/production.test.js`); the Docker image ran in production against both. CI in
+  `nooblyjs-apps/.github/workflows/hero-co.yml` (not yet run on GitHub). hero-co uses no core queue or cache, so
+  Redis is sessions only. Open: several instances need core's sign-in records, the infrastructure FsStore and
+  telemetry off `DATA_DIR`.*
 - [ ] 8.2 Second, third and fourth regions (Frankfurt, Virginia, Singapore): pools and ingress per region.
 - [ ] 8.3 Security review: tenant isolation, container hardening, webhook verification, secret handling, rate limits, payments SAQ A scope.
 - [ ] 8.4 Dark mode in `hero-co.css` (`data-bs-theme="dark"`); accessibility audit (axe) on every screen.
