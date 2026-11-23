@@ -66,6 +66,9 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   (an admin connection string, environment only) to offer Postgres on the Local network.
 - `docs/production.md`: the image, the production environment, MongoDB and Redis, one instance (roadmap 8.1). CI is
   `../.github/workflows/hero-co.yml`; `scripts/install-all.sh` installs the linked packages.
+- `docs/security-review.md`: the 8.3 review (fixed, sound, open). `src/platform/reserved.js`: path segments a workspace
+  id may never be (Local network services answer `/<workspace>/<service>/` ahead of our routes); a new top-level route
+  fails `test/security.test.js` until its segment is added there.
 - `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
   (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, format, components, shell,

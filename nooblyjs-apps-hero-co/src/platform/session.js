@@ -42,7 +42,9 @@ export function readCookies(req) {
 const isApi = (req) => req.originalUrl.split('?')[0].includes('/api/');
 const sendError = (res, status, code, message) => res.status(status).json({ error: { code, message } });
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-export const safeNext = (next) => (typeof next === 'string' && /^\/(?![/\\])/.test(next) ? next : null);
+// A path on this site: one slash, then not a second slash or backslash, and no whitespace or control characters
+// anywhere (browsers drop tabs and newlines from URLs, so "/\t/evil.com" would become "//evil.com": roadmap 8.3).
+export const safeNext = (next) => (typeof next === 'string' && next.length <= 2048 && /^\/(?![/\\])[^\s\x00-\x1f\x7f]*$/.test(next) ? next : null);
 
 /**
  * The one sign-in screen: nooblyjs-core's authservice login page. It posts to /services/authservice/api/login, which
@@ -110,6 +112,21 @@ export function createSession({ accounts, config, log }) {
     } catch (err) {
       next?.(err);
     }
+  }
+
+  /**
+   * Who `req` is signed in as now, read again from the store: null once the session is signed out or expired, the
+   * person's password was reset (epoch), or they are gone. A long-lived request (the event stream) asks this, since
+   * req.person is only what was true when it started (roadmap 8.3).
+   */
+  async function current(req) {
+    if (req.signedInBy === 'header') return load(await accounts.getPerson(req.person?.id));
+    if (req.signedInBy !== 'cookie' || !req.sessionID || !req.sessionStore) return null;
+    const stored = await new Promise((resolve) => req.sessionStore.get(req.sessionID, (err, s) => resolve(err ? null : s)));
+    if (!stored?.personId) return null;
+    const record = await accounts.getPerson(stored.personId);
+    if (!record || (record.sessionEpoch ?? 0) !== (stored.epoch ?? 0)) return null;
+    return load(record);
   }
 
   /** Refuses cross-site writes from cookie sign-ins and to the sign-in forms (login CSRF). */
@@ -242,5 +259,5 @@ export function createSession({ accounts, config, log }) {
     return router;
   }
 
-  return { cookie, identify, csrf, auth, requireOperator, requirePlatform, requireWorkspace, requireOwner, signIn, signOut, homeOf, load, devRoutes, close: store.close };
+  return { cookie, identify, current, csrf, auth, requireOperator, requirePlatform, requireWorkspace, requireOwner, signIn, signOut, homeOf, load, devRoutes, close: store.close };
 }

@@ -49,7 +49,7 @@ export function checkSignUp(body = {}) {
 }
 
 /** A small fixed-window limiter (per process; Redis-backed once stack §3.1's production providers land). */
-export function createLimiter({ max, windowMs }) {
+export function createLimiter({ max, windowMs, MAX_KEYS = 10_000 }) {
   const hits = new Map();
   return {
     blocked(key) {
@@ -60,11 +60,19 @@ export function createLimiter({ max, windowMs }) {
       const h = hits.get(key);
       if (!h || h.resetAt <= Date.now()) hits.set(key, { count: 1, resetAt: Date.now() + windowMs });
       else h.count += 1;
-      if (hits.size > 10_000) for (const [k, v] of hits) if (v.resetAt <= Date.now()) hits.delete(k);
+      if (hits.size > MAX_KEYS) {
+        for (const [k, v] of hits) if (v.resetAt <= Date.now()) hits.delete(k);
+        // Still full (many keys within the window, such as made-up emails): the oldest go first, so memory stays bounded.
+        for (const k of hits.keys()) {
+          if (hits.size <= MAX_KEYS) break;
+          hits.delete(k);
+        }
+      }
     },
     clear(key) {
       hits.delete(key);
     },
+    size: () => hits.size,
   };
 }
 
