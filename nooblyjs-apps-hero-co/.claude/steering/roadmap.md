@@ -286,8 +286,8 @@ creation; a declined card is retried and the owner is emailed each time; a paid 
   that fails without its fix: a team named like one of our paths could put its Local network service in front of our
   scripts (critical: every path segment is now reserved, checked against the live routers); an open redirect after
   sign-in; live event streams outliving access; origin-wide headers from proxied apps; the webhook parsing before
-  checking; an unbounded rate limiter. Open before customers: egress rules for builds and containers (infra), a
-  separate origin for Local network apps, userns-remap on hosts, rate limits in Redis for several instances.*
+  checking; an unbounded rate limiter. Egress rules for builds and containers followed the same day (infra spec
+  8.9 R14). Open before customers: a separate origin for Local network apps, userns-remap on hosts, rate limits in Redis for several instances.*
 - [ ] 8.4 Dark mode in `hero-co.css` (`data-bs-theme="dark"`); accessibility audit (axe) on every screen.
 - [ ] 8.5 Operator runbooks: host drain, region full, failed builds across tenants, failed payments.
 - [ ] 8.6 **[pay 5]** Payments v1.0 hardening.

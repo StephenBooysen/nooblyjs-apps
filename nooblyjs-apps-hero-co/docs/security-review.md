@@ -41,10 +41,10 @@ handling, rate limits, the payments SAQ A scope.
 
 ## Open (recommended before customers)
 
-1. **Egress from builds and containers.** Builds run on Docker's default bridge and services on a bridge per
-   workspace, with no egress rules: customer code can reach the host and its local network (other machines, an
-   operator's Postgres if it listens beyond 127.0.0.1). The infrastructure accelerator should drop traffic from tenant
-   networks and builds to private ranges and the host, except what the platform relays (its own databases' relay).
+1. ~~**Egress from builds and containers.**~~ *Fixed 2026-11-23 in the infrastructure accelerator (spec 8.9 R14):
+   an egress firewall applied by `install.sh` stops tenant containers and builds reaching the server and its private
+   network (and cloud metadata), leaving the internet, DNS and the database relays on their gateway; tested on this
+   Codespace's real iptables and Docker. Servers without it show a warning to operators.*
 2. **A separate origin for customer apps.** On the Local network, apps answer on our own origin under a path. The
    sandbox keeps their scripts away from our cookies and API, but a page there can still look like ours (phishing).
    Cloud regions already use `<service>.nooblyjs.app`; give the Local network an apps host of its own as well.

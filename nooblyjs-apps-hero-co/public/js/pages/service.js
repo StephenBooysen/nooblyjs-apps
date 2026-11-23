@@ -770,6 +770,30 @@ export async function servicePage({ workspace, params }) {
         root.querySelector('[data-status-note]').innerHTML = String(statusNote(svc));
         root.querySelector('.nj-actions')?.replaceWith(...new DOMParser().parseFromString(String(actions(svc)), 'text/html').body.childNodes);
       };
+      // Events sent before this page's live channel connected (a quick deploy ends while the page loads) never arrive:
+      // while a deploy runs, and whenever the channel (re)connects, the service is read again and the page catches up.
+      let syncing = false;
+      async function syncDeploy() {
+        if (syncing) return;
+        syncing = true;
+        try {
+          const fresh = await api(base);
+          const latestNow = fresh.deploys?.[0];
+          if (latestNow && (latestNow.id !== current?.id || latestNow.status !== current?.status)) {
+            current = latestNow;
+            box.innerHTML = String(deployCard(current, svc.type));
+            applySizes(box);
+            if (isSite && ['live', 'failed'].includes(current.status)) refreshSite();
+          }
+          if (fresh.current) svc.current = fresh.current;
+          if (fresh.status !== svc.status) showStatus(fresh.status);
+        } catch { /* the next tick tries again */ } finally {
+          syncing = false;
+        }
+      }
+      const catchUp = setInterval(() => { if (running(current) || ['deploying', 'building', 'queued'].includes(svc.status)) syncDeploy(); }, 2000);
+      stops.push(() => clearInterval(catchUp), on('hello', syncDeploy));
+
       stops.push(on('deploy', async (e) => {
         if (e.service !== svc.name) return;
         if (e.status) showStatus(e.status);
