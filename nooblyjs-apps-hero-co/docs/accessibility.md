@@ -30,7 +30,19 @@ Already in place: the skip link, the focus outline, `prefers-reduced-motion`, st
 Keyboard paths through sign-up, create a service, and the service page; screen-reader names of the status pill,
 meters and log viewer. Do these again when a screen changes much.
 
-## Dark mode
+## Dark mode (2026-11-23)
 
-Not yet: the theme has no dark values, so the palette is designed in `public/css/hero-co.css` (stack.md §5); the axe
-test runs in dark mode too once it ships.
+- **Who gets it:** dark when the device is set to dark, light otherwise; *Settings → Appearance* (System / Light /
+  Dark) overrides it for that browser and is remembered. `public/js/theme.js`, a classic script in `<head>`, sets
+  `data-bs-theme` before the page draws, so it never flashes.
+- **The palette** (`public/css/hero-co.css`, `:root[data-bs-theme="dark"]`): the theme has no dark values, so each of
+  its colour tokens gets one there. Warm brown-black grounds and cream text, not a cold console; persimmon stays the
+  fill behind white text, a lighter persimmon is used for links and accents on dark.
+- **The log viewer** keeps its own tokens (`--nj-log-*`) and is dark in both modes, a shade darker than the page in
+  dark mode.
+- **Checked:** the same axe tests run in dark mode (every screen, desktop and phone), and a test checks that System
+  follows the device, that Light and Dark stay after a reload, and that the log viewer is dark in both.
+- **Not dark:** nooblyjs-core's sign-in page and the operator screens (the accelerators' own styles).
+
+Found on the way: the Auto-deploy switch was drawn as a stretched checkbox in both modes (it was not inside Bootstrap's
+`form-switch`); it is a switch now.

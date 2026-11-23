@@ -288,10 +288,11 @@ creation; a declined card is retried and the owner is emailed each time; a paid 
   sign-in; live event streams outliving access; origin-wide headers from proxied apps; the webhook parsing before
   checking; an unbounded rate limiter. Egress rules for builds and containers followed the same day (infra spec
   8.9 R14). Open before customers: a separate origin for Local network apps, userns-remap on hosts, rate limits in Redis for several instances.*
-- [ ] 8.4 Dark mode in `hero-co.css` (`data-bs-theme="dark"`); accessibility audit (axe) on every screen.
-  *Accessibility done 2026-11-23 (`docs/accessibility.md`, `test/ui/a11y.spec.js`): axe's WCAG 2.2 AA rules pass on
-  every screen, desktop and phone, including the operator screens; fixed links told apart by colour only, the log
-  header's contrast, scrolling tables and logs unreachable by keyboard, and touch targets under 44 px. Dark mode next.*
+- [x] 8.4 Dark mode in `hero-co.css` (`data-bs-theme="dark"`); accessibility audit (axe) on every screen.
+  *Done 2026-11-23 (`docs/accessibility.md`, `test/ui/a11y.spec.js`): axe's WCAG 2.2 AA rules pass on every screen,
+  desktop and phone, in light and dark mode, and on the operator screens; fixed links told apart by colour only, the log
+  header's contrast, scrolling tables and logs unreachable by keyboard, and touch targets under 44 px. Dark mode follows
+  the device, with Settings → Appearance (System / Light / Dark) to override it; the log viewer stays dark.*
 - [ ] 8.5 Operator runbooks: host drain, region full, failed builds across tenants, failed payments.
 - [ ] 8.6 **[pay 5]** Payments v1.0 hardening.
 

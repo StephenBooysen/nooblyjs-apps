@@ -193,7 +193,7 @@ function summaryAside(type) {
     <div class="nj-summary-total"><span>Estimated</span><strong class="nj-num" data-sum="price">$— / mo</strong></div>
     <p class="nj-meta mb-1">${type.key === 'static' ? `Static sites are free. Their bandwidth counts toward the workspace's ${BANDWIDTH_INCLUDED_GB} GB a month.` : type.schedule ? 'A flat price for the cron job, however often it runs.' : type.tasks ? 'A flat price for the workflow, however many tasks it runs.' : `A flat price for the service, for 1 to ${MAX_INSTANCES} instances.`}</p>
     ${type.sleeps ? html`<p class="nj-meta">In a cloud region it sleeps after ${SLEEP.afterMinutes} minutes without requests, and wakes on the next one. ${SLEEP.wakeText}</p>` : ''}
-    <label class="nj-switch-row" for="f-auto">
+    <label class="nj-switch-row form-switch" for="f-auto">
       <span><strong class="d-block">Auto-deploy</strong><span class="nj-meta" data-sum="auto">Deploy on every push to main</span></span>
       <input class="form-check-input nj-switch" type="checkbox" role="switch" name="autoDeploy" id="f-auto" checked aria-label="Auto-deploy on push">
     </label>

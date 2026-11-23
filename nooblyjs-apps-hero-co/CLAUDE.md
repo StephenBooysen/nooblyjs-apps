@@ -71,7 +71,8 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   fails `test/security.test.js` until its segment is added there.
 - `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
-  (everything else, theme tokens only), `js/` (native ES modules: router, api, sse, charts, format, components, shell,
+  (everything else, theme tokens only; dark values for each token under `:root[data-bs-theme="dark"]`; the log viewer
+  uses `--nj-log-*`), `js/theme.js` (light or dark before the page draws; Settings → Appearance), `js/` (native ES modules: router, api, sse, charts, format, components, shell,
   pages; `pages/watch.js` draws the dashboard, Deploys, Metrics and Logs screens and the shared log viewer).
 
 ## Rules
@@ -79,6 +80,8 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
 - No inline `style=""`, `<style>`, inline scripts or `on*=` handlers: core's CSP has no `unsafe-inline`. Set dynamic
   sizes through the CSSOM (`data-pct` + `applySizes()`). `test/app.test.js` checks this.
 - Escape everything with `html```; numbers carry units and limits; statuses are words as well as colours.
+- Accessibility: `test/ui/a11y.spec.js` runs axe (WCAG 2.2 AA) on every screen in light and dark mode and checks 44 px
+  targets on a phone; add a new screen to it. A table or log that scrolls gets `role="region" tabindex="0"` and a name.
 - The only sign-in screen is nooblyjs-core's `/services/authservice/views/login.html` (with `?returnUrl=`); this app
   answers its API in `auth.js` (`login` router). Never build another sign-in page.
 - Another workspace is a 404, never a 403. Operator-only routes are a 404 for customers. A new workspace route goes in

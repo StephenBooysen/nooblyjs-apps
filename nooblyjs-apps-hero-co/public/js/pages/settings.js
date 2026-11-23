@@ -35,7 +35,7 @@ export function settingsPage({ workspace, me }) {
   return {
     title: `Settings · ${workspace.name}`,
     content: html`<div class="nj-page-head"><div><p class="nj-breadcrumb">${workspace.name}</p><h1 class="nj-title">Settings</h1>
-      <p class="nj-lead">Workspace name, members and the danger zone.</p></div></div>
+      <p class="nj-lead">Workspace name, members, how the app looks, and the danger zone.</p></div></div>
 
       <section class="nj-card mb-4" aria-labelledby="ws-title">
         <h2 class="nj-card-title" id="ws-title">Workspace</h2>
@@ -67,12 +67,31 @@ export function settingsPage({ workspace, me }) {
         <p class="nj-meta mt-2 mb-0" role="status" data-invite-status></p>` : html`<p class="nj-meta mt-3 mb-0">Only the owner can invite or remove members.</p>`}
       </section>
 
+      <section class="nj-card mb-4" aria-labelledby="appearance-title">
+        <h2 class="nj-card-title" id="appearance-title">Appearance</h2>
+        <fieldset data-appearance>
+          <legend class="nj-meta mb-2">For you, in this browser.</legend>
+          ${[['system', 'System', 'Light or dark, as your device is set; it changes when your device does.'], ['light', 'Light', ''], ['dark', 'Dark', '']].map(([value, label, hint]) => html`
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="theme" id="f-theme-${value}" value="${value}"${hint ? html` aria-describedby="f-theme-${value}-hint"` : ''}>
+            <label class="form-check-label" for="f-theme-${value}">${label}</label>
+            ${hint ? html`<div class="form-text mt-0" id="f-theme-${value}-hint">${hint}</div>` : ''}
+          </div>`)}
+        </fieldset>
+      </section>
+
       <section class="nj-card nj-danger" aria-labelledby="danger-title">
         <h2 class="nj-card-title" id="danger-title">Danger zone</h2>
         <p class="mb-0 nj-meta">Deleting a workspace removes its services and data stores. It arrives with services in Phase 2.</p>
       </section>`,
 
     async mount(root) {
+      // Appearance: this browser's choice (public/js/theme.js applies it at once and on the next visit).
+      const appearance = root.querySelector('[data-appearance]');
+      const chosen = window.njTheme?.get() ?? 'system';
+      appearance.querySelector(`input[value="${chosen}"]`).checked = true;
+      appearance.addEventListener('change', (event) => window.njTheme?.set(event.target.value));
+
       const box = root.querySelector('[data-members]');
       const load = async () => {
         try {
