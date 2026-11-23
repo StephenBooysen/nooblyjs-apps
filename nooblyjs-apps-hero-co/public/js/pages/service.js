@@ -77,7 +77,7 @@ function deployCard(d, type) {
 function buildLog(lines, live, label = 'Build and rollout', empty = 'Waiting for the build to start…') {
   return html`<section class="nj-logs" aria-label="${label} log">
     <div class="nj-logs-bar"><span class="nj-pill ${live ? 'nj-pill-live' : 'nj-pill-idle'}">${live ? 'Live' : 'Finished'}</span><span class="nj-meta">${label}</span></div>
-    <div class="nj-logs-body" role="log" aria-live="polite">${lines.length
+    <div class="nj-logs-body" role="log" aria-live="polite" tabindex="0">${lines.length
       ? lines.map((l) => html`<div class="nj-log-line nj-log-line-build"><span class="nj-log-time">${time(l.at)}</span><span class="nj-log-level nj-log-${(l.level ?? 'info').toLowerCase()}">${(l.level ?? 'info').toUpperCase()}</span><span>${l.text}</span></div>`)
       : html`<div class="nj-logs-empty">${empty}</div>`}</div>
   </section>`;
@@ -185,7 +185,7 @@ function siteCard(svc, site) {
     <div class="nj-run-row mb-4" data-site-meters>${siteMeters({ monthBytes: m.bytes, includedBytes: BANDWIDTH_INCLUDED_GB * 1e9, requests: m.requests, hitRate: m.hitRate })}</div>
     <h3 class="nj-subtitle" id="kept-title">Roll back</h3>
     <p class="nj-meta">The files of the last ${site.keep + 1} deploys are kept. Rolling back serves one of them again at once, without building; the next deploy serves new files as usual.</p>
-    ${site.kept.length ? html`<div class="table-responsive mb-4"><table class="table mb-0" aria-labelledby="kept-title">
+    ${site.kept.length ? html`<div class="table-responsive mb-4" role="region" tabindex="0" aria-label="Deploys kept for rollback"><table class="table mb-0" aria-labelledby="kept-title">
       <thead><tr><th scope="col">Commit</th><th scope="col">Uploaded</th><th scope="col">Files</th><th scope="col"><span class="visually-hidden">Action</span></th></tr></thead>
       <tbody>${site.kept.map((d) => html`<tr>
         <td class="nj-mono">${short(d.commit) === '—' ? d.deployId : short(d.commit)}</td>

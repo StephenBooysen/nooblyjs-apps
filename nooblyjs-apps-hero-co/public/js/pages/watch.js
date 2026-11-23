@@ -164,7 +164,7 @@ export function logsPanel({ services = null, download = false, foot = '' } = {})
       ${download ? html`<a class="btn btn-sm btn-secondary" data-logs-download data-reload download href="#" aria-label="Download these logs (the last 24 hours, with the filters above)"><i class="bi bi-download" aria-hidden="true"></i></a>` : ''}
     </div>
     <button type="button" class="nj-logs-new" data-logs-new hidden></button>
-    <div class="nj-logs-body" role="log" aria-live="polite" aria-label="Log lines, newest first" data-logs-body><div class="nj-logs-empty">Loading…</div></div>
+    <div class="nj-logs-body" role="log" aria-live="polite" tabindex="0" aria-label="Log lines, newest first" data-logs-body><div class="nj-logs-empty">Loading…</div></div>
     ${foot ? html`<div class="nj-logs-foot">${foot}</div>` : ''}
   </section>`;
 }
@@ -375,7 +375,7 @@ export function runMeters(run) {
 /** A Cron Job's runs, newest first, each with a button that shows its log. */
 export function runsTable(runs, limitMb) {
   if (!runs.length) return emptyState({ icon: 'clock-history', title: 'No runs yet', text: 'Each run shows here with its result, how long it took and its peak memory. Run now to try it.' });
-  return html`<div class="table-responsive"><table class="table mb-0">
+  return html`<div class="table-responsive" role="region" tabindex="0" aria-label="Runs"><table class="table mb-0">
     <caption class="visually-hidden">Runs, newest first</caption>
     <thead><tr><th scope="col">Started</th><th scope="col">Status</th><th scope="col">Started by</th><th scope="col">Took</th><th scope="col">Exit code</th><th scope="col">Peak memory</th><th scope="col"><span class="visually-hidden">Log</span></th></tr></thead>
     <tbody>${runs.map((r) => html`<tr>
@@ -414,7 +414,7 @@ function serviceCard(c, ws) {
 
 export function deploysTable(list, ws, { withService = true } = {}) {
   if (!list.length) return emptyState({ icon: 'rocket-takeoff', title: 'No deploys yet', text: 'Each deploy shows here with its commit, trigger and result.' });
-  return html`<div class="table-responsive"><table class="table mb-0">
+  return html`<div class="table-responsive" role="region" tabindex="0" aria-label="Deploys"><table class="table mb-0">
     <caption class="visually-hidden">Deploys, newest first</caption>
     <thead><tr>${withService ? html`<th scope="col">Service</th>` : ''}<th scope="col">Commit</th><th scope="col">Status</th><th scope="col">Trigger</th><th scope="col">Started</th><th scope="col">Took</th></tr></thead>
     <tbody>${list.map((d) => html`<tr>

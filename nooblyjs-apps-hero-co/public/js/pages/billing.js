@@ -16,7 +16,7 @@ const head = (workspace) => html`<div class="nj-page-head"><div><p class="nj-bre
 
 function servicesTable(services) {
   if (!services.length) return emptyState({ icon: 'credit-card', title: 'Nothing to pay for yet', text: 'Starter services, Key Value Starter and Static Sites are free.' });
-  return html`<div class="table-responsive"><table class="table nj-billing-services">
+  return html`<div class="table-responsive" role="region" tabindex="0" aria-label="Paid services"><table class="table nj-billing-services">
     <caption class="visually-hidden">Services and their monthly prices</caption>
     <thead><tr><th scope="col">Service</th><th scope="col">Type</th><th scope="col">Plan</th><th scope="col" class="text-end">Price</th></tr></thead>
     <tbody>${services.map((s) => html`<tr>

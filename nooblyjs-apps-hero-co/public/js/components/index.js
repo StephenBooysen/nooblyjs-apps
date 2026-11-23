@@ -96,7 +96,7 @@ export function logViewer({ lines, live = true, footer = '', empty = 'No log lin
     <div class="nj-logs-bar">
       <span class="nj-pill ${live ? 'nj-pill-live' : 'nj-pill-idle'}">${live ? 'Live' : 'Paused'}</span>
     </div>
-    <div class="nj-logs-body" role="log" aria-live="polite">
+    <div class="nj-logs-body" role="log" aria-live="polite" tabindex="0">
       ${lines.length
         ? lines.map((l) => html`<div class="nj-log-line"><span class="nj-log-time">${l.t}</span><span class="nj-log-inst">${l.inst}</span><span class="nj-log-level nj-log-${l.level.toLowerCase()}">${l.level}</span><span>${l.msg}</span></div>`)
         : html`<div class="nj-logs-empty">${empty}</div>`}

@@ -161,7 +161,7 @@ function backupsCard(d) {
   return html`<div class="nj-section-head"><h2 class="nj-card-title mb-0" id="backups-title">Backups</h2>
       <button type="button" class="btn btn-secondary btn-sm" data-backup${d.status === 'live' ? '' : html` disabled`}>Back up now</button></div>
     <p class="nj-meta">${d.backupTime ? `Every day at ${d.backupTime} UTC` : 'No daily backup'}; the last ${d.keepBackups} are kept. A restore makes a new database from the backup, and leaves this one as it is.</p>
-    ${d.backups.length ? html`<div class="table-responsive"><table class="table nj-table mb-0"><thead><tr><th scope="col">Taken</th><th scope="col">Size</th><th scope="col">By</th><th scope="col"><span class="visually-hidden">Restore</span></th></tr></thead>
+    ${d.backups.length ? html`<div class="table-responsive" role="region" tabindex="0" aria-label="Backups"><table class="table nj-table mb-0"><thead><tr><th scope="col">Taken</th><th scope="col">Size</th><th scope="col">By</th><th scope="col"><span class="visually-hidden">Restore</span></th></tr></thead>
       <tbody>${d.backups.map((b) => html`<tr><td>${when(b.at)} <span class="nj-meta">· ${ago(b.at)}</span></td><td class="nj-num">${bytesText(b.bytes)}</td><td>${b.trigger === 'schedule' ? 'Daily' : 'Back up now'}</td>
         <td class="text-end"><button type="button" class="btn btn-link btn-sm" data-restore="${b.id}" aria-label="Restore the backup taken ${when(b.at)}">Restore</button></td></tr>`)}</tbody></table></div>`
       : html`<p class="nj-meta mb-0" data-no-backups>No backups yet.</p>`}

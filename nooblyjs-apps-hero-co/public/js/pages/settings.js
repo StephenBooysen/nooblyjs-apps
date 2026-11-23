@@ -8,7 +8,7 @@ import { statusPill } from '../components/index.js';
 const date = (iso) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
 function membersTable(data, me) {
-  return html`<div class="table-responsive"><table class="table nj-members">
+  return html`<div class="table-responsive" role="region" tabindex="0" aria-label="Members"><table class="table nj-members">
     <caption class="visually-hidden">Members</caption>
     <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Since</th>${data.canManage ? html`<th scope="col"><span class="visually-hidden">Actions</span></th>` : ''}</tr></thead>
     <tbody>
