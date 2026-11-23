@@ -44,6 +44,7 @@ const GITHUB_ERRORS = {
   github: 'GitHub sign-in did not finish. Try again.',
   'github-email': 'Your GitHub account has no verified email address. Verify one on GitHub, or sign up with email.',
   google: 'Google sign-in did not finish. Try again.',
+  'invite-only': 'New accounts need an invitation. Ask a workspace owner to invite you, then use the link in the email.',
   'google-email': 'Google has not verified the email address on that account. Use an account with a verified address.',
 };
 
@@ -55,6 +56,11 @@ export function signUpPage({ me, config, url, serviceTypes }) {
   const ghHref = (marketing) => `/auth/github?${new URLSearchParams({ ...(invite ? { invite } : {}), ...(marketing ? { marketing: '1' } : {}) })}`;
   const account = me
     ? card('You are signed in', `As ${me.name} (${me.email}).`, html`<a class="btn btn-primary w-100" href="${homeOf(me)}">Open dashboard</a>`)
+    : config.inviteOnly && !invite
+    ? card('Accounts are by invitation', 'A workspace owner invites you by email; the link in it makes your account.', html`
+      ${githubError ? html`<div class="alert alert-warning" role="alert">${githubError}</div>` : ''}
+      <a class="btn btn-primary w-100" href="${LOGIN_PAGE}">Sign in</a>
+      <a class="btn btn-secondary w-100 mt-2" href="${config.registerUrl}">Create an account</a>`)
     : config.googleOnly
     ? card('Sign in or create your account', 'With your Google account. Your first sign-in makes your workspace; it is free to start.', html`
       ${githubError ? html`<div class="alert alert-warning" role="alert">${githubError}</div>` : ''}
@@ -190,6 +196,14 @@ export function verifyEmailPage({ url }) {
 export function invitePage({ url, me, config }) {
   const token = url.searchParams.get('token') ?? '';
   const here = `/invite?token=${encodeURIComponent(token)}`;
+  // Opened without its link (core's "Redeem Invitation", say): an invitation is the link in its email.
+  if (!token) {
+    return {
+      title: 'Invitation · NooblyJS Cloud',
+      content: html`<div class="nj-auth">${card('Open the link in your invitation', 'An invitation to a workspace comes by email. Open the link in it to join, and to make your account if you have none.', html`
+        <a class="btn btn-secondary w-100" href="${LOGIN_PAGE}">Sign in</a>`)}</div>`,
+    };
+  }
   return {
     title: 'Invitation · NooblyJS Cloud',
     content: html`<div class="nj-auth" data-invite>${card('Opening your invitation…', '', '')}</div>`,

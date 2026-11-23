@@ -111,6 +111,9 @@ export function createAuth({ express, session, accounts, core, link, config, aud
   // AUTHTYPE=google: Google is the only way in (core's sign-in page goes straight to it); email sign-up and GitHub
   // sign-in are off. Without a Google client outside production, the mock at /dev/google stands in.
   const googleOnly = config.authType === 'google';
+  // AUTHTYPE=local: accounts by invitation only. Core's "Create New Account" goes to its register screen; the sign-up
+  // form and GitHub make an account only for an open invitation to that email.
+  const inviteOnly = config.authType === 'local';
   const googleMock = googleOnly && !config.google?.clientId && !config.production;
   const githubMock = !googleOnly && !config.github?.clientId && !config.production;
   const githubEnabled = !googleOnly && (Boolean(config.github?.clientId) || githubMock);
@@ -155,7 +158,7 @@ export function createAuth({ express, session, accounts, core, link, config, aud
   const api = express.Router();
   api.use(express.json({ limit: '16kb' }));
 
-  api.get('/config', (req, res) => res.json({ github: githubEnabled, githubMock, googleOnly, googleMock, googleUrl: GOOGLE_START, devSignIn: config.devSignIn, passwordHint: PASSWORD_HINT }));
+  api.get('/config', (req, res) => res.json({ github: githubEnabled, githubMock, googleOnly, googleMock, googleUrl: GOOGLE_START, inviteOnly, registerUrl: REGISTER_PAGE, devSignIn: config.devSignIn, passwordHint: PASSWORD_HINT }));
 
   api.post('/signup', async (req, res, next) => {
     if (googleOnly) return sendError(res, 403, 'google_only', 'Accounts are made by signing in with Google.');
@@ -163,6 +166,11 @@ export function createAuth({ express, session, accounts, core, link, config, aud
       if (limits.signupIp.blocked(req.ip)) return tooMany(res);
       const { values, details } = checkSignUp(req.body);
       if (details.length) return invalid(res, details);
+      if (inviteOnly) {
+        const inv = await accounts.findInvitation(values.invite);
+        if (!inv) return sendError(res, 403, 'invite_only', 'New accounts need an invitation. Ask a workspace owner to invite you, then use the link in the email.');
+        if (inv.email !== values.email) return invalid(res, [{ path: 'email', message: `This invitation is for ${inv.email}. Sign up with that address.` }]);
+      }
       limits.signupIp.hit(req.ip);
       if (await accounts.findPersonByEmail(values.email)) {
         return invalid(res, [{ path: 'email', message: 'An account with this email exists. Sign in instead.' }]);
@@ -342,6 +350,8 @@ export function createAuth({ express, session, accounts, core, link, config, aud
             person = await accounts.updatePerson(person.id, { githubId: profile.id, githubLogin: profile.username, emailVerifiedAt: person.emailVerifiedAt ?? new Date().toISOString() });
             await audit({ action: 'person.github-linked', actor: person.id, target: person.id, detail: { login: profile.username } });
           } else {
+            // By invitation only: GitHub makes a new account just for an open invitation to this address.
+            if (inviteOnly && (await accounts.findInvitation(intent.invite))?.email !== email) return res.redirect(303, '/?error=invite-only');
             const name = profile.displayName || profile.username;
             try {
               await core.createUser({ email, fullName: name, password: `${crypto.randomBytes(24).toString('base64url')}9`, role: 'user' });
@@ -385,8 +395,13 @@ export function createAuth({ express, session, accounts, core, link, config, aud
     }
   };
   login.get('/signin', (req, res) => res.redirect(302, loginUrl(req.query.next)));
-  // "Create New Account" on the login page: sign-up is the marketing page.
-  login.get(`${A}/views/request-invitation.html`, (req, res) => res.redirect(302, '/'));
+  // "Create New Account" on the login page: core's register screen when accounts are by invitation (AUTHTYPE=local),
+  // otherwise the sign-up on the marketing page (the form, or Continue with Google). Core's "Redeem Invitation" is its
+  // own invitation codes; ours are links in an email, opened at /invite.
+  const query = (req) => (req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '');
+  login.get(`${A}/views/request-invitation.html`, (req, res) => res.redirect(302, inviteOnly ? `${REGISTER_PAGE}${query(req)}` : '/'));
+  login.get(REGISTER_PAGE, (req, res, next) => (inviteOnly ? next() : res.redirect(302, '/')));
+  login.get([`${A}/redeem-invitation`, `${A}/views/redeem-invitation.html`], (req, res) => res.redirect(302, '/invite'));
   login.get(`${A}/api/branding`, (req, res) => res.json({
     success: true,
     data: { appName: 'NooblyJS Cloud', logoUrl: '/images/nooblyjs-logo.png', stylesheetUrl: null, homeUrl: req.person ? session.homeOf(req.person) : '/' },
@@ -508,6 +523,9 @@ export function createAuth({ express, session, accounts, core, link, config, aud
 
   return { api, pages, login, githubMock, googleOnly, googleMock };
 }
+
+/** Core's register screen: where "Create New Account" goes when accounts are by invitation (AUTHTYPE=local). */
+export const REGISTER_PAGE = '/services/authservice/views/register.html';
 
 /** Where Google sign-in starts and where Google sends the browser back (core's paths; register the second with Google). */
 export const GOOGLE_START = '/services/authservice/api/google';
