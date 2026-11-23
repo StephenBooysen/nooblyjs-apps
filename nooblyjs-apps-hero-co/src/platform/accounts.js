@@ -6,6 +6,7 @@
 //
 // Lookups scan a container. That is fine for v1 volumes; the MongoDB provider gets indexes when it lands.
 import crypto from 'node:crypto';
+import { isReserved } from './reserved.js';
 
 export const CONTAINERS = {
   people: 'hero_people',
@@ -36,8 +37,6 @@ export function slugify(name) {
   return slug.length >= 2 ? slug : `workspace${slug ? `-${slug}` : ''}`;
 }
 
-/** Reserved so a workspace id never shadows a route of ours. */
-const RESERVED = new Set(['new', 'admin', 'api', 'auth', 'dev', 'signin', 'settings', 'services', 'workspace']);
 
 /**
  * @param {object} o
@@ -108,7 +107,7 @@ export function createAccounts({ data }) {
     const taken = new Set((await all(C.workspaces)).map((w) => w.id));
     for (let n = 1; ; n += 1) {
       const id = n === 1 ? base : `${base.slice(0, 36)}-${n}`;
-      if (!taken.has(id) && !RESERVED.has(id)) return id;
+      if (!taken.has(id) && !isReserved(id)) return id;
     }
   }
 
@@ -117,6 +116,7 @@ export function createAccounts({ data }) {
    * @param {{ name: string, ownerId: string, id?: string }} input
    */
   async function createWorkspace({ name, ownerId, id }) {
+    if (id && isReserved(id)) throw new Error(`The workspace id ${id} is one of our paths.`);
     const workspace = { id: id ?? await freeWorkspaceId(name), name: String(name).trim(), createdBy: ownerId, organizationId: null, createdAt: now() };
     await put(C.workspaces, workspace);
     await put(C.memberships, { id: newId('m'), workspaceId: workspace.id, personId: ownerId, role: 'Owner', createdAt: now() });

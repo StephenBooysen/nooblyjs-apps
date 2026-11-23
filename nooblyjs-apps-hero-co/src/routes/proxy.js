@@ -16,11 +16,20 @@
 // sandbox. A redirect to one of its own paths stays under its prefix; whether the cache answered is counted.
 import http from 'node:http';
 import { REGIONS } from '../../public/js/shared/catalog.js';
+import { isReserved } from '../platform/reserved.js';
 
 const LOCAL = new Set(REGIONS.filter((r) => r.local).map((r) => r.id));
 const OURS = new Set(['hero.sid', 'noobly.csrf', 'noobly.dev-person', 'connect.sid']);
 const HOP = new Set(['connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade']);
 const SANDBOX = 'sandbox allow-scripts allow-forms allow-popups allow-modals allow-downloads';
+// Headers a service may not set on our origin (roadmap 8.3): cookies and its own CSP (it gets our sandbox), and the
+// ones that act on the whole origin rather than its own page: Clear-Site-Data would sign every viewer out of us,
+// Strict-Transport-Security could turn our HSTS off, NEL / Report-To / Reporting-Endpoints would send it reports about
+// our pages, Alt-Svc could point our origin at another host, Service-Worker-Allowed widens a worker's scope.
+export const DROPPED = new Set([
+  'set-cookie', 'content-security-policy', 'content-security-policy-report-only', 'clear-site-data',
+  'strict-transport-security', 'nel', 'report-to', 'reporting-endpoints', 'alt-svc', 'service-worker-allowed',
+]);
 const SEGMENT = /^[a-z0-9][a-z0-9-]{0,62}$/;
 
 /** The Cookie header without our cookies. */
@@ -28,6 +37,20 @@ export function stripOurCookies(header) {
   if (!header) return null;
   const kept = String(header).split(';').map((c) => c.trim()).filter((c) => c && !OURS.has(c.split('=')[0].trim()));
   return kept.length ? kept.join('; ') : null;
+}
+
+/**
+ * The service's headers in place of ours (helmet's are for our pages), less DROPPED, then our sandbox. Our own
+ * Strict-Transport-Security stays: the address is ours whatever answers it.
+ */
+function takeHeaders(res, theirs) {
+  const hsts = res.getHeader('strict-transport-security');
+  for (const name of res.getHeaderNames()) res.removeHeader(name);
+  for (const [k, v] of Object.entries(theirs)) if (!HOP.has(k) && !DROPPED.has(k.toLowerCase())) res.setHeader(k, v);
+  if (hsts) res.setHeader('strict-transport-security', hsts);
+  res.setHeader('content-security-policy', SANDBOX);
+  res.setHeader('x-content-type-options', 'nosniff');
+  res.setHeader('referrer-policy', 'same-origin');
 }
 
 /**
@@ -84,18 +107,10 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {}, 
       'x-forwarded-prefix': prefix,
     });
     const upstream = http.request({ host: target.hostname, port: target.port, method: req.method, path: rest, headers, timeout: 60_000 }, (up) => {
-      // Our headers (helmet, CSP for this app) are not theirs; their cookies are not allowed on our origin.
-      for (const name of res.getHeaderNames()) res.removeHeader(name);
-      for (const [k, v] of Object.entries(up.headers)) {
-        if (HOP.has(k) || k === 'set-cookie' || k === 'content-security-policy' || k === 'content-security-policy-report-only') continue;
-        res.setHeader(k, v);
-      }
+      takeHeaders(res, up.headers);
       // A redirect to the app's own root stays under its prefix.
       const loc = up.headers.location;
       if (typeof loc === 'string' && loc.startsWith('/') && !loc.startsWith('//') && !loc.startsWith(prefix)) res.setHeader('location', `${prefix.replace(/\/$/, '')}${loc}`);
-      res.setHeader('content-security-policy', SANDBOX);
-      res.setHeader('x-content-type-options', 'nosniff');
-      res.setHeader('referrer-policy', 'same-origin');
       res.statusCode = up.statusCode ?? 502;
       up.on('data', (chunk) => { res.heroBytes = (res.heroBytes ?? 0) + chunk.length; });
       up.pipe(res);
@@ -125,16 +140,9 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {}, 
       log.warn?.(`[hero-co] ${req.servicePrefix} site: ${err.message}`);
       return res.status(502).type('text').send('This site cannot be served right now. Try again shortly.');
     }
-    for (const name of res.getHeaderNames()) res.removeHeader(name);
-    for (const [k, v] of Object.entries(r.headers ?? {})) {
-      if (k === 'set-cookie' || k === 'content-security-policy' || k === 'content-security-policy-report-only') continue;
-      res.setHeader(k, v);
-    }
+    takeHeaders(res, r.headers ?? {});
     const loc = r.headers?.location;
     if (typeof loc === 'string' && loc.startsWith('/') && !loc.startsWith('//')) res.setHeader('location', `${req.servicePrefix.replace(/\/$/, '')}${loc}`);
-    res.setHeader('content-security-policy', SANDBOX);
-    res.setHeader('x-content-type-options', 'nosniff');
-    res.setHeader('referrer-policy', 'same-origin');
     res.heroHit = r.hit === true;
     res.heroBytes = r.body?.length ?? 0;
     res.statusCode = r.status;
@@ -144,7 +152,8 @@ export function createServiceProxy({ records, platform, eventEmitter, log = {}, 
   /** Express middleware: answers /<workspace>/<service>[/…] for a running Local network service; anything else passes. */
   function middleware(req, res, next) {
     const [, ws, name] = req.path.split('/');
-    if (!ws || !name || !SEGMENT.test(ws) || !SEGMENT.test(name)) return next();
+    // One of our own paths is never a service's, whatever workspace has that id (platform/reserved.js).
+    if (!ws || !name || !SEGMENT.test(ws) || !SEGMENT.test(name) || isReserved(ws)) return next();
     const route = routes.get(key(ws, name));
     if (!route) return next();
     const base = `/${ws}/${name}`;

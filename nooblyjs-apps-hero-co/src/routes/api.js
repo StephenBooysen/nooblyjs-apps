@@ -2,6 +2,8 @@
 import { OPERATORS } from '../platform/realtime.js';
 
 const HEARTBEAT_MS = 25_000;
+/** How often an open event stream checks that its person may still see each workspace on it (roadmap 8.3). */
+export const RECHECK_MS = 10_000;
 
 /**
  * @param {object} o
@@ -10,8 +12,9 @@ const HEARTBEAT_MS = 25_000;
  * @param {ReturnType<import('../platform/realtime.js').createRealtime>} o.realtime
  * @param {() => object[]} o.accelerators   describe() of the mounted accelerators
  * @param {{ name: string, version: string }} o.about
+ * @param {number} [o.recheckMs]   how often an event stream re-reads who it is for (tests make it short)
  */
-export function createApi({ express, session, realtime, accelerators, about }) {
+export function createApi({ express, session, realtime, accelerators, about, recheckMs = RECHECK_MS }) {
   const router = express.Router();
 
   router.get('/about', (req, res) => res.json(about));
@@ -36,8 +39,27 @@ export function createApi({ express, session, realtime, accelerators, about }) {
     const unsubscribe = realtime.subscribe(topics, (event) => send(event.type, { ...event.data, at: event.at }));
     const heartbeat = setInterval(() => res.write(': keep-alive\n\n'), HEARTBEAT_MS);
     heartbeat.unref();
+    // Signed out, a password reset, removed from a workspace, no longer an operator: the stream ends, and the browser's
+    // reconnect gets only what the person may see now (or a 401).
+    let checking = false;
+    const recheck = setInterval(async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        const now = await session.current(req);
+        const allowed = new Set(now?.workspaces.map((w) => w.id) ?? []);
+        if (now?.operator) allowed.add(OPERATORS);
+        if (!now || topics.some((t) => !allowed.has(t))) res.end();
+      } catch {
+        res.end();
+      } finally {
+        checking = false;
+      }
+    }, recheckMs);
+    recheck.unref();
     req.on('close', () => {
       clearInterval(heartbeat);
+      clearInterval(recheck);
       unsubscribe();
     });
   });

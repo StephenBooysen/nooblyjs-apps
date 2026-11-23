@@ -22,14 +22,15 @@ export function githubHookRoutes({ express, records, github, platform, audit, re
       const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
       const event = req.get('x-github-event') ?? '';
       const delivery = req.get('x-github-delivery') ?? '';
+      // The signature first: nothing from an unsigned body is parsed or acted on (roadmap 8.3).
+      const ws = req.params.workspace;
+      if (!(await github.verify(ws, raw, req.get('x-hub-signature-256')))) return reply(res, 401, { error: { code: 'signature', message: 'The signature does not match.' } });
       let body;
       try {
         body = JSON.parse(raw.toString('utf8'));
       } catch {
         return reply(res, 400, { error: { code: 'invalid', message: 'Send the event as JSON (content type application/json).' } });
       }
-      const ws = req.params.workspace;
-      if (!(await github.verify(ws, raw, req.get('x-hub-signature-256')))) return reply(res, 401, { error: { code: 'signature', message: 'The signature does not match.' } });
       const repo = String(body?.repository?.full_name ?? '').toLowerCase();
       const services = (await records.services.list(ws)).filter((s) => s.source?.provider === 'github' && String(s.source.repo).toLowerCase() === repo);
       if (event === 'ping') return reply(res, 200, { ok: true });

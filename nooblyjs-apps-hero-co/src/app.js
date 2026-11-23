@@ -75,8 +75,9 @@ const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'packa
  * @param {boolean} [o.taskTimers]       false in tests: they call tasks.tick() themselves
  * @param {boolean} [o.billingTimers]    false in tests: they call billing.handOff() and payments.tick() themselves
  * @param {{ now(): number }} [o.payClock]   tests: the payments accelerator's and billing's clock
+ * @param {number} [o.eventsRecheckMs]   tests: how often an event stream re-reads who it is for
  */
-export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true, taskTimers = true, billingTimers = true, payClock } = {}) {
+export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true, taskTimers = true, billingTimers = true, payClock, eventsRecheckMs } = {}) {
   if (config.production && config.devSignIn) throw new Error('The development sign-in cannot run with NODE_ENV=production.');
   if (config.production && !config.sessionSecret) throw new Error('SESSION_SECRET is required in production.');
   await fs.mkdir(config.dataDir, { recursive: true });
@@ -260,7 +261,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   // Prices from the payments catalogue (the create form's Summary): not a secret, so no sign-in.
   app.get('/api/v1/prices', (req, res) => res.json(billing.prices()));
   app.use('/api/v1', createWorkspacesApi({ express, session, accounts, link, config, audit, realtime, records, secrets, github, platform, telemetry, cron, tasks, billing, pay: accelerators.mounted.payments }));
-  app.use('/api/v1', createApi({ express, session, realtime, accelerators: accelerators.describe, about: { name: 'nooblyjs-cloud', version: VERSION } }));
+  app.use('/api/v1', createApi({ express, session, realtime, accelerators: accelerators.describe, about: { name: 'nooblyjs-cloud', version: VERSION }, ...(eventsRecheckMs ? { recheckMs: eventsRecheckMs } : {}) }));
   app.use(express.static(path.join(ROOT, 'public'), { index: false, redirect: false }));
   app.use(createGithubConnect({ express, session, accounts, github, config, audit, log }));
   // GitHub's push webhook (roadmap 3.8): no sign-in; the HMAC of the body is the proof.
