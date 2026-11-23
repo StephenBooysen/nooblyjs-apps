@@ -1,0 +1,12 @@
+/* The operator screens in nooblyjs-core's frame (public/js/operator/): UI kit tokens only. */
+
+/* An embedded accelerator page fills everything right of the rail (below it on a phone). */
+.main:has(> .content > .hero-embed) { display: flex; flex-direction: column; padding: 0; }
+.content:has(> .hero-embed) { flex: 1 1 auto; max-width: none; min-height: 0; }
+.hero-embed { flex: 1 1 auto; display: block; width: 100%; min-height: 100vh; border: 0; background: var(--surface-page); }
+@media (max-width: 860px) {
+  .hero-embed { min-height: 70vh; }
+}
+
+.hero-accelerator { display: flex; flex-direction: column; gap: 12px; }
+.hero-accelerator .actions { margin-top: auto; }

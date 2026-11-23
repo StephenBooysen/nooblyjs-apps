@@ -2,7 +2,7 @@
 // phase; the watch screens (Dashboard, Deploys, Metrics, Logs; Phase 4) are in watch.js.
 import { html } from '../html.js';
 import { api } from '../api.js';
-import { emptyState, optionCard, statusPill, stepper } from '../components/index.js';
+import { emptyState, optionCard, stepper } from '../components/index.js';
 import { signUpPage, forgotPasswordPage, resetPasswordPage, verifyEmailPage, invitePage } from './account.js';
 import { settingsPage } from './settings.js';
 import { createServicePage, comingTypePage } from './create.js';
@@ -94,19 +94,6 @@ export const PAGES = {
   'reset-password': resetPasswordPage,
   'verify-email': verifyEmailPage,
   invite: invitePage,
-
-  admin: async () => {
-    const { items } = await api('/api/v1/admin/accelerators');
-    return {
-      title: 'Operator · NooblyJS Cloud',
-      content: html`${head({ eyebrow: 'Operator', title: 'Back office', lead: 'The accelerators NooblyJS Cloud runs on. Customers never see these screens.' })}
-        <div class="nj-accelerators">${items.map((a) => html`<section class="nj-card">
-          <div class="d-flex justify-content-between align-items-start gap-2"><h2 class="nj-card-title">${a.label}</h2>${statusPill(a.state === 'mounted' ? 'Live' : 'Idle')}</div>
-          <p class="nj-meta mb-3">${a.state === 'mounted' ? `Mounted${a.version ? ` · v${a.version}` : ''}` : a.reason}</p>
-          ${a.links.map((href) => html`<a class="btn btn-secondary btn-sm me-2" href="${href}" data-reload>Open ${href}</a>`)}
-        </section>`)}</div>`,
-    };
-  },
 };
 
 export function notFound() {

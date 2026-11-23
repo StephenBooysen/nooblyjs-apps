@@ -14,6 +14,8 @@ before(async () => { t = await startApp(); });
 after(async () => { await t?.close(); });
 
 const isIndex = (res) => res.status === 200 && /text\/html/.test(res.headers.get('content-type')) && res.text.includes('<div id="app"');
+/** nooblyjs-core's frame page: the operator screens. */
+const isFrame = (res) => res.status === 200 && /text\/html/.test(res.headers.get('content-type')) && res.text.includes('id="noobly-rail"');
 
 test('health answers', async () => {
   const res = await t.get('/health/live');
@@ -50,10 +52,10 @@ test('signed-out visitors are sent to sign in; another workspace is a 404, never
   assert.ok(isIndex(await t.get('/w/amara-labs', { as: 'amara' })));
 });
 
-test('/admin is for operators; customers get a 404', async () => {
+test('/admin is nooblyjs-core\'s frame, for operators; customers get a 404', async () => {
   assert.equal((await t.get('/admin', { as: 'stevie' })).status, 404);
-  assert.ok(isIndex(await t.get('/admin', { as: 'ops-platform' })));
-  assert.ok(isIndex(await t.get('/admin', { as: 'ops-support' })));
+  assert.ok(isFrame(await t.get('/admin', { as: 'ops-platform' })));
+  assert.ok(isFrame(await t.get('/admin', { as: 'ops-support' })));
 });
 
 test('/api/v1/me says who is signed in and which workspaces they have', async () => {

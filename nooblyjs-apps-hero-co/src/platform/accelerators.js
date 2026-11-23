@@ -6,6 +6,10 @@
 //   payments        /admin/payments/, /admin/billing/     operator screens and APIs; /admin/payments/p and /components are
 //                                                         public (webhooks, hosted invoices, the card form)
 //   infrastructure  /infrastructure/                      operator control plane (stack.md §3.2)
+//
+// The operator rail (nooblyjs-core's shell) has one button per screen: Customers, Marketing, Payments, Infrastructure.
+// Infrastructure is the accelerator's own frame app. The other three are their accelerators' pages, shown in the frame
+// at /customers, /marketing and /payments (public/js/operator/embed.js); their own URLs under /admin still answer.
 import path from 'node:path';
 import { INFRA_HOST_NEEDS } from './host.js';
 
@@ -13,6 +17,32 @@ export const INFRA_MOUNT = '/infrastructure';
 export const CX_BASE = '/admin';
 /** Customers' public routes (tracking, unsubscribe, webhooks): no sign-in. */
 export const CX_PUBLIC = `${CX_BASE}/marketing/p`;
+
+/** The back office (/admin): the overview in the frame, without a rail button of its own. */
+export const BACK_OFFICE = {
+  name: 'back-office',
+  label: 'Back office',
+  title: 'Back office',
+  icon: 'grid',
+  mountPath: CX_BASE,
+  rail: false,
+  ui: { entry: '/js/operator/back-office.js', styles: ['/css/operator.css'] },
+  nav: [{ key: 'overview', label: 'Overview', path: '/', icon: 'grid' }],
+};
+
+/** The accelerator pages the rail shows in the frame: `mountPath` is the frame's URL, `src` the accelerator's page. */
+export const EMBEDDED_SCREENS = [
+  { name: 'customers', label: 'Customers', icon: 'users', mountPath: '/customers', src: `${CX_BASE}/customer/` },
+  { name: 'marketing', label: 'Marketing', icon: 'spark', mountPath: '/marketing', src: `${CX_BASE}/marketing/` },
+  { name: 'payments', label: 'Payments', icon: 'doc', mountPath: '/payments', src: `${CX_BASE}/payments/` },
+];
+const SCREEN = Object.fromEntries(EMBEDDED_SCREENS.map((s) => [s.name, s]));
+
+/** A rail app for one embedded screen. Every one carries all of them, so a link inside one can switch the rail. */
+function embeddedApp({ name, label, icon, mountPath, src }) {
+  const screens = EMBEDDED_SCREENS.map((s) => ({ mountPath: s.mountPath, src: s.src }));
+  return { name, label, title: label, icon, mountPath, ui: { entry: '/js/operator/embed.js', styles: ['/css/operator.css'], src, screens }, nav: [] };
+}
 
 async function importOptional(name) {
   try {
@@ -125,7 +155,13 @@ export async function mountAccelerators({ app, eventEmitter, serviceRegistry, in
       ...(jobCheckMs === undefined ? {} : { jobCheckMs }),
     });
     mounted.infrastructure = infrastructure;
-    shell.add(infrastructure, { name: infrastructure.name, mountPath: INFRA_MOUNT });
+
+    // The rail, in this order, once everything is up.
+    shell.add(embeddedApp(SCREEN.customers), { name: 'customers', mountPath: SCREEN.customers.mountPath });
+    shell.add(embeddedApp(SCREEN.marketing), { name: 'marketing', mountPath: SCREEN.marketing.mountPath });
+    if (mounted.payments) shell.add(embeddedApp(SCREEN.payments), { name: 'payments', mountPath: SCREEN.payments.mountPath });
+    else shell.notInstalled({ name: 'payments', mountPath: SCREEN.payments.mountPath }, { name: 'payments', label: SCREEN.payments.label, icon: SCREEN.payments.icon, phase: 0 });
+    shell.add({ ...infrastructure, label: 'Infrastructure' }, { name: infrastructure.name, mountPath: INFRA_MOUNT });
   } catch (err) {
     await closeAll();
     throw err;
@@ -134,13 +170,14 @@ export async function mountAccelerators({ app, eventEmitter, serviceRegistry, in
   return {
     mounted,
     pending,
-    /** What the admin page shows. */
+    /** What the back office shows, in rail order: `href` is the screen in the frame, `links` the accelerator's own pages. */
     describe: () => [
-      { name: 'customers', label: 'Customers', state: 'mounted', links: [`${CX_BASE}/customer/`, `${CX_BASE}/marketing/`], version: mounted.customers.version },
+      { name: 'customers', label: 'Customers', state: 'mounted', href: SCREEN.customers.mountPath, links: [SCREEN.customers.src], version: mounted.customers.version },
+      { name: 'marketing', label: 'Marketing', state: 'mounted', href: SCREEN.marketing.mountPath, links: [SCREEN.marketing.src], version: mounted.customers.version },
       ...(mounted.payments
-        ? [{ name: 'payments', label: 'Payments', state: 'mounted', links: [`${CX_BASE}/payments/`], version: mounted.payments.version }]
-        : pending.map((p) => ({ name: p.name, label: 'Payments', state: 'pending', reason: p.reason, links: [] }))),
-      { name: 'infrastructure', label: mounted.infrastructure.title, state: 'mounted', links: [`${INFRA_MOUNT}/`] },
+        ? [{ name: 'payments', label: 'Payments', state: 'mounted', href: SCREEN.payments.mountPath, links: [SCREEN.payments.src], version: mounted.payments.version }]
+        : pending.map((p) => ({ name: p.name, label: 'Payments', state: 'pending', reason: p.reason, href: SCREEN.payments.mountPath, links: [] }))),
+      { name: 'infrastructure', label: 'Infrastructure', state: 'mounted', href: INFRA_MOUNT, links: [`${INFRA_MOUNT}/`] },
     ],
     shutdown: closeAll,
   };

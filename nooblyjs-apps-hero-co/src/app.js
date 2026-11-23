@@ -16,7 +16,7 @@ import { INFRA_MATRIX, DEV_PEOPLE, DEV_PASSWORD, OPERATOR_ROLES } from './platfo
 import { createServiceProxy } from './routes/proxy.js';
 import { createHost } from './platform/host.js';
 import { createRealtime, OPERATORS } from './platform/realtime.js';
-import { mountAccelerators, INFRA_MOUNT, CX_BASE, CX_PUBLIC } from './platform/accelerators.js';
+import { mountAccelerators, INFRA_MOUNT, CX_BASE, CX_PUBLIC, BACK_OFFICE } from './platform/accelerators.js';
 import { createCustomersLink } from './platform/customers-link.js';
 import { createCoreAuth, createAuth, githubMockRoutes, googleMockRoutes } from './platform/auth.js';
 import { createApi } from './routes/api.js';
@@ -170,6 +170,8 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
     permissionsFor: async (role) => Object.keys(INFRA_MATRIX).filter((p) => INFRA_MATRIX[p].includes(role)),
     log,
   });
+  // The back office (/admin) is the frame's first page; mountAccelerators adds the rail's buttons.
+  shell.builtIn(BACK_OFFICE);
   app.use(shell.router);
   app.use('/ui', express.static(UI_DIR, { index: false, redirect: false }));
 
@@ -268,7 +270,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   app.use(createGithubConnect({ express, session, accounts, github, config, audit, log }));
   // GitHub's push webhook (roadmap 3.8): no sign-in; the HMAC of the body is the proof.
   app.use(githubHookRoutes({ express, records, github, platform, audit, realtime, log }));
-  app.use(createPages({ express, session }));
+  app.use(createPages({ express, session, frame: shell.frame }));
 
   app.use((req, res) => {
     if (req.originalUrl.includes('/api/')) return res.status(404).json({ error: { code: 'not_found', message: 'No such API route.' } });

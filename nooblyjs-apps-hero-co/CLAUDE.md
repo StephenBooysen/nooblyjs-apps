@@ -45,11 +45,13 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   (sign-up/in, verify, reset, GitHub, the mock GitHub), `session.js` (sessions, CSRF, gates, dev sign-in),
   `customers-link.js` (customer, organisation, consent, account emails), `host.js` (the infrastructure accelerator's
   host contract), `accelerators.js` (customers at `/admin`, payments at `/admin/payments` and `/admin/billing`,
-  infrastructure at `/infrastructure`), `billing.js` (stack.md D14: the plan catalogue in the payments accelerator, a
+  infrastructure at `/infrastructure`; the operator rail in nooblyjs-core's frame: the back office at `/admin`, and
+  Customers, Marketing, Payments and Infrastructure buttons, the first three showing their accelerator's own page at
+  `/customers`, `/marketing` and `/payments`), `billing.js` (stack.md D14: the plan catalogue in the payments accelerator, a
   billing account per workspace, the hourly hand-off, *card required*, suspend and resume, the development seed),
   `people.js`, `realtime.js`.
 - `src/routes/`: `api.js` (`/api/v1`), `workspaces.js` (`/api/v1/workspaces/:workspace/...`, invitations), `pages.js`
-  (page URLs answered with `public/index.html`), `telemetry.js` (dashboard, metrics, instances, logs, scale).
+  (page URLs answered with `public/index.html`; the operator pages with core's frame), `telemetry.js` (dashboard, metrics, instances, logs, scale).
 - `src/telemetry/`: metric history and logs from `services.platform.telemetry` and the proxy, saved under
   `DATA_DIR/telemetry` (stack.md §4.2, §4.3).
 - `src/scheduling/cron.js`: Cron Jobs' minute scheduler (UTC, stack.md D10) and the follower that writes each run's
@@ -80,6 +82,8 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   (everything else, theme tokens only; dark values for each token under `:root[data-bs-theme="dark"]`; the log viewer
   uses `--nj-log-*`), `js/theme.js` (light or dark before the page draws; Settings → Appearance), `js/` (native ES modules: router, api, sse, charts, format, components, shell,
   pages; `pages/watch.js` draws the dashboard, Deploys, Metrics and Logs screens and the shared log viewer).
+  `js/operator/` and `css/operator.css` are the operator screens' modules for core's frame (its UI kit and tokens, not
+  Bootstrap): `back-office.js` (`/admin`) and `embed.js` (an accelerator's page in a same-origin frame beside the rail).
 
 ## Rules
 

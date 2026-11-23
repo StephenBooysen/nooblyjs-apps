@@ -1,5 +1,5 @@
-// The three layouts: public (marketing, sign-in), workspace (top bar + sidebar from product.md §5) and admin
-// (operators). Each wraps a page's content.
+// The two layouts: public (marketing, sign-in) and workspace (top bar + sidebar from product.md §5). Each wraps a page's
+// content. The operator screens (/admin and the rail) are nooblyjs-core's frame (public/js/operator/).
 import { html } from './html.js';
 import { LOGIN_PAGE } from './login.js';
 
@@ -86,19 +86,5 @@ export function publicLayout({ me, content }) {
       ${home ? html`<a class="btn btn-primary btn-sm" href="${home}">Open dashboard</a>` : html`<a class="btn btn-secondary btn-sm" href="${LOGIN_PAGE}">Sign in</a>`}
     </header>
     <main id="main" tabindex="-1">${content}</main>
-  </div>`;
-}
-
-/** @param {{ me: object, content: unknown }} o */
-export function adminLayout({ me, content }) {
-  return html`<div class="nj-app">
-    <header class="nj-topbar">
-      <a class="nj-brand" href="/admin">NooblyJS Cloud</a>
-      <span class="nj-pill nj-pill-new">Operator</span>
-      <span class="nj-topbar-spacer"></span>
-      <span class="nj-meta d-none d-sm-inline">${me.name}</span>
-      ${signOut()}
-    </header>
-    <main class="nj-main" id="main" tabindex="-1">${content}</main>
   </div>`;
 }

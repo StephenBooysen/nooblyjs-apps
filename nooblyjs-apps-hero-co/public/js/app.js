@@ -6,7 +6,7 @@ import { start } from './router.js';
 import { connect } from './sse.js';
 import { loginUrl } from './login.js';
 import { applySizes } from './charts.js';
-import { workspaceLayout, publicLayout, adminLayout } from './shell.js';
+import { workspaceLayout, publicLayout } from './shell.js';
 import { PAGES, SERVICE_TYPES, notFound } from './pages/index.js';
 import { applyPrices } from './shared/catalog.js';
 
@@ -66,12 +66,6 @@ async function onRoute(route, url) {
     if (!me) {
       window.location.assign(loginUrl(url.pathname + url.search));
       return undefined;
-    }
-
-    if (route.layout === 'admin') {
-      if (!me.operator) return show(publicLayout({ me, content: missing().content }), missing());
-      const page = await PAGES[route.name](ctx);
-      return show(adminLayout({ me, content: page.content }), page);
     }
 
     const workspace = me.workspaces.find((w) => w.id === route.params.workspace);
