@@ -26,7 +26,7 @@ function githubButton({ label, href, enabled }) {
   return html`<a class="btn nj-btn-github w-100" href="${href}" data-reload data-github><i class="bi bi-github" aria-hidden="true"></i>${label}</a>`;
 }
 
-/** "Continue with Google" (AUTHTYPE=google): the one way to sign up or sign in. */
+/** "Continue with Google" (AUTH_TYPE=google): the one way to sign up or sign in. */
 function googleButton({ label = 'Continue with Google', start, query = {} }) {
   const q = new URLSearchParams(Object.entries(query).filter(([, v]) => v)).toString();
   return html`<a class="btn btn-secondary nj-btn-google w-100" href="${start}${q ? `?${q}` : ''}" data-reload data-google><i class="bi bi-google" aria-hidden="true"></i>${label}</a>`;

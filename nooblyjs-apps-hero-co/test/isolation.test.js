@@ -75,8 +75,8 @@ test('customers cannot reach nooblyjs-core\'s /services portal; only its login p
   for (const url of ['/services/', '/services/authservice/api/status', '/services/authservice/api/users', '/services/authservice/views/profile.html']) {
     assert.equal((await t.get(url, { as: 'stevie' })).status, 404, url);
   }
-  // Core's register screen is part of signing up, never core's portal: here (AUTHTYPE unset) it sends people to the
-  // sign-up on /; with AUTHTYPE=local it is shown (test/invite-only.test.js).
+  // Core's register screen is part of signing up, never core's portal: here (AUTH_TYPE unset) it sends people to the
+  // sign-up on /; with AUTH_TYPE=local it is shown (test/invite-only.test.js).
   const register = await t.get('/services/authservice/views/register.html', { as: 'stevie' });
   assert.deepEqual([register.status, register.location], [302, '/']);
   assert.equal((await t.get('/services/', { as: 'ops-support' })).status, 404, 'support operators neither');

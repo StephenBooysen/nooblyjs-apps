@@ -1,4 +1,4 @@
-// Google sign-in (AUTHTYPE=google): Google is the only way in. Core's sign-in page asks sso-config and goes straight
+// Google sign-in (AUTH_TYPE=google): Google is the only way in. Core's sign-in page asks sso-config and goes straight
 // to Google; the callback (the redirect URI registered with Google) makes a hero-co session and, the first time, the
 // person and their workspace. Email sign-up and GitHub sign-in are off; the password form stays for operators
 // (?local=1). Runs against the mock Google at /dev/google, which passport-google-oauth20 talks to as it would to Google.
@@ -94,6 +94,6 @@ test('operators keep the password form (?local=1): the login API still answers',
   assert.equal(ok.status, 200, ok.text);
 });
 
-test('production refuses AUTHTYPE=google without a Google client', async () => {
-  await assert.rejects(startApp({ config: { production: true, devSignIn: false, sessionSecret: 'a production secret for the test', authType: 'google', google: {} } }), /AUTHTYPE=google needs GOOGLE_OAUTH_CLIENT/);
+test('production refuses AUTH_TYPE=google without a Google client', async () => {
+  await assert.rejects(startApp({ config: { production: true, devSignIn: false, sessionSecret: 'a production secret for the test', authType: 'google', google: {} } }), /AUTH_TYPE=google needs GOOGLE_OAUTH_CLIENT/);
 });

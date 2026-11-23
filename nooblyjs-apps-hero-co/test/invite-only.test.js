@@ -1,4 +1,4 @@
-// AUTHTYPE=local: accounts by invitation only. Core's "Create New Account" goes to its register screen ("registration
+// AUTH_TYPE=local: accounts by invitation only. Core's "Create New Account" goes to its register screen ("registration
 // requires an invitation"); the sign-up form and GitHub make an account only for an open invitation to that email;
 // people who have an account sign in as before. Its own file: one app per test file (core's registry is per process).
 import { test, before, after } from 'node:test';
@@ -20,12 +20,13 @@ async function invite(email) {
   return (await t.linkFor(email, /invited you/i)).searchParams.get('token');
 }
 
-test('AUTHTYPE (or AUTH_TYPE) picks the mode; unset is open sign-up', () => {
-  assert.equal(loadConfig({ AUTHTYPE: 'local' }).authType, 'local');
+test('AUTH_TYPE picks the mode (the older AUTHTYPE when it is not set); unset is open sign-up', () => {
+  assert.equal(loadConfig({ AUTH_TYPE: 'local' }).authType, 'local');
   assert.equal(loadConfig({ AUTH_TYPE: 'Google' }).authType, 'google');
-  assert.equal(loadConfig({ AUTHTYPE: 'local', AUTH_TYPE: 'google' }).authType, 'local', 'AUTHTYPE first');
+  assert.equal(loadConfig({ AUTHTYPE: 'local' }).authType, 'local', 'the older name still works');
+  assert.equal(loadConfig({ AUTH_TYPE: 'google', AUTHTYPE: 'local' }).authType, 'google', 'AUTH_TYPE first');
   assert.equal(loadConfig({}).authType, 'open');
-  assert.equal(loadConfig({ AUTHTYPE: 'nonsense' }).authType, 'open');
+  assert.equal(loadConfig({ AUTH_TYPE: 'nonsense' }).authType, 'open');
 });
 
 test('"Create New Account" on core\'s sign-in page goes to core\'s register screen, which a stranger can open', async () => {

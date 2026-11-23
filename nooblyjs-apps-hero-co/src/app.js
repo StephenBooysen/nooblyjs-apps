@@ -80,7 +80,7 @@ const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'packa
 export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true, taskTimers = true, billingTimers = true, payClock, eventsRecheckMs } = {}) {
   if (config.production && config.devSignIn) throw new Error('The development sign-in cannot run with NODE_ENV=production.');
   if (config.production && !config.sessionSecret) throw new Error('SESSION_SECRET is required in production.');
-  if (config.production && config.authType === 'google' && !(config.google?.clientId && config.google?.clientSecret)) throw new Error('AUTHTYPE=google needs GOOGLE_OAUTH_CLIENT and GOOGLE_OAUTH_SECRET in production.');
+  if (config.production && config.authType === 'google' && !(config.google?.clientId && config.google?.clientSecret)) throw new Error('AUTH_TYPE=google needs GOOGLE_OAUTH_CLIENT and GOOGLE_OAUTH_SECRET in production.');
   await fs.mkdir(config.dataDir, { recursive: true });
 
   const app = express();

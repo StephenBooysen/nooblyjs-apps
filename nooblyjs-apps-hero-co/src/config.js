@@ -56,16 +56,16 @@ export function loadConfig(env = process.env) {
     sessionSecret: env.SESSION_SECRET,
     // GitHub OAuth app. Without it, outside production, GitHub sign-in uses the mock at /dev/github.
     github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
-    // How people sign in and get an account (AUTHTYPE, or AUTH_TYPE):
+    // How people sign in and get an account (AUTH_TYPE; the older AUTHTYPE is read when AUTH_TYPE is not set):
     //   unset   'open': email and password or GitHub; anyone signs up on the form at /.
     //   local   'local': email and password or GitHub, by invitation only: "Create New Account" goes to core's register
     //           screen (accounts need an invitation); the sign-up form takes only a valid invitation for that email.
     //   google  'google': Google only; core's sign-in page goes straight to Google (?local=1 keeps the password form
     //           for operators).
-    authType: authTypeOf(env.AUTHTYPE ?? env.AUTH_TYPE),
+    authType: authTypeOf(env.AUTH_TYPE ?? env.AUTHTYPE),
     // Google OAuth client (GOOGLE_OAUTH_CLIENT / GOOGLE_OAUTH_SECRET, or GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET). Its
     // authorised redirect URI is <PUBLIC_URL>/services/authservice/api/google/callback. Without it, outside
-    // production, AUTHTYPE=google uses the mock at /dev/google.
+    // production, AUTH_TYPE=google uses the mock at /dev/google.
     // GOOGLE_REDIRECT_BASE: the address Google sends the browser back to, when it is not PUBLIC_URL (a Codespaces
     // forwarded address, say https://<codespace>-11010.app.github.dev); the callback path is added to it.
     google: {

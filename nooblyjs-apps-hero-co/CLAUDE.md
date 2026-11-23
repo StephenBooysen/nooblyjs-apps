@@ -28,9 +28,9 @@ app, its cookies are dropped, its pages are sandboxed). The start-up admin gets 
 Development people (created on first start outside production; password `development-only-1`): `stevie` (workspace
 exclusivity-life), `amara` (amara-labs), `ops-platform` (operator, infra Owner), `ops-support` (operator, infra Viewer).
 Tests call as a person with the `X-Dev-Person` header (id or email), or sign in with a cookie jar (`test/helpers.js`).
-"Continue with GitHub" uses the mock GitHub at `/dev/github` unless `GITHUB_CLIENT_ID` is set. `AUTHTYPE` (or
-`AUTH_TYPE`) picks how accounts are made: unset, anyone signs up on `/`; `local`, by invitation only (core's "Create New
-Account" goes to its register screen; `test/invite-only.test.js`). With `AUTHTYPE=google`
+"Continue with GitHub" uses the mock GitHub at `/dev/github` unless `GITHUB_CLIENT_ID` is set. `AUTH_TYPE` (or
+the older `AUTHTYPE`) picks how accounts are made: unset, anyone signs up on `/`; `local`, by invitation only (core's "Create New
+Account" goes to its register screen; `test/invite-only.test.js`). With `AUTH_TYPE=google`
 Google is the only sign-in: core's sign-in page goes straight to Google (`?local=1` keeps the password form for
 operators), and the callback `<PUBLIC_URL>/services/authservice/api/google/callback` makes the person and workspace
 (`auth.js`); without `GOOGLE_OAUTH_CLIENT` outside production it uses the mock Google at `/dev/google`

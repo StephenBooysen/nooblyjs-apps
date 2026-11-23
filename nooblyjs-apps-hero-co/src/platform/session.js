@@ -58,7 +58,7 @@ export const loginUrl = (next) => (safeNext(next) ? `${LOGIN_PAGE}?returnUrl=${e
 export const LOGIN_ASSETS = new Set([
   LOGIN_PAGE,
   '/services/authservice/views/js/login.page.js',
-  // Core's register screen (AUTHTYPE=local: accounts by invitation); auth.js sends it elsewhere in the other modes.
+  // Core's register screen (AUTH_TYPE=local: accounts by invitation); auth.js sends it elsewhere in the other modes.
   '/services/authservice/views/register.html',
   '/services/authservice/views/js/register.page.js',
   '/services/css/auth-register.css',

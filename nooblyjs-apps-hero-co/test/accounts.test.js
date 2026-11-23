@@ -208,7 +208,7 @@ test('no customer link or account email failed along the way', () => {
   assert.deepEqual(t.host.auditLog.filter((r) => ['customers.link-failed', 'email.failed'].includes(r.action)), []);
 });
 
-test('with AUTHTYPE unset anyone signs up on the form at /: core\'s "Create New Account" and register screen go there', async () => {
+test('with AUTH_TYPE unset anyone signs up on the form at /: core\'s "Create New Account" and register screen go there', async () => {
   for (const path of ['/services/authservice/views/request-invitation.html', '/services/authservice/views/register.html']) {
     const res = await t.get(path);
     assert.deepEqual([res.status, res.location], [302, '/'], path);

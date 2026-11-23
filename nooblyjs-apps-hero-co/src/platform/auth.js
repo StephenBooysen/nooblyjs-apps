@@ -108,10 +108,10 @@ const sendError = (res, status, code, message) => res.status(status).json({ erro
  */
 export function createAuth({ express, session, accounts, core, link, config, audit, log }) {
   const url = (p) => `${config.publicUrl}${p}`;
-  // AUTHTYPE=google: Google is the only way in (core's sign-in page goes straight to it); email sign-up and GitHub
+  // AUTH_TYPE=google: Google is the only way in (core's sign-in page goes straight to it); email sign-up and GitHub
   // sign-in are off. Without a Google client outside production, the mock at /dev/google stands in.
   const googleOnly = config.authType === 'google';
-  // AUTHTYPE=local: accounts by invitation only. Core's "Create New Account" goes to its register screen; the sign-up
+  // AUTH_TYPE=local: accounts by invitation only. Core's "Create New Account" goes to its register screen; the sign-up
   // form and GitHub make an account only for an open invitation to that email.
   const inviteOnly = config.authType === 'local';
   const googleMock = googleOnly && !config.google?.clientId && !config.production;
@@ -395,7 +395,7 @@ export function createAuth({ express, session, accounts, core, link, config, aud
     }
   };
   login.get('/signin', (req, res) => res.redirect(302, loginUrl(req.query.next)));
-  // "Create New Account" on the login page: core's register screen when accounts are by invitation (AUTHTYPE=local),
+  // "Create New Account" on the login page: core's register screen when accounts are by invitation (AUTH_TYPE=local),
   // otherwise the sign-up on the marketing page (the form, or Continue with Google). Core's "Redeem Invitation" is its
   // own invitation codes; ours are links in an email, opened at /invite.
   const query = (req) => (req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '');
@@ -406,10 +406,10 @@ export function createAuth({ express, session, accounts, core, link, config, aud
     success: true,
     data: { appName: 'NooblyJS Cloud', logoUrl: '/images/nooblyjs-logo.png', stylesheetUrl: null, homeUrl: req.person ? session.homeOf(req.person) : '/' },
   }));
-  // Core's sign-in page asks this first: with AUTHTYPE=google it goes straight to Google (?local=1 keeps the password form).
+  // Core's sign-in page asks this first: with AUTH_TYPE=google it goes straight to Google (?local=1 keeps the password form).
   login.get(`${A}/api/sso-config`, (req, res) => res.json({ success: true, data: googleOnly ? { enabled: true, provider: 'google', initiateUrl: GOOGLE_START } : { enabled: false, provider: null, initiateUrl: null } }));
 
-  // ---- Google (AUTHTYPE=google), on core's paths ------------------------------------------
+  // ---- Google (AUTH_TYPE=google), on core's paths ------------------------------------------
   // Answered here, ahead of core, like its login API: a Google sign-in makes a hero-co session and, the first time, a
   // person and their workspace (as GitHub sign-up does). The redirect URI registered with Google is GOOGLE_CALLBACK on
   // PUBLIC_URL.
@@ -524,7 +524,7 @@ export function createAuth({ express, session, accounts, core, link, config, aud
   return { api, pages, login, githubMock, googleOnly, googleMock };
 }
 
-/** Core's register screen: where "Create New Account" goes when accounts are by invitation (AUTHTYPE=local). */
+/** Core's register screen: where "Create New Account" goes when accounts are by invitation (AUTH_TYPE=local). */
 export const REGISTER_PAGE = '/services/authservice/views/register.html';
 
 /** Where Google sign-in starts and where Google sends the browser back (core's paths; register the second with Google). */
@@ -532,7 +532,7 @@ export const GOOGLE_START = '/services/authservice/api/google';
 export const GOOGLE_CALLBACK = '/services/authservice/api/google/callback';
 
 /**
- * A stand-in for Google's OAuth web flow and its userinfo endpoint (development and tests, AUTHTYPE=google without a
+ * A stand-in for Google's OAuth web flow and its userinfo endpoint (development and tests, AUTH_TYPE=google without a
  * client). The authorize page lists GOOGLE_MOCK_USERS; anyone can be anyone.
  */
 export const GOOGLE_MOCK_USERS = [
