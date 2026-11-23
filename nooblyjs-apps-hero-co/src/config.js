@@ -19,6 +19,11 @@ function localAgentOf(env, production) {
   return fs.existsSync('/var/run/docker.sock') ? 'fork' : 'off';
 }
 
+function authTypeOf(value) {
+  const v = String(value ?? '').trim().toLowerCase();
+  return v === 'google' || v === 'local' ? v : 'open';
+}
+
 export function loadConfig(env = process.env) {
   const production = env.NODE_ENV === 'production';
   const port = Number(env.PORT ?? DEFAULT_PORT);
@@ -51,6 +56,23 @@ export function loadConfig(env = process.env) {
     sessionSecret: env.SESSION_SECRET,
     // GitHub OAuth app. Without it, outside production, GitHub sign-in uses the mock at /dev/github.
     github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
+    // How people sign in and get an account (AUTH_TYPE; the older AUTHTYPE is read when AUTH_TYPE is not set):
+    //   unset   'open': email and password or GitHub; anyone signs up on the form at /.
+    //   local   'local': email and password or GitHub, by invitation only: "Create New Account" goes to core's register
+    //           screen (accounts need an invitation); the sign-up form takes only a valid invitation for that email.
+    //   google  'google': Google only; core's sign-in page goes straight to Google (?local=1 keeps the password form
+    //           for operators).
+    authType: authTypeOf(env.AUTH_TYPE ?? env.AUTHTYPE),
+    // Google OAuth client (GOOGLE_OAUTH_CLIENT / GOOGLE_OAUTH_SECRET, or GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET). Its
+    // authorised redirect URI is <PUBLIC_URL>/services/authservice/api/google/callback. Without it, outside
+    // production, AUTH_TYPE=google uses the mock at /dev/google.
+    // GOOGLE_REDIRECT_BASE: the address Google sends the browser back to, when it is not PUBLIC_URL (a Codespaces
+    // forwarded address, say https://<codespace>-11010.app.github.dev); the callback path is added to it.
+    google: {
+      clientId: env.GOOGLE_OAUTH_CLIENT || env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_OAUTH_SECRET || env.GOOGLE_CLIENT_SECRET,
+      redirectBase: /^https?:\/\/[^/\s]+/.test(env.GOOGLE_REDIRECT_BASE ?? '') ? env.GOOGLE_REDIRECT_BASE.trim().replace(/\/+$/, '') : null,
+    },
     // Encrypts environment variables and GitHub tokens at rest (required in production; a dev key file otherwise).
     secretKey: env.HERO_SECRET_KEY,
     // The card provider (roadmap 7.3): Stripe when STRIPE_SECRET_KEY is set (with STRIPE_WEBHOOK_SECRET and
