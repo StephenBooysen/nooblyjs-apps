@@ -10,9 +10,9 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "start": "node --env-file-if-exists=.env app.js",
-    "dev": "nodemon --watch src --watch public --watch app.js app.js",
-    "seed": "node --env-file-if-exists=.env app.js --seed",
+    "start": "node --env-file-if-exists=.env app.js --development",
+    "dev": "nodemon --watch src --watch public --watch app.js --exec \"node --env-file-if-exists=.env\" app.js --development",
+    "seed": "node --env-file-if-exists=.env app.js --development --seed",
     "test": "node --test --test-force-exit \"test/**/*.test.js\"",
     "test:ui": "playwright test",
     "test:ui:install": "playwright install chromium",
@@ -24,6 +24,7 @@
     "express-session": "^1.19.0",
     "helmet": "^8.1.0",
     "mongodb": "^6.22.0",
+    "nodemailer": "^10.6.1",
     "nooblyjs-accel-customers": "file:../../nooblyjs-accl/nooblyjs-accel-customers",
     "nooblyjs-accel-payments": "file:../../nooblyjs-accl/nooblyjs-accel-payments",
     "nooblyjs-accelerator-infrastructure": "file:../../nooblyjs-accl/nooblyjs-accl-infrastructure",

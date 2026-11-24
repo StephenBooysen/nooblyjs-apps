@@ -1,7 +1,7 @@
 // GitHub repository access for a workspace (roadmap 2.4; product.md §11 [GITHUB]: the OAuth app for now, a GitHub
 // App later). The workspace Owner connects once with the `repo read:org` scope; the token is sealed in hero_github.
 // Repositories are cached for a few minutes per workspace; branches and the branch's latest commit are asked for when
-// needed. Without GITHUB_CLIENT_ID (outside production) it talks to the mock at /dev/github.
+// needed. Without GITHUB_CLIENT_ID (in development) it talks to the mock at /dev/github.
 //
 // Auto-deploy (roadmap 3.8): each workspace has a webhook secret (random, sealed with the connection); creating a
 // service adds a `push` webhook on its repository pointing at <PUBLIC_URL>/hooks/github/<workspace>, signed with that

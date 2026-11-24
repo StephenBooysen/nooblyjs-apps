@@ -1,7 +1,7 @@
 // Accessibility (roadmap 8.4): axe-core's WCAG 2.2 A and AA rules on every screen, desktop and phone, after it has
 // drawn. A violation fails with the rule, the screen and the first element, so a new screen or a change that breaks
 // contrast, names, labels, focus or targets is caught here. (axe finds about half of WCAG problems; keyboard paths and
-// screen-reader wording are still checked by hand, see docs/accessibility.md.) Light and dark mode both; the operator
+// screen-reader wording are still checked by hand, see .claude/steering/accessibility.md.) Light and dark mode both; the operator
 // screens are nooblyjs-core's and the accelerators', which have no dark mode.
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';

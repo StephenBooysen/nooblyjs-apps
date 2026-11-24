@@ -17,7 +17,9 @@ npm test                  # node:test, offline, on the mock cloud
 npm run test:ui:install   # once: Playwright Chromium (needs system libraries: sudo npx playwright install-deps chromium)
 npm run test:ui           # Playwright, desktop + phone
 MONGODB_URL=mongodb://127.0.0.1:27017 REDIS_URL=redis://127.0.0.1:6379 npm test   # on the production providers
-npm run docker:build      # the production image (docs/production.md); context is the folder holding the repos
+npm run docker:build      # the production image (.claude/steering/production.md); context is the folder holding the repos
+node app.js --backup <dir>      # DATA_DIR (and MongoDB) into <dir>/nooblyjs-cloud-<time>/, with the app stopped
+node app.js --restore <backup>  # back into an empty DATA_DIR (and database); --force moves what is there aside
 ```
 
 Local network region (infra spec 8.9): in development `npm start` also runs the infrastructure accelerator's agent
@@ -25,7 +27,8 @@ against this machine's Docker (`HERO_LOCAL_AGENT=fork|mock|off`; tests use `mock
 this machine and answers at `<base URL>/<workspace>/<service>/` (`src/routes/proxy.js`: none of our cookies go to the
 app, its cookies are dropped, its pages are sandboxed). The start-up admin gets a workspace of their own.
 
-Development people (created on first start outside production; password `development-only-1`): `stevie` (workspace
+Development people (created on first start in development: `NODE_ENV=development` or `test`, which `npm start`,
+`npm run dev` and `npm run seed` assume when it is unset; password `development-only-1`): `stevie` (workspace
 exclusivity-life), `amara` (amara-labs), `ops-platform` (operator, infra Owner), `ops-support` (operator, infra Viewer).
 Tests call as a person with the `X-Dev-Person` header (id or email), or sign in with a cookie jar (`test/helpers.js`).
 "Continue with GitHub" uses the mock GitHub at `/dev/github` unless `GITHUB_CLIENT_ID` is set. `AUTH_TYPE` (or
@@ -33,13 +36,18 @@ the older `AUTHTYPE`) picks how accounts are made: unset, anyone signs up on `/`
 Account" goes to its register screen; `test/invite-only.test.js`). With `AUTH_TYPE=google`
 Google is the only sign-in: core's sign-in page goes straight to Google (`?local=1` keeps the password form for
 operators), and the callback `<PUBLIC_URL>/services/authservice/api/google/callback` makes the person and workspace
-(`auth.js`); without `GOOGLE_OAUTH_CLIENT` outside production it uses the mock Google at `/dev/google`
+(`auth.js`); without `GOOGLE_OAUTH_CLIENT` in development it uses the mock Google at `/dev/google`
 (`test/google.test.js`). Account emails land in
-the customers accelerator's console outbox (`hero.accelerators.mounted.customers.marketing.channels.email.outbox`).
+the customers accelerator's console outbox (`hero.accelerators.mounted.customers.marketing.channels.email.outbox`),
+or go out over SMTP with `SMTP_URL` and `EMAIL_FROM` (`src/platform/mail.js`; tests pass a `mailTransport`). Outside
+`development` and `test` there is no development sign-in, no mock GitHub or Google and no sample data; production also
+refuses to start without its four keys, SMTP and a real cloud (`src/config.js` `configProblem`, `productionProblem`;
+`test/production-readiness.test.js`).
 
 ## Layout
 
-- `app.js`: entry (`--seed [--reset]` seeds the infrastructure accelerator).
+- `app.js`: entry (`--seed [--reset]` seeds the infrastructure accelerator). One process per `DATA_DIR`: it takes
+  `DATA_DIR/hero-co.lock` (`src/platform/lock.js`), so `--seed` and `--operator` refuse while the app runs.
 - `src/app.js`: `createApp()`: core, CSP, sessions, gates, accelerators, API, pages. Tests start it on port 0.
 - `src/platform/`: `accounts.js` (people, workspaces, members, invitations, tokens on core dataService), `auth.js`
   (sign-up/in, verify, reset, GitHub, the mock GitHub), `session.js` (sessions, CSRF, gates, dev sign-in),
@@ -72,12 +80,12 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   backups and restore, plan, and Link to service (`PUT .../links`); `public/js/pages/datastore.js` draws the create form,
   the page and the Link to service card. The databases and stores are the platform's; set `HERO_LOCAL_POSTGRES_URL`
   (an admin connection string, environment only) to offer Postgres on the Local network.
-- `docs/production.md`: the image, the production environment, MongoDB and Redis, one instance (roadmap 8.1). CI is
+- `.claude/steering/production.md`: the image, the production environment, MongoDB and Redis, one instance (roadmap 8.1). CI is
   `../.github/workflows/hero-co.yml`; `scripts/install-all.sh` installs the linked packages.
-- `docs/security-review.md`: the 8.3 review (fixed, sound, open). `src/platform/reserved.js`: path segments a workspace
+- `.claude/steering/security-review.md`: the 8.3 review (fixed, sound, open). `src/platform/reserved.js`: path segments a workspace
   id may never be (Local network services answer `/<workspace>/<service>/` ahead of our routes); a new top-level route
   fails `test/security.test.js` until its segment is added there.
-- `docs/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
+- `.claude/steering/operator-setup.md`: opening a cloud region (pools, ingress, the environment) for operators.
 - `public/`: `css/styles.css` (verbatim copy of `nooblyjs/styling/styles.css`; never edit it), `css/hero-co.css`
   (everything else, theme tokens only; dark values for each token under `:root[data-bs-theme="dark"]`; the log viewer
   uses `--nj-log-*`), `js/theme.js` (light or dark before the page draws; Settings → Appearance), `js/` (native ES modules: router, api, sse, charts, format, components, shell,
@@ -98,3 +106,5 @@ the customers accelerator's console outbox (`hero.accelerators.mounted.customers
   `src/routes/workspaces.js` (behind `requireWorkspace`): `test/isolation.test.js` walks that router.
 - Accelerators are mounted with `mount(app, eventEmitter, serviceRegistry, options)` and shut down in reverse.
 - Temporary files go in `.temp/` (git-ignored); data in `DATA_DIR` (default `.application/`).
+- The CSP is `src/platform/csp.js`: hero-co's pages (Billing included) run scripts from this origin only. A third-party
+  file goes in `public/vendor/` (exact version, licence beside it), never a CDN; `test/csp.test.js` checks every page.

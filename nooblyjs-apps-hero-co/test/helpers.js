@@ -73,15 +73,18 @@ export function cookieJar() {
 
 let apps = 0;
 
+/**
+ * Starts the app on a free port. `dataDir` reuses a folder (a restart, a restore); close({ keepData }) leaves it.
+ */
 export async function startApp(options = {}) {
-  const dataDir = await tempDir();
+  const dataDir = options.dataDir ?? await tempDir();
   const server = http.createServer();
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   // MONGODB_URL runs the suite on MongoDB (CI does): each app its own database, dropped by close().
   const mongo = process.env.MONGODB_URL ? { mongodbUrl: process.env.MONGODB_URL, mongodbDatabase: `hero_test_${process.pid}_${++apps}` } : {};
   const config = { ...loadConfig({ NODE_ENV: 'test' }), ...mongo, dataDir, publicUrl: base, ...(options.config ?? {}) };
-  const { cards = true, ...rest } = options;
+  const { cards = true, dataDir: _dataDir, ...rest } = options;
   const hero = await createApp({ config, mockStepMs: 0, jobCheckMs: 0, telemetryTimers: false, cronTimers: false, taskTimers: false, billingTimers: false, ...rest, ...(options.config ? { config } : {}) });
   server.on('request', hero.app);
   // The development workspaces pay with a test card unless a test says otherwise (paid instance types need one).
@@ -108,13 +111,16 @@ export async function startApp(options = {}) {
       const res = await call('GET', tracked.replace(base, ''));
       return new URL(res.location ?? tracked);
     },
-    /** Stops the app; `keepDatabase` leaves its MongoDB database for another app to start on (a restart). */
-    async close({ keepDatabase = false } = {}) {
+    /**
+     * Stops the app; `keepDatabase` leaves its MongoDB database and `keepData` its DATA_DIR for another app to start
+     * on (a restart, a backup).
+     */
+    async close({ keepDatabase = false, keepData = false } = {}) {
       await new Promise((resolve) => server.close(resolve));
       server.closeAllConnections?.();
       if (hero.config.mongodbUrl && !keepDatabase) await hero.data.provider.db_?.dropDatabase().catch(() => {});
       await hero.shutdown();
-      await fs.rm(dataDir, { recursive: true, force: true });
+      if (!keepData) await fs.rm(dataDir, { recursive: true, force: true });
     },
   };
 }
@@ -140,4 +146,11 @@ export async function connectGithub(t, as, workspace, login) {
   const granted = await t.post('/dev/github/login/oauth/authorize', { form: { user, redirect_uri: authorize.searchParams.get('redirect_uri'), state: authorize.searchParams.get('state') } });
   const back = new URL(granted.location);
   return t.get(back.pathname + back.search, { as, jar });
+}
+
+/** Signs up a person through the form (marketing consent ticked); their record. Password: a long enough password 1. */
+export async function signUp(t, email, name = 'Ada Lovelace') {
+  const res = await t.post('/api/v1/auth/signup', { body: { name, email, password: 'a long enough password 1', team: `${name} team`, marketing: true, terms: true }, headers: { origin: t.base } });
+  if (res.status !== 201) throw new Error(`sign-up of ${email} failed: ${res.status} ${res.text}`);
+  return t.accounts.findPersonByEmail(email);
 }

@@ -38,6 +38,22 @@ handling, rate limits, the payments SAQ A scope.
 - **Payments, SAQ A.** Card numbers only ever go to the provider's own fields (Stripe's Payment Element, or the mock
   provider's hosted fields, which production refuses); our API sees setup ids, the brand and the last four digits.
   The CSP has no `unsafe-inline`; finding 1 was the one way found to run a script of someone else's on our pages.
+- **The Billing page's scripts** (PCI DSS 4.0.1 6.4.3; roadmap 8.7.6, `src/platform/csp.js`, `test/csp.test.js`).
+  Billing is hero-co's own page (`public/index.html`), and its policy is `script-src 'self'`, plus
+  `https://js.stripe.com` when Stripe takes the cards. Its scripts, all from this origin and all in this repository
+  or a linked one at a pinned commit:
+
+  | Script | From | Why |
+  | --- | --- | --- |
+  | `/js/theme.js` | hero-co | Light or dark before the page draws. |
+  | `/js/app.js` and the modules it imports (`/js/**`) | hero-co | The app: router, API, pages. |
+  | `/js/pages/billing.js`, `/js/components/card-prompt.js` | hero-co | The Billing page and the *Add a card* prompt. |
+  | `BillingSummary`, `CardForm` (`/admin/payments/…` modules) | nooblyjs-accel-payments | The summary and the card form. |
+  | `https://js.stripe.com/v3/` | Stripe | The Payment Element (card fields in Stripe's own frames). Only with Stripe. |
+
+  The hosted checkout (`/admin/payments/p/…`) has the same policy. Bootstrap's stylesheet and icons are served from
+  `public/vendor/`, byte for byte the published 5.3.3 and 1.11.3 files (their sha384 is checked by the test). Any
+  change to this list is a change to this table.
 
 ## Open (recommended before customers)
 

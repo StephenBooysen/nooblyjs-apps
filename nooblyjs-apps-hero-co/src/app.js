@@ -9,7 +9,10 @@ import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
 import express from 'express';
 import helmet from 'helmet';
-import { ROOT, loadConfig } from './config.js';
+import { ROOT, loadConfig, configProblem, productionProblem } from './config.js';
+import { createMailTransport, describeTransport, mailProblem, parseFrom } from './platform/mail.js';
+import { contentSecurityPolicy } from './platform/csp.js';
+import { lockDataDir } from './platform/lock.js';
 import { createAccounts } from './platform/accounts.js';
 import { createSession } from './platform/session.js';
 import { INFRA_MATRIX, DEV_PEOPLE, DEV_PASSWORD, OPERATOR_ROLES } from './platform/people.js';
@@ -37,27 +40,6 @@ import { seedRecords } from './domain/seed.js';
 import { createBilling, CardRequired } from './platform/billing.js';
 
 const require = createRequire(import.meta.url);
-const { helmetCspOption } = require('nooblyjs-core/src/shared/utils/contentSecurityPolicy.js');
-
-/**
- * Core's CSP (no 'unsafe-inline'), plus Stripe's origins when Stripe takes the cards: its script, the Payment Element's
- * and 3-D Secure frames, and its API (stack.md §3.4; docs/operator-setup.md). The mock provider's card form is a
- * same-origin frame, which default-src 'self' already allows.
- */
-function cspOption(config) {
-  const option = helmetCspOption();
-  if (!option || config.payProvider !== 'stripe') return option;
-  const d = option.directives;
-  return {
-    ...option,
-    directives: {
-      ...d,
-      scriptSrc: [...d.scriptSrc, 'https://js.stripe.com'],
-      frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
-      connectSrc: [...d.connectSrc, 'https://api.stripe.com'],
-    },
-  };
-}
 const { createShell, UI_DIR } = require('nooblyjs-core/src/shell');
 const { context: cxContext } = require('nooblyjs-accel-customers');
 const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'package.json'), 'utf8'));
@@ -76,17 +58,42 @@ const { version: VERSION } = JSON.parse(await fs.readFile(path.join(ROOT, 'packa
  * @param {boolean} [o.billingTimers]    false in tests: they call billing.handOff() and payments.tick() themselves
  * @param {{ now(): number }} [o.payClock]   tests: the payments accelerator's and billing's clock
  * @param {number} [o.eventsRecheckMs]   tests: how often an event stream re-reads who it is for
+ * @param {{ sendMail(m: object): Promise<object> }} [o.mailTransport]   tests: the SMTP transport (else SMTP_URL's)
+ * @param {{ staleMs?: number, heartbeatMs?: number, waitMs?: number }} [o.lock]   DATA_DIR's lock (src/platform/lock.js)
+ * @param {(holder: object|null) => void} [o.onLockLost]   another process took DATA_DIR's lock: app.js stops this one
  */
-export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true, taskTimers = true, billingTimers = true, payClock, eventsRecheckMs } = {}) {
-  if (config.production && config.devSignIn) throw new Error('The development sign-in cannot run with NODE_ENV=production.');
+export async function createApp({ config = loadConfig(), serviceRegistry = require('nooblyjs-core'), seed = false, mockStepMs, jobCheckMs, changeInfraHost = (h) => h, telemetryTimers = true, cronTimers = true, taskTimers = true, billingTimers = true, payClock, eventsRecheckMs, mailTransport, lock = {}, onLockLost } = {}) {
+  const problem = configProblem(config);
+  if (problem) throw new Error(problem);
   if (config.production && !config.sessionSecret) throw new Error('SESSION_SECRET is required in production.');
-  if (config.production && config.authType === 'google' && !(config.google?.clientId && config.google?.clientSecret)) throw new Error('AUTH_TYPE=google needs GOOGLE_OAUTH_CLIENT and GOOGLE_OAUTH_SECRET in production.');
+  // Outside development there is no mock Google to stand in for a missing client.
+  if ((config.production || !config.development) && config.authType === 'google' && !(config.google?.clientId && config.google?.clientSecret)) throw new Error('AUTH_TYPE=google needs GOOGLE_OAUTH_CLIENT and GOOGLE_OAUTH_SECRET outside development.');
+  const unsafe = productionProblem({ ...config, mailTransport });
+  if (unsafe) throw new Error(unsafe);
+  const badMail = mailProblem(config);
+  if (badMail) throw new Error(badMail);
+  // Before roadmap 8.7.8 the payments records were files under DATA_DIR/payments even with MongoDB. Now they are read
+  // from MongoDB, so starting would show none of them: refuse rather than lose the ledger from view.
+  if (config.mongodbUrl) {
+    const legacy = (await fs.readdir(path.join(config.dataDir, 'payments')).catch(() => [])).filter((f) => f.endsWith('.json'));
+    if (legacy.length) {
+      throw new Error(`${path.join(config.dataDir, 'payments')} holds payments records in files (${legacy.length}), but with MONGODB_URL they are read from MongoDB now (roadmap 8.7.8). Start without MONGODB_URL, or move them into the pay_* collections, then move the folder away.`);
+    }
+  }
   await fs.mkdir(config.dataDir, { recursive: true });
+  // One process per DATA_DIR (roadmap 8.7.7): taken before anything writes there, released last by shutdown().
+  const dataLock = await lockDataDir(config.dataDir, {
+    ...lock,
+    log: { warn: (line) => console.warn(line) },
+    onLost: onLockLost ?? ((holder) => console.error(`[hero-co] DATA_DIR's lock is now held by pid ${holder?.pid ?? '?'} on ${holder?.hostname ?? '?'}: this process must stop.`)),
+  });
 
   const app = express();
   app.disable('x-powered-by');
   if (config.trustProxy) app.set('trust proxy', 1);
-  app.use(helmet({ contentSecurityPolicy: cspOption(config) }));
+  // Each page's CSP (src/platform/csp.js; roadmap 8.7.6): no 'unsafe-inline', and third-party files by exact URL only.
+  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(contentSecurityPolicy(config));
   // Local network services at /<workspace>/<service>/… (routes/proxy.js), before sessions: they are other people's
   // apps, so they never see our session. Set once the accelerators are mounted.
   let serviceProxy = null;
@@ -109,15 +116,24 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
 
   // nooblyjs-core: one shared emitter for core and every accelerator.
   const eventEmitter = new EventEmitter().setMaxListeners(100);
+  // core's settings (feature flags among them) live under DATA_DIR with everything else, not in ./.application beside
+  // the code, which in the image is neither writable nor on the volume (roadmap 8.7.5). Declared before anything
+  // creates the settings service, and created at once, so every part of core shares this one.
+  const settingsFile = path.join(config.dataDir, 'settings', 'settings.enc.json');
+  serviceRegistry.setDefaultProvider?.('settings', 'file', { filepath: settingsFile });
   serviceRegistry.initialize(app, eventEmitter, {
     security: { apiKeyAuth: { requireApiKey: false, apiKeys: [] }, servicesAuth: { requireLogin: true } },
   });
+  serviceRegistry.settings?.('file', { filepath: settingsFile });
   const log = serviceRegistry.logger('console', { instanceName: 'hero-co' });
   // Records: MongoDB in production (MONGODB_URL), core's file provider otherwise (stack.md §3.1, roadmap 8.1).
   const data = config.mongodbUrl
     ? serviceRegistry.dataService('mongodb', { instanceName: 'nooblyjs-cloud', connectionString: config.mongodbUrl, database: config.mongodbDatabase })
     : serviceRegistry.dataService('file', { instanceName: 'nooblyjs-cloud', dataDir: path.join(config.dataDir, 'data') });
   for (const line of productionWarnings(config)) log.warn?.(`[hero-co] ${line}`);
+  if (!config.nodeEnv) {
+    log.warn?.('[hero-co] NODE_ENV is not set: the development sign-in, the development people and sample data are off. For development, run npm start (it assumes NODE_ENV=development); for production, set NODE_ENV=production.');
+  }
   const accounts = createAccounts({ data });
   await accounts.init();
   const records = createRecords({ data });
@@ -194,7 +210,11 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   const accelerators = await mountAccelerators({
     app, eventEmitter, serviceRegistry, shell, config, log, mockStepMs, jobCheckMs, resolveSecrets, payClock, payJobs: billingTimers,
     dataDir: config.dataDir,
-    infraHost: changeInfraHost(host.hostFor(path.join(config.dataDir, 'infrastructure'))),
+    infraHost: { ...changeInfraHost(host.hostFor(path.join(config.dataDir, 'infrastructure'))), sampleData: config.sampleData === true },
+    mail: {
+      transport: mailTransport ?? createMailTransport(config),
+      from: parseFrom(config.emailFrom) ?? (mailTransport ? { address: 'no-reply@localhost' } : null),
+    },
   });
   infraPublic = new Set(accelerators.mounted.infrastructure.publicPaths ?? []);
   infraPublicPosts = accelerators.mounted.infrastructure.publicPostPrefixes ?? [];
@@ -243,17 +263,19 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
   }
   accounts.onWorkspaceCreated((ws) => billing.ensureWorkspace(ws).then(() => undefined, (err) => log.warn?.(`[hero-co] billing account for ${ws.id} failed: ${err.message}`)));
   await billing.init();
-  if (config.production && !config.emailChannel) {
-    log.warn?.('[hero-co] No email channel is configured: account emails go to the customers accelerator\'s console outbox only.');
-  }
+  if (config.smtpUrl) log.info?.(`[hero-co] Account emails are sent through ${describeTransport(config.smtpUrl)} from ${config.emailFrom}.`);
+  else if (!mailTransport) log.warn?.(`[hero-co] No SMTP_URL${config.emailOff ? ' (EMAIL=off)' : ''}: account emails go to the customers accelerator's console outbox only.`);
 
   if (seed) {
     const infraDir = path.join(config.dataDir, 'infrastructure');
     const empty = (await fs.readdir(infraDir).catch(() => [])).filter((f) => !f.startsWith('.') && !['secrets', 'local', 'local-agent', 'config.yaml'].includes(f)).length === 0;
-    if (empty) {
+    if (empty && config.sampleData) {
       await accelerators.mounted.infrastructure.seed({ reset: false });
       await seedRecords({ records, secrets, platform, accounts });
       await accelerators.mounted.infrastructure.resume();
+    } else if (empty) {
+      // Outside development the folder is marked as started without sample content, so nothing seeds it later.
+      await accelerators.mounted.infrastructure.seed({ reset: false, content: false });
     }
   }
 
@@ -343,6 +365,7 @@ export async function createApp({ config = loadConfig(), serviceRegistry = requi
       await accelerators.shutdown();
       await session.close?.();
       await serviceRegistry.shutdown?.();
+      await dataLock.release();
     },
   };
 }

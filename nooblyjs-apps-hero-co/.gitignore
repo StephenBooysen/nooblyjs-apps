@@ -2,3 +2,6 @@ node_modules/
 .application/
 .temp/
 .env
+
+# Vendored packages keep their published paths (Bootstrap is under dist/), which the root ignores.
+!/public/vendor/*/dist/

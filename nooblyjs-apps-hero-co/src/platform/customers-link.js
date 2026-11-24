@@ -132,10 +132,22 @@ export function createCustomersLink({ cx, systemContext, accounts, log, audit = 
     }
   }
 
-  /** The workspace's organisation (created once). @returns {Promise<string|null>} */
+  const missing = (err) => err?.status === 404 || err?.code === 'not_found';
+
+  /**
+   * The workspace's organisation (created once; again if the customers accelerator no longer has it: until roadmap
+   * 8.7.8 its records were in memory, so a restart lost them). @returns {Promise<string|null>}
+   */
   async function linkWorkspace(workspace) {
     const current = await accounts.getWorkspace(workspace.id);
-    if (current?.organizationId) return current.organizationId;
+    if (current?.organizationId) {
+      try {
+        await cx.customer.services.organizations.get(current.organizationId, ctx());
+        return current.organizationId;
+      } catch (err) {
+        if (!missing(err)) throw err;
+      }
+    }
     const org = await cx.customer.services.organizations.create({ name: workspace.name }, ctx());
     await accounts.updateWorkspace(workspace.id, { organizationId: org.id });
     return org.id;
@@ -148,16 +160,24 @@ export function createCustomersLink({ cx, systemContext, accounts, log, audit = 
    * @returns {Promise<boolean>} sent (or queued) without error
    */
   async function send(template, { person, to, data, idempotencyKey }) {
+    const sendTo = (customerId) => cx.marketing.sendTransactional({
+      template,
+      ...(customerId ? { customerId } : { to: to ?? person.email }),
+      data,
+      purpose: 'transactional',
+      ...(idempotencyKey ? { idempotencyKey } : {}),
+    }, ctx());
     try {
       let customerId = person?.customerId ?? null;
       if (person && !customerId) customerId = await linkPerson(person);
-      await cx.marketing.sendTransactional({
-        template,
-        ...(customerId ? { customerId } : { to: to ?? person.email }),
-        data,
-        purpose: 'transactional',
-        ...(idempotencyKey ? { idempotencyKey } : {}),
-      }, ctx());
+      try {
+        await sendTo(customerId);
+      } catch (err) {
+        // A person whose customer record is gone (kept in memory until roadmap 8.7.8): link them again, send once more.
+        if (!person || !customerId || !missing(err)) throw err;
+        log?.warn?.(`[hero-co] customer ${customerId} of ${person.id} is missing: linking them again.`);
+        await sendTo(await linkPerson({ ...person, customerId: null }));
+      }
       return true;
     } catch (err) {
       log?.warn?.(`[hero-co] email ${template} failed: ${err.message}`);
