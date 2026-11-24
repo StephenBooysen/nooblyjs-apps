@@ -28,7 +28,7 @@ tags: [hero-co, nooblyjs-cloud, steering, stack]
 | Control plane | **nooblyjs-accl-infrastructure** via `mount()`: provider contract (mock → GCP/AWS), operations engine, VMs, deploy-from-Git, Caddy endpoints, buckets, cost catalogue, activity | Calling a cloud SDK from this repo; bypassing its operations engine |
 | Customer back office | **nooblyjs-accel-customers** via `mount()`: `customer` and `marketing` modules (customer 360, consent, audit, transactional email) | Our own CRM tables; sending email outside its send pipeline |
 | Billing | **nooblyjs-accel-payments** via `mount()`: plans, metered usage, subscriptions, invoices, card capture, dunning, refunds, ledger | Card data on our servers; our own invoice or proration logic |
-| Browser | Plain HTML + native ES modules, **Bootstrap 5.3.3** and **Bootstrap Icons 1.11.3** from jsDelivr, the NooblyJS theme `styles.css` (verbatim copy of `nooblyjs/styling/styles.css`), `.nj-` components in `hero-co.css` (§5) | React, TypeScript, bundlers, Tailwind, any other CSS framework; hex values in components |
+| Browser | Plain HTML + native ES modules, **Bootstrap 5.3.3** and **Bootstrap Icons 1.11.3** from `public/vendor/` (roadmap 8.7.6), the NooblyJS theme `styles.css` (verbatim copy of `nooblyjs/styling/styles.css`), `.nj-` components in `hero-co.css` (§5) | React, TypeScript, bundlers, Tailwind, any other CSS framework; hex values in components |
 | Charts | Inline SVG drawn by one small local module (`public/js/charts.js`): area, stacked bar, meter | Chart libraries from a CDN |
 | Fonts | Bricolage Grotesque and Figtree from Google Fonts (the theme's `@import`); JetBrains Mono added the same way in `hero-co.css` | Inter, Roboto, Arial |
 | Records | Repositories over core **dataService** (`file` in dev and tests, `mongodb` in production); the infrastructure accelerator keeps its own FsStore under `<DATA_DIR>/infrastructure` | SQLite, ORM layers, a second store of record |
@@ -82,7 +82,7 @@ the three accelerators as `file:` links, plus a reason in the PR for anything el
 | `dataservice` | Workspaces, projects, environments, services, deploys, plans, usage | `file` → `mongodb` |
 
 Rules from core apply here unchanged: `ClientError` + `sendSafeError` for errors, `validate()` + `parseLimit` for
-input, route permissions declared up front, the CSP from `contentSecurityPolicy.js` (no inline styles or scripts;
+input, route permissions declared up front, the CSP from `src/platform/csp.js` (no inline styles or scripts;
 clicks through `data-onclick`), injected logger with structured metadata.
 
 ### 3.2 nooblyjs-accl-infrastructure (the control plane)
@@ -184,7 +184,7 @@ our minute scheduler (D10), a Workflow's task runs from our queue (D11), side by
   a per-person `sessionEpoch` that a password reset bumps, signing out every other session. CSRF: double-submit
   `noobly.csrf` or a same-origin Origin, on every cookie write and on the sign-in forms.
 - **GitHub sign-in** (`src/platform/auth.js`): `passport-github2` with `read:user,user:email`; the primary verified
-  email links to an existing account. Without `GITHUB_CLIENT_ID` outside production it talks to the mock at
+  email links to an existing account. Without `GITHUB_CLIENT_ID` in development it talks to the mock at
   `/dev/github`.
 - **Gates**: `requireWorkspace` (non-members get a 404) on every `/w/:workspace` page and `/api/v1/workspaces/:workspace`
   route; `requireOwner` for members, invitations and rename; core's `/services` portal for platform operators only.
@@ -192,7 +192,9 @@ our minute scheduler (D10), a Workflow's task runs from our queue (D11), side by
   workspace, the sign-up checkbox on the consent ledger (`source: form`, the checkbox text as evidence), and the
   `cloud-*` transactional templates (created and approved at start if missing; operators may edit them).
 - **Development**: `/dev/login`, the `X-Dev-Person` header and the people in `people.js` (password
-  `development-only-1`) exist only when `NODE_ENV` is not production. Operators: `node app.js --operator <email> <role>`.
+  `development-only-1`) exist only with `NODE_ENV=development` or `test` (`npm start` assumes development when it is
+  unset; `node app.js` does not). Any other value refuses to start. Operators: `node app.js --operator <email> <role>`, with the app stopped (one
+  process per `DATA_DIR`: `src/platform/lock.js`).
 
 ### 4.2 Live data
 
@@ -240,11 +242,12 @@ The theme is **`/workspaces/codespaces-blank/nooblyjs/styling/styles.css`**: the
 theme (tokens, type, buttons, cards, forms, badges, pills, chips, alerts, tables, progress, navbar, modals). nooblyjs-core
 (`src/views/css/styles.css`) and the customers accelerator (`src/shared/views/css/styles.css`) carry identical copies.
 
-- **Load order on every page:** Bootstrap 5.3.3 CSS (jsDelivr) → Bootstrap Icons 1.11.3 (jsDelivr) →
+- **Load order on every page:** Bootstrap 5.3.3 CSS (`/vendor/`) → Bootstrap Icons 1.11.3 (`/vendor/`) →
   `/css/styles.css` (verbatim copy of the theme; re-copy to update, never edit) → `/css/hero-co.css`. The theme pulls
   Bricolage Grotesque and Figtree from Google Fonts with `@import`.
-- **CSP:** use core's `contentSecurityPolicy.js`, which already allows `cdn.jsdelivr.net`, `fonts.googleapis.com` and
-  `fonts.gstatic.com`; add the payment provider's domains for the card form (payments spec §10).
+- **CSP:** `src/platform/csp.js` (roadmap 8.7.6). Our pages get `script-src 'self'` (plus Stripe's domains for the card
+  form, payments spec §10); core's and the customers accelerator's pages also get the exact third-party files they
+  load (`THIRD_PARTY`), never a whole CDN. Stylesheets from Google Fonts and the exact Bootstrap files only.
 - **Token names.** The style guide writes `--nj-<name>`; the theme defines them without the prefix. Use the theme's
   names: `--nj-bg` → `--bg`, `--nj-surface` → `--surface`, `--nj-surface-sunken` → `--surface-sunken`,
   `--nj-hover` → `--divider`, `--nj-border(-strong)` → `--border(-strong)`, `--nj-ink(-2)` → `--ink(-2)`,
@@ -274,10 +277,10 @@ theme (tokens, type, buttons, cards, forms, badges, pills, chips, alerts, tables
 | `PUBLIC_URL`, `APP_DOMAIN` | Our base URL; the customer domain (`nooblyjs.app`) |
 | `GITHUB_APP_ID`, `GITHUB_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub connect and sign-in (sign-in uses the OAuth app's client id and secret; callback `<PUBLIC_URL>/auth/github/callback`) |
 | `AUTH_TYPE` (or the older `AUTHTYPE`) | Unset: open sign-up on `/`. `local`: accounts by invitation only (core's "Create New Account" → its register screen; the sign-up form and GitHub need an open invitation to that email). `google`: see below |
-| `GOOGLE_OAUTH_CLIENT`, `GOOGLE_OAUTH_SECRET`, `GOOGLE_REDIRECT_BASE` | `AUTH_TYPE=google`: Google is the only sign-in (`GOOGLE_REDIRECT_BASE` replaces `PUBLIC_URL` in the redirect URI only, for a Codespaces address; the URI is logged at start) (core's sign-in page redirects to it through `sso-config`; email sign-up and GitHub sign-in off; the password form for operators at `?local=1`). Redirect URI `<PUBLIC_URL>/services/authservice/api/google/callback`, answered by `auth.js` ahead of core. Mock at `/dev/google` without a client outside production; required in production |
-| `DEV_SIGN_IN` | `0` turns the development sign-in off outside production (it is always off in production) |
+| `GOOGLE_OAUTH_CLIENT`, `GOOGLE_OAUTH_SECRET`, `GOOGLE_REDIRECT_BASE` | `AUTH_TYPE=google`: Google is the only sign-in (`GOOGLE_REDIRECT_BASE` replaces `PUBLIC_URL` in the redirect URI only, for a Codespaces address; the URI is logged at start) (core's sign-in page redirects to it through `sso-config`; email sign-up and GitHub sign-in off; the password form for operators at `?local=1`). Redirect URI `<PUBLIC_URL>/services/authservice/api/google/callback`, answered by `auth.js` ahead of core. Mock at `/dev/google` without a client in development; required outside it |
+| `DEV_SIGN_IN` | `0` turns the development sign-in off in development (it is only ever on with `NODE_ENV=development` or `test`) |
 | `INFRA_PROVIDERS`, `INFRA_*` | Passed through to the infrastructure accelerator (`mock` until its phase 2 adapters land) |
-| `REDIS_URL`, `MONGODB_URL`, `MONGODB_DATABASE` | Production providers: sessions in Redis; records (dataService `mongodb`, database `nooblyjs_cloud` by default). `docs/production.md` |
+| `REDIS_URL`, `MONGODB_URL`, `MONGODB_DATABASE` | Production providers: sessions in Redis; records (dataService `mongodb`, database `nooblyjs_cloud` by default). `.claude/steering/production.md` |
 | `SMTP_URL`, `CX_TRACKING_SECRET` | Transactional email through the customers accelerator |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY` | Stripe for the payments accelerator when the secret key is set (it reads them itself; the CSP then allows Stripe's domains); otherwise the mock provider, which is refused in production |
 | `PAY_SIGNING_SECRET` | Signs hosted checkout and 3-D Secure links (required in production) |
@@ -290,7 +293,7 @@ theme (tokens, type, buttons, cards, forms, badges, pills, chips, alerts, tables
 npm start            # app.js on :11010
 npm run dev          # nodemon over src/ and public/
 npm run seed         # the seed story; -- --reset to start again
-node app.js --operator <email> <platform|support|none>   # grant or remove an operator role
+node app.js --operator <email> <platform|support|none>   # grant or remove an operator role (app stopped: one process per DATA_DIR)
 npm test             # node:test, offline, mock cloud
 npm run test:ui      # Playwright, desktop + phone
 ```

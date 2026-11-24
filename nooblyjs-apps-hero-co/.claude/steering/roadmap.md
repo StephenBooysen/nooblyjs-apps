@@ -273,7 +273,7 @@ creation; a declined card is retried and the owner is emailed each time; a paid 
 ## Phase 8 — Hardening and launch
 
 - [ ] 8.1 Production providers: MongoDB dataService, Redis queue/cache/sessions; `TRUST_PROXY`; Dockerfile and CI (Node 22 + 24, tests, Playwright, audit).
-  *Done for one instance (2026-11-23, `docs/production.md`): records in MongoDB with `MONGODB_URL` (core's MongoDB
+  *Done for one instance (2026-11-23, `.claude/steering/production.md`): records in MongoDB with `MONGODB_URL` (core's MongoDB
   provider fixed to replace on update, as its contract says), sessions in Redis with `REDIS_URL`, start-up warnings
   for what production lacks, `/health/ready`; the whole suite passes on MongoDB and Redis, and a sign-in survives a
   restart (`test/production.test.js`); the Docker image ran in production against both. CI in
@@ -282,22 +282,91 @@ creation; a declined card is retried and the owner is emailed each time; a paid 
   telemetry off `DATA_DIR`.*
 - [ ] 8.2 Second, third and fourth regions (Frankfurt, Virginia, Singapore): pools and ingress per region.
 - [ ] 8.3 Security review: tenant isolation, container hardening, webhook verification, secret handling, rate limits, payments SAQ A scope.
-  *Reviewed 2026-11-23 (`docs/security-review.md`); six findings fixed, each with a test in `test/security.test.js`
+  *Reviewed 2026-11-23 (`.claude/steering/security-review.md`); six findings fixed, each with a test in `test/security.test.js`
   that fails without its fix: a team named like one of our paths could put its Local network service in front of our
   scripts (critical: every path segment is now reserved, checked against the live routers); an open redirect after
   sign-in; live event streams outliving access; origin-wide headers from proxied apps; the webhook parsing before
   checking; an unbounded rate limiter. Egress rules for builds and containers followed the same day (infra spec
   8.9 R14). Open before customers: a separate origin for Local network apps, userns-remap on hosts, rate limits in Redis for several instances.*
 - [x] 8.4 Dark mode in `hero-co.css` (`data-bs-theme="dark"`); accessibility audit (axe) on every screen.
-  *Done 2026-11-23 (`docs/accessibility.md`, `test/ui/a11y.spec.js`): axe's WCAG 2.2 AA rules pass on every screen,
+  *Done 2026-11-23 (`.claude/steering/accessibility.md`, `test/ui/a11y.spec.js`): axe's WCAG 2.2 AA rules pass on every screen,
   desktop and phone, in light and dark mode, and on the operator screens; fixed links told apart by colour only, the log
   header's contrast, scrolling tables and logs unreachable by keyboard, and touch targets under 44 px. Dark mode follows
   the device, with Settings → Appearance (System / Light / Dark) to override it; the log viewer stays dark.*
 - [ ] 8.5 Operator runbooks: host drain, region full, failed builds across tenants, failed payments.
 - [ ] 8.6 **[pay 5]** Payments v1.0 hardening.
+- [ ] 8.7 **Production readiness** (the audit of 2026-11-23: `.claude/audits/2026-11-23-production-readiness-security-audit.md`;
+  S = security finding, P = production readiness finding). In priority order; each box is ticked with the test that
+  proves it.
+
+  *Before any real customer*
+  - [x] 8.7.1 **Email is delivered in production** (P1). `SMTP_URL` and `EMAIL_FROM` give the customers accelerator an
+    SMTP channel; production refuses to start without one (`EMAIL=off` says so on purpose); a reset email reaches the
+    transport in a test.
+    *`src/platform/mail.js` (nodemailer; `smtp://` must offer STARTTLS); `test/production-readiness.test.js`.*
+  - [x] 8.7.2 **No sample data outside development** (P2). The infrastructure seed story, the demo customers and
+    `npm run seed` only with `NODE_ENV=development` or `test`; a production start writes no sample data (test).
+    *`config.sampleData`; the infrastructure folder is marked `content: false`, so nothing seeds it later.*
+  - [x] 8.7.3 **Development sign-in fails closed** (S1). `/dev/login`, `X-Dev-Person`, the mock GitHub and Google and
+    the development people only with `NODE_ENV=development` or `test`; an unknown `NODE_ENV` (`prod`) refuses to
+    start, and so does an unset one with an `https://` `PUBLIC_URL` (tests).
+    *`configProblem()`; `npm start`, `npm run dev` and `npm run seed` pass `--development`, which stands for an unset
+    `NODE_ENV`; `node app.js` (the image) does not.*
+  - [x] 8.7.4 **Every secret has its own key, and the mock cloud stays out of production** (S6, P7). Production
+    refuses to start without `INFRA_SECRET_KEY` and `SETTINGS_SECRET` (no fallback to `SESSION_SECRET`), or with the
+    `mock` provider unless `INFRA_ALLOW_MOCK=1`; `production.md` lists every variable.
+    *`productionProblem()`: the four keys present and all different; CI's image run sets them.*
+  - [x] 8.7.5 **core's settings live under `DATA_DIR`** (P4), not `./.application/settings` beside the code (test:
+    nothing is written outside `DATA_DIR`).
+    *`DATA_DIR/settings/settings.enc.json`, through core's `setDefaultProvider('settings', …)`.*
+
+  *Before taking payments*
+  - [x] 8.7.6 **A CSP without public CDNs, and vendored assets** (S2). Bootstrap and Bootstrap Icons served from
+    `public/vendor/`; `script-src` without jsDelivr, unpkg or Google Tag Manager; `integrity` on anything third-party
+    that stays; a script inventory for the Billing page.
+    *`src/platform/csp.js`: hero-co's pages (Billing included) and the hosted checkout `script-src 'self'` (+ Stripe);
+    core's `/services` pages and the customers accelerator's screens also get the exact files they load (no whole
+    host, no Tag Manager). Inventory in `security-review.md`; `test/csp.test.js` fetches each page and checks every
+    third-party file it loads against its policy.*
+    - [ ] **[core] [accl]** Vendor Bootstrap, Chart.js and Swagger UI in core's and the accelerators' own views (core's
+      sign-in page loads Bootstrap's JS from jsDelivr), then empty `THIRD_PARTY` of scripts.
+  - [x] 8.7.7 **One instance per `DATA_DIR`, enforced** (P3). An exclusive lock at start-up; a second process refuses
+    to start; `production.md` says to deploy by stop-then-start.
+    *`src/platform/lock.js`: `DATA_DIR/hero-co.lock`, O_EXCL and a heartbeat; a copy that is gone (same host) or
+    silent for 60 s gives it up. `--seed` and `--operator` refuse while the app runs; `test/lock.test.js`.*
+  - [x] 8.7.8 **Backups and restore** (P5, P14). Payments records in MongoDB rather than JSON files; every store under
+    `DATA_DIR` listed; a documented, tested backup and restore of `DATA_DIR` and MongoDB.
+    *The customers and payments accelerators keep their records with hero-co's (MongoDB, or `DATA_DIR/customers` and
+    `/payments`): the customers accelerator's were in memory (P14, found here), so a restart lost customers, consent and
+    the unsubscribe list, and a reset email to an existing person failed. People with a lost customer are linked again.
+    `node app.js --backup` / `--restore`; `production.md` "What is where"; `test/stores.test.js`, `test/backup.test.js`.*
+    - [ ] **[accl]** The customers accelerator's dispatch queue is still memory: a communication queued at a restart
+      stays `queued`. Re-enqueue them at start (or a persistent queue).
+
+  *Soon after launch*
+  - [ ] 8.7.9 **No takeover through sign-up** (S3, S4). GitHub or Google never links into an unverified password
+    account without ending its password and sessions; sign-up never replaces a core credential hero-co did not make.
+  - [ ] 8.7.10 **Operators sign in with a second factor** (S7, P12). TOTP or WebAuthn for operators; no automatic
+    GitHub or Google link to an operator account; an idle timeout for operator sessions. **[core]** for the factor.
+  - [ ] 8.7.11 **Builds cannot reach the private network** (S5). Public Git URLs to private, loopback or link-local
+    addresses refused; clones without redirects, inside the build sandbox. **[infra]**
+  - [ ] 8.7.12 **Observability** (P8). A one-line JSON access log, error reporting, metrics, handlers for unhandled
+    rejections, and a restart policy in the documented run command.
+
+  *As volume grows*
+  - [ ] 8.7.13 **Queries by field, with indexes** (P6), not whole collections; no session lookup for static files;
+    used and expired tokens purged.
+  - [ ] 8.7.14 **Deleting and exporting data** (P9): workspace deletion, person deletion and export, retention for
+    tokens, deploy records and the audit trail.
+  - [ ] 8.7.15 **Reproducible, traceable images** (P10): the base image pinned by digest, the core and accelerator
+    commits recorded as labels, actions pinned by SHA, the lockfile enforced.
+  - [ ] 8.7.16 **The low findings**: sign-in timing (S8), targeted lockout (S9), core's session tokens hashed (S10,
+    **[core]**), the CSRF 500 (S11), a cap on event streams (S12), `passport-azure-ad` out of core (S13, **[core]**),
+    a shutdown deadline (P11), the operator rail's cross-origin frame (P13).
 
 **Exit check:** a stranger signs up, deploys a repo and reads its logs in under 5 minutes, in any of the four regions,
-and pays for it with a card.
+and pays for it with a card; and every Critical and High finding of the production readiness audit (8.7.1–8.7.8) is
+closed.
 
 ## Phase 9 — Beyond v1
 

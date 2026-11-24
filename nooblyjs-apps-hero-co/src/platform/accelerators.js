@@ -69,7 +69,7 @@ async function importOptional(name) {
  * @param {{ now(): number }} [o.payClock]   the payments accelerator's clock (tests move it)
  * @param {boolean} [o.payJobs]           the payments jobs (period close, dunning) on a timer; false in tests
  */
-export async function mountAccelerators({ app, eventEmitter, serviceRegistry, infraHost, shell, dataDir, config, log = console, mockStepMs, jobCheckMs, resolveSecrets, payClock, payJobs = true }) {
+export async function mountAccelerators({ app, eventEmitter, serviceRegistry, infraHost, shell, dataDir, config, log = console, mockStepMs, jobCheckMs, resolveSecrets, payClock, payJobs = true, mail = {} }) {
   // Check before mounting anything.
   if (typeof eventEmitter?.emit !== 'function') throw new Error('mountAccelerators needs the shared EventEmitter.');
   if (!serviceRegistry?.initialized) throw new Error('mountAccelerators needs an initialised serviceRegistry.');
@@ -82,6 +82,13 @@ export async function mountAccelerators({ app, eventEmitter, serviceRegistry, in
     import('nooblyjs-accelerator-infrastructure'),
   ]);
   const customers = customersModule.default ?? customersModule;
+
+  // Where an accelerator keeps its records (roadmap 8.7.8): with hero-co's, in MongoDB when it is set (collections
+  // cx_* and pay_* beside hero_*), else in files under DATA_DIR/<name>. Never the accelerators' default, memory, which
+  // a restart empties (customers, the consent ledger and the unsubscribe list among them).
+  const storeFor = (name) => (config.mongodbUrl
+    ? { type: 'mongodb', options: { instanceName: name, connectionString: config.mongodbUrl, database: config.mongodbDatabase } }
+    : { type: 'file', options: { instanceName: name, dataDir: path.join(dataDir, name) } });
 
   const mounted = {};
   const pending = [];
@@ -101,22 +108,30 @@ export async function mountAccelerators({ app, eventEmitter, serviceRegistry, in
       basePath: CX_BASE,
       containerPrefix: 'cx',
       auth: { roleResolver: (req) => req.person?.cxRoles ?? [] },
-      seed: !config.production,
+      providers: { data: storeFor('customers') },
+      // Demo customers in development (config.demoCustomers): the accelerator's 500 on MongoDB; 25 on files, where
+      // every insert rewrites the whole container file (500 would take minutes on a first start).
+      seed: config.sampleData === true && config.demoCustomers
+        ? (typeof config.demoCustomers === 'object' ? config.demoCustomers : config.mongodbUrl ? true : { customers: 25, organizations: 5 })
+        : false,
       marketing: {
         tracking: { baseUrl: config.publicUrl, signingSecret: config.cxTrackingSecret },
         dispatch: { concurrency: 1 },
+        // SMTP when there is a transport (src/platform/mail.js; roadmap 8.7.1), else the accelerator's console outbox.
+        ...(mail.transport ? { channels: { email: customers.adapters.smtp({ transport: mail.transport }) } } : {}),
+        ...(mail.from ? { defaults: { from: { email: mail.from } } } : {}),
       },
     });
 
     if (paymentsModule) {
-      // Billing (roadmap 7.1–7.3; stack.md §3.4): its records in its own file store under DATA_DIR/payments; emails
+      // Billing (roadmap 7.1–7.3; stack.md §3.4): its records with hero-co's (storeFor: MongoDB, or DATA_DIR/payments); emails
       // through the customers accelerator; Stripe when its keys are in the environment, else the mock provider.
       mounted.payments = await paymentsModule.mount(app, eventEmitter, serviceRegistry, {
         modules: ['payments', 'billing'],
         basePath: CX_BASE,
         containerPrefix: 'pay',
         express: (await import('express')).default,
-        providers: { data: { type: 'file', options: { dataDir: path.join(dataDir, 'payments') } } },
+        providers: { data: storeFor('payments') },
         provider: { type: config.payProvider ?? 'mock' },
         customers: mounted.customers,
         currency: 'USD',

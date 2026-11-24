@@ -9,7 +9,7 @@
 #   npm run docker:build        (docker build -f Dockerfile -t nooblyjs-cloud ../..)
 #
 # Run it with DATA_DIR on a volume (the infrastructure accelerator's store, core's sign-in records and telemetry live
-# there) and the production environment in docs/production.md.
+# there) and the production environment in .claude/steering/production.md.
 
 FROM node:24-bookworm-slim AS deps
 WORKDIR /src

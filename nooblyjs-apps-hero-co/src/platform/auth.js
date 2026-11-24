@@ -2,7 +2,7 @@
 // (passport-github2), verify-email and reset-password with single-use tokens, and the sign-up that makes a person, a
 // workspace, a default project and a Production environment (product.md §6.1).
 //
-// Without GITHUB_CLIENT_ID outside production, GitHub is a mock served by this app at /dev/github, so sign-up with
+// Without GITHUB_CLIENT_ID in development, GitHub is a mock served by this app at /dev/github, so sign-up with
 // GitHub works offline and in tests; passport-github2 talks to it exactly as it would to github.com.
 import crypto from 'node:crypto';
 import path from 'node:path';
@@ -102,20 +102,21 @@ const sendError = (res, status, code, message) => res.status(status).json({ erro
  * @param {ReturnType<import('./accounts.js').createAccounts>} o.accounts
  * @param {object} o.core          createCoreAuth()
  * @param {ReturnType<import('./customers-link.js').createCustomersLink>} o.link
- * @param {{ publicUrl: string, production: boolean, devSignIn: boolean, github: { clientId?: string, clientSecret?: string } }} o.config
+ * @param {{ publicUrl: string, production: boolean, development: boolean, devSignIn: boolean, github: { clientId?: string, clientSecret?: string } }} o.config
  * @param {(entry: object) => Promise<void>} o.audit
  * @param {object} [o.log]
  */
 export function createAuth({ express, session, accounts, core, link, config, audit, log }) {
   const url = (p) => `${config.publicUrl}${p}`;
   // AUTH_TYPE=google: Google is the only way in (core's sign-in page goes straight to it); email sign-up and GitHub
-  // sign-in are off. Without a Google client outside production, the mock at /dev/google stands in.
+  // sign-in are off. Without a Google client in development, the mock at /dev/google stands in.
   const googleOnly = config.authType === 'google';
   // AUTH_TYPE=local: accounts by invitation only. Core's "Create New Account" goes to its register screen; the sign-up
   // form and GitHub make an account only for an open invitation to that email.
   const inviteOnly = config.authType === 'local';
-  const googleMock = googleOnly && !config.google?.clientId && !config.production;
-  const githubMock = !googleOnly && !config.github?.clientId && !config.production;
+  // The mocks let anyone be anyone, so they exist only where the development sign-in does (roadmap 8.7.3).
+  const googleMock = googleOnly && !config.google?.clientId && config.devSignIn === true;
+  const githubMock = !googleOnly && !config.github?.clientId && config.devSignIn === true;
   const githubEnabled = !googleOnly && (Boolean(config.github?.clientId) || githubMock);
   const limits = {
     signinEmail: createLimiter({ max: 10, windowMs: 15 * 60_000 }),

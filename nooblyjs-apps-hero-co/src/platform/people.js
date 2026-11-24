@@ -25,7 +25,7 @@ export const INFRA_MATRIX = {
 };
 
 /**
- * The development people, created on first start outside production (and in tests). Their password is
+ * The development people, created on first start with NODE_ENV=development (and in tests). Their password is
  * DEV_PASSWORD; the development sign-in at /dev/login needs none.
  */
 export const DEV_PASSWORD = 'development-only-1';

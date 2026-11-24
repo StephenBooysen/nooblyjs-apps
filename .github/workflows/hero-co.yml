@@ -53,6 +53,9 @@ jobs:
       mongo:
         image: mongo:7
         ports: ['27017:27017']
+        # Each test app has a database of its own (hero_*, cx_*, pay_* collections): MongoDB's own advice is 64000
+        # open files, and a runner whose default is 1024 sees WiredTiger abort halfway through the suite.
+        options: --ulimit nofile=64000:64000
       redis:
         image: redis:7-alpine
         ports: ['6379:6379']
@@ -155,6 +158,8 @@ jobs:
             -e SESSION_SECRET="$(openssl rand -hex 32)" -e HERO_SECRET_KEY="$(openssl rand -hex 32)" \
             -e PAY_SIGNING_SECRET="$(openssl rand -hex 32)" -e CX_TRACKING_SECRET="$(openssl rand -hex 32)" \
             -e STRIPE_SECRET_KEY=sk_test_ci -e STRIPE_WEBHOOK_SECRET=whsec_ci -e STRIPE_PUBLISHABLE_KEY=pk_test_ci \
+            -e INFRA_SECRET_KEY="$(openssl rand -hex 32)" -e SETTINGS_SECRET="$(openssl rand -hex 32)" \
+            -e EMAIL=off -e INFRA_PROVIDERS=mock -e INFRA_ALLOW_MOCK=1 \
             nooblyjs-cloud:ci
           for _ in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:11010/health/ready; then echo; exit 0; fi

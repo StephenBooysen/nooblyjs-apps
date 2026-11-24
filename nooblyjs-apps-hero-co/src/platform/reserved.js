@@ -9,7 +9,7 @@
 export const RESERVED_SEGMENTS = new Set([
   // Our pages, files and mounts.
   'w', 'new', 'api', 'admin', 'infrastructure', 'services', 'ui', 'hooks', 'health', 'dev', 'auth', 'css', 'js',
-  'images', 'fonts', 'assets', 'static', 'public', 'index.html', 'favicon.ico', 'robots.txt',
+  'images', 'fonts', 'assets', 'static', 'public', 'vendor', 'index.html', 'favicon.ico', 'robots.txt',
   // Signing in and accounts.
   'signin', 'signup', 'signout', 'login', 'logout', 'verify-email', 'reset-password', 'forgot-password', 'invite',
   'invitations', 'account', 'me', 'settings', 'workspace', 'workspaces', 'oauth', 'github', 'google', 'token', 'userinfo',
